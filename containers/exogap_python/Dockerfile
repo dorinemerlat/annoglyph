@@ -1,34 +1,36 @@
-FROM mambaorg/micromamba:1.5.10
+FROM python:3.9.23-slim-bookworm
 
-LABEL maintainer="Dorine MERLAT <dorine.merlat@etu.unistra.fr>"
+LABEL maintainer="Dorine MERLAT"
 
-USER root
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        git \
-        libgl1 \
-        libglib2.0-0 \
-        libsm6 \
-        libxext6 \
-        libxrender1 \
-        tcl && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
-RUN git clone https://github.com/GonzalezLab/MCHelper.git /opt/MCHelper && \
-    chown -R $MAMBA_USER:$MAMBA_USER /opt/MCHelper
+# Dépendances système utiles pour certaines libs Python
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    git \
+    wget \
+    curl \
+    libsqlite3-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-USER $MAMBA_USER
+# Mise à jour pip
+RUN python -m pip install --no-cache-dir --upgrade pip setuptools wheel
 
-ENV MAMBA_DOCKERFILE_ACTIVATE=1
+# Librairies Python non standard nécessaires
+RUN pip install --no-cache-dir \
+    biopython \
+    ete3 \
+    gffpandas \
+    gffutils \
+    matplotlib \
+    numpy \
+    pandas \
+    requests \
+    seaborn
 
-RUN micromamba create -y -n MCHelper -f /opt/MCHelper/MCHelper.yml && \
-    micromamba clean --all --yes
+WORKDIR /app
 
-SHELL ["/usr/local/bin/_dockerfile_shell.sh"]
-
-# Très important pour Singularity/runtime
-ENV PATH=/opt/conda/envs/MCHelper/bin:/opt/conda/bin:$PATH
-ENV CONDA_DEFAULT_ENV=MCHelper
-
-CMD ["/bin/bash"]
+CMD ["python"]

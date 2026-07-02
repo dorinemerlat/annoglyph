@@ -15,4 +15,3 @@ workflow POSTPROCESSING {
         // CLEAN_GENOME_HEADERS
     // emit:
 }
-

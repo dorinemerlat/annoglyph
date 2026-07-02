@@ -196,4 +196,3 @@ workflow REPEATS_ANNOTATION {
         masked_genomes = REPEATMASKER.out.masked
         repeat_gff = REPEATMASKER_OUT_TO_GFF.out
 }
-

@@ -1,5 +1,5 @@
-process BRAKER3 {
-    tag "${rnaseq_aligner}/${id}"
+process BRAKER2 {
+    tag "${id}"
     cpus 40
     time '10d'
     label 'braker'
@@ -8,10 +8,10 @@ process BRAKER3 {
     stageInMode 'copy'
     
     input:
-    tuple val(id), val(meta), val(rnaseq_aligner), path(genome), path(bam), path(proteins), val(specie_name)
+    tuple val(id), val(meta), path(genome), path(proteins), val(specie_name)
 
     output:
-    tuple val(id), val(meta), val(rnaseq_aligner), path("braker_${id}/braker.gff3"), emit: gff
+    tuple val(id), val(meta), path("braker_${id}/braker.gff3"), emit: gff
 
     script:
     def name    = specie_name.replaceAll(/\s+/, '_').replace('.','')
@@ -23,7 +23,7 @@ process BRAKER3 {
     cp -r /opt/Augustus/config/ .
     AUGUSTUS_CONFIG_PATH="\$PWD/config"
 
-    braker.pl --genome=${genome} --prot_seq=${proteins} --bam=${bam} --gff3 --species=${genus}_${species} --threads ${task.cpus} \
+    braker.pl --genome=${genome} --prot_seq=${proteins} --gff3 --species=${genus}_${species} --threads ${task.cpus} \
         --AUGUSTUS_CONFIG_PATH=\$AUGUSTUS_CONFIG_PATH \
                                 --AUGUSTUS_BIN_PATH="/opt/Augustus/bin/" \
                                 --AUGUSTUS_SCRIPTS_PATH="/opt/Augustus/scripts/" \

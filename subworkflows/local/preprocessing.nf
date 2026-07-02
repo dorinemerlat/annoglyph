@@ -118,4 +118,3 @@ workflow PREPROCESSING {
         newick = DOWNLOAD_NEWICK.out
         genome_stats = SEQKIT_STATS.out
 }
-
