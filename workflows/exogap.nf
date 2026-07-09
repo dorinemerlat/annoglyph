@@ -1,6 +1,6 @@
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	IMPORT LOCAL MODULES/SUBWORKFLOWS
+    IMPORT LOCAL MODULES/SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
@@ -15,79 +15,79 @@ include { POSTPROCESSING } from "$projectDir/subworkflows/local/postprocessing.n
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	RUN MAIN WORKFLOW
+    RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
 workflow EXOGAP {
-	take:
-		genomes
+    take:
+        genomes
 
-	main:
-		log.info "Running workflow EXOGAP"
+    main:
+        log.info "Running workflow EXOGAP"
 
-		log.info "Running module cleaning genomes"
-		PREPROCESSING(genomes)
+        log.info "Running module cleaning genomes"
+        PREPROCESSING(genomes)
 
-		if (params.module_repeats == true) {
-			log.info "Running module repeat annotation"
-			REPEATS_ANNOTATION(PREPROCESSING.out.genomes, PREPROCESSING.out.newick, PREPROCESSING.out.genome_stats)
+        if (params.module_repeats == true) {
+            log.info "Running module repeat annotation"
+            REPEATS_ANNOTATION(PREPROCESSING.out.genomes, PREPROCESSING.out.newick, PREPROCESSING.out.genome_stats)
 
-		}
+        }
 
-		if (params.module_genes == true) {
-			log.info "Running module gene annotation"
+        if (params.module_genes == true) {
+            log.info "Running module gene annotation"
 
-			if (params.module_repeats == true) {
-				REPEATS_ANNOTATION.out.masked_genomes.set { masked_genomes }
-				REPEATS_ANNOTATION.out.repeat_gff.set { repeat_gff }
-			} else {
-				PREPROCESSING.out.genomes.set { masked_genomes }
-				Channel.empty().set { repeat_gff }
-			}
+            if (params.module_repeats == true) {
+                REPEATS_ANNOTATION.out.masked_genomes.set { masked_genomes }
+                REPEATS_ANNOTATION.out.repeat_gff.set { repeat_gff }
+            } else {
+                PREPROCESSING.out.genomes.set { masked_genomes }
+                Channel.empty().set { repeat_gff }
+            }
+            
+            GENES_ANNOTATION(
+                masked_genomes, 
+                repeat_gff, 
+                PREPROCESSING.out.newick,
+                PREPROCESSING.out.all_genome_stats 
+            )
+        }
 
-			GENES_ANNOTATION(
-				masked_genomes,
-				repeat_gff,
-				PREPROCESSING.out.newick,
-				PREPROCESSING.out.genome_stats
-			)
-		}
+        // if (params.module_ncgenes == true) {
+        //     print "Running module ncRNA annotation"
 
-		// if (params.module_ncgenes == true) {
-		//     print "Running module ncRNA annotation"
+        //     if (params.module_repeats == true) {
+        //         REPEATS_ANNOTATION.out.unmasked_genomes.set { genomes_for_ncgenes_annotation }
+        //     } else {
+        //         PREPROCESSING.out.genomes.set { genomes_for_ncgenes_annotation }
+        //     }
 
-		//     if (params.module_repeats == true) {
-		//         REPEATS_ANNOTATION.out.unmasked_genomes.set { genomes_for_ncgenes_annotation }
-		//     } else {
-		//         PREPROCESSING.out.genomes.set { genomes_for_ncgenes_annotation }
-		//     }
+        //     NCGENES_ANNOTATION( genomes_for_ncgenes_annotation )
+        // }
 
-		//     NCGENES_ANNOTATION( genomes_for_ncgenes_annotation )
-		// }
-
-		// print "Running module postprocessing"
-		// POSTPROCESSING()
+        // print "Running module postprocessing"
+        // POSTPROCESSING()
 }
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	COMPLETION EMAIL AND SUMMARY
+    COMPLETION EMAIL AND SUMMARY
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
 workflow.onComplete {
-	if (params.email || params.email_on_fail) {
-		NfcoreTemplate.email(workflow, params, summary_params, projectDir, log, multiqc_report)
-	}
-	NfcoreTemplate.summary(workflow, params, log)
-	if (params.hook_url) {
-		NfcoreTemplate.IM_notification(workflow, params, summary_params, projectDir, log)
-	}
+    if (params.email || params.email_on_fail) {
+        NfcoreTemplate.email(workflow, params, summary_params, projectDir, log, multiqc_report)
+    }
+    NfcoreTemplate.summary(workflow, params, log)
+    if (params.hook_url) {
+        NfcoreTemplate.IM_notification(workflow, params, summary_params, projectDir, log)
+    }
 }
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	THE END
+    THE END
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */

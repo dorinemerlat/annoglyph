@@ -29,9 +29,7 @@ workflow RNASEQ_ASSEMBLY {
          * are passed to GENERATE_RUNLIST.
          */
         genomes
-            .map { id, meta, fasta ->
-                tuple(id, meta)
-            }
+            .map { id, meta, fasta -> [ id, meta ] }
             .set { genomes_without_fasta }
 
         GENERATE_RUNLIST(genomes_without_fasta)
@@ -61,7 +59,7 @@ workflow RNASEQ_ASSEMBLY {
                     .drop(1)
                     .findAll { it.trim() }
                     .collect { line ->
-                        tuple(id, line.split(/\s+/)[0])
+                        [ id, line.split(/\s+/)[0] ]
                     }
             }
             .set { sra_IDs }
@@ -101,7 +99,7 @@ workflow RNASEQ_ASSEMBLY {
                     def single_files = rnaseq?.single_end ?: []
 
                     single_files.collect { fastq ->
-                        tuple(id, fastq)
+                        [ id, fastq ]
                     }
                 }
                 .set { rnaseq_single_files }
@@ -122,7 +120,7 @@ workflow RNASEQ_ASSEMBLY {
                     def paired_files = rnaseq?.paired_end ?: []
 
                     paired_files.collect { pair ->
-                        tuple(id, pair)
+                        [ id, pair ]
                     }
                 }
                 .set { rnaseq_paired_files }
@@ -158,7 +156,7 @@ workflow RNASEQ_ASSEMBLY {
                 .groupTuple(by: 0)
                 .join(genomes, by: 0)
                 .map { id, fastq, meta, genome ->
-                    tuple(id, meta, genome, fastq.flatten())
+                    [ id, meta, genome, fastq.flatten() ]
                 }
                 .set { star_input_single_end }
 
@@ -175,7 +173,7 @@ workflow RNASEQ_ASSEMBLY {
                 .groupTuple(by: 0)
                 .join(genomes, by: 0)
                 .map { id, fastq, meta, genome ->
-                    tuple(id, meta, genome, fastq.flatten())
+                    [ id, meta, genome, fastq.flatten() ]
                 }
                 .set { star_input_paired_end }
 
@@ -197,7 +195,7 @@ workflow RNASEQ_ASSEMBLY {
                 .concat(STAR_PAIRED.out.bam)
                 .groupTuple(by: [0, 1])
                 .map { id, meta, bams ->
-                    tuple(id, meta, bams)
+                    [ id, meta, bams ]
                 }
                 .branch { id, meta, bams ->
                     has_multiple_bams: bams.size() > 1
@@ -210,7 +208,7 @@ workflow RNASEQ_ASSEMBLY {
             MERGE_BAM.out
                 .concat(merged_star_input.single_bam)
                 .map { id, meta, bam ->
-                    tuple(id, meta, 'star', bam)
+                    [ id, meta, 'star', bam ]
                 }
                 .set { all_star_bams }
 
@@ -246,7 +244,7 @@ workflow RNASEQ_ASSEMBLY {
 
             VARUS.out.bam
                 .map { id, meta, bam ->
-                    tuple(id, meta, 'varus', bam)
+                    [ id, meta, 'varus', bam ]
                 }
                 .set { all_varus_bams }
 
@@ -301,7 +299,7 @@ workflow RNASEQ_ASSEMBLY {
         read_count_results.good_quality
             .join(all_bams, by: [0, 1, 2])
             .map { id, meta, aligner, read_count_file, bam ->
-                tuple(id, meta, aligner, bam)
+                [ id, meta, aligner, bam ]
             }
             .set { bams_for_gene_annotation }
 

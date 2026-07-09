@@ -1,6 +1,5 @@
 process SELECT_BEST_ANNOTATION {
-
-    tag "${status}"
+    tag ""
     label 'exogap_python'
     scratch false
 
@@ -12,18 +11,11 @@ process SELECT_BEST_ANNOTATION {
 
     script:
     """
-    select_best_annotations.py \\
-        --summary ${summary} \\
-        --output best_annotations.tsv
-
-    test -s best_annotations.tsv
+    select_best_annotations.py -i ${summary} -o best_annotations.tsv
     """
 
     stub:
     """
-    cat <<EOF > best_annotations.tsv
-genome_id	annotation_method	selected
-species_1	braker3	yes
-EOF
+    touch best_annotations.tsv 
     """
 }

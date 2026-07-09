@@ -16,7 +16,10 @@ process BLASTP {
     """
     blastp -query $proteins -db $db -evalue $evalue -word_size $word_size -max_hsps $max_hsps -outfmt 11 -out ${archive} -num_threads ${task.cpus}
     blast_formatter -archive $archive -outfmt 5 -out ${id}_${annotation_method}_blastp.xml
-    blast_formatter -archive $archive -outfmt 6 -out ${id}_${annotation_method}_blastp.tsv
+    blast_formatter -archive $archive -outfmt 6 \
+        -outfmt "6 qseqid sseqid sacc saccver qlen slen pident length nident mismatch positive ppos gapopen gaps qstart qend sstart send evalue bitscor
+e score qcovhsp qcovs stitle" \
+        -out ${id}_${annotation_method}_blastp.tsv
     """
 
 

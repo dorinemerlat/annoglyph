@@ -31,8 +31,6 @@ workflow REPEATS_ANNOTATION {
         genome_stats
 
     main:
-        println "Run repeats annotation"
-
         // Some genomes have softmasked regions, which can correspond to low complexity or low coverage regions.
         // These softmasked regions can cause problems for repeat annotation, so we will unmask them before running RepeatModeler.
         UNMASK_GENOME(genomes)
@@ -192,7 +190,7 @@ workflow REPEATS_ANNOTATION {
         MERGE_REPEATLANDSCAPE( tables_for_merge_repeatlandscape )
 
     emit:
-        unmasked_genomes = UNMASK_GENOME.out
         masked_genomes = REPEATMASKER.out.masked
         repeat_gff = REPEATMASKER_OUT_TO_GFF.out
 }
+

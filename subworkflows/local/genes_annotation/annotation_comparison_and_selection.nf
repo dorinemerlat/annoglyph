@@ -191,7 +191,4 @@ workflow ANNOTATION_COMPARISON_AND_SELECTION {
         best_annotations = best_annotations
         best_gff         = best_gff
         best_proteins    = best_proteins
-
-        all_tables       = CONCAT_ANNOTATION_TABLES.out
-        best_tables      = CONCAT_BEST_ANNOTATION_TABLES.out
 }

@@ -34,16 +34,7 @@ workflow FUNCTIONAL_ANNOTATION {
          */
         proteins
             .map { id, meta, annotation_method, fasta ->
-                tuple(
-                    id,
-                    meta,
-                    annotation_method,
-                    fasta,
-                    "uniprot_sprot",
-                    "1e-6",
-                    "3",
-                    "20"
-                )
+                [ id, meta, annotation_method, fasta, "uniprot_sprot", "1e-6", "3", "20" ]
             }
             .set { blastp_input }
 

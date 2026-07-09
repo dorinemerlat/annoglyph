@@ -23,6 +23,7 @@ process PLOT_ANNOTATION_COMPARISON {
 
     stub:
     """
+    mkdir -p figures/summary_plots figures/correlation_plots
     touch ${status}_annotation_comparison_summary.{png,pdf,svg}
     """
 }

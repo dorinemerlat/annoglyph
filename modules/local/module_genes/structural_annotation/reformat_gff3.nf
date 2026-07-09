@@ -1,28 +1,21 @@
 process REFORMAT_GFF3 {
-    tag "${id}/${annotation_method}"
+    tag "${annotation_method}/${id}"
+    stageInMode 'copy'
 
     input:
     tuple val(id), val(meta), val(annotation_method), path(gff)
 
     output:
-    tuple val(id), val(meta), val(annotation_method), path("${id}_${annotation_method}_filtered.gff")
+    tuple val(id), val(meta), val(annotation_method), path("${id}_${annotation_method}_reformatted.gff3")
 
     script:
+    def genome_code = meta.mnemonic.exogap
     """
-    awk -v prefix="${meta.mnemonic.for_exogap}" 'BEGIN{OFS="\t"}
-    {
-        if (\$0 ~ /^#/) {
-            print \$0
-        } else {
-            gsub(/ID=/, "ID=" prefix ".", \$9)
-            gsub(/Parent=/, "Parent=" prefix ".", \$9)
-            print \$0
-        }
-    }' $gff > ${id}_${annotation_method}_filtered.gff
+    sed 's/=g/=${genome_code}.g/g' "${gff}" > "${id}_${annotation_method}_reformatted.gff3"
     """
 
     stub:
     """
-    touch ${id}_${annotation_method}_filtered.gff
+    touch "${id}_${annotation_method}_reformatted.gff3"
     """
 }

@@ -1,28 +1,23 @@
-process SAMTOOLS_READ_COUNT {
-
-    tag "${id}/${aligner}"
-    label 'exogap_samtools'
-    scratch false
+process SAMTOOLS_READ_COUNT { 
+    tag "${aligner}/${id}"
+    label 'varus'
+    memory { (2 * task.attempt).GB }
+    maxRetries 5
 
     input:
     tuple val(id), val(meta), val(aligner), path(bam)
 
     output:
-    tuple val(id), val(meta), val(aligner), path("${id}_${aligner}_mapped_reads.txt"), emit: out
+    tuple val(id), val(meta), val(aligner), path("${id}_mapped_read_count.txt")
 
     script:
     """
-    samtools view \\
-        -@ ${task.cpus} \\
-        -F 4 \\
-        -c ${bam} > ${id}_${aligner}_mapped_reads.txt
-
-    test -s ${id}_${aligner}_mapped_reads.txt
+    # calculate the number of mapped reads 
+    samtools view -c -F 4  $bam > ${id}_mapped_read_count.txt
     """
 
     stub:
     """
-    echo 10000000 > ${id}_${aligner}_mapped_reads.txt
+    touch ${id}_mapped_read_count.txt
     """
-
 }

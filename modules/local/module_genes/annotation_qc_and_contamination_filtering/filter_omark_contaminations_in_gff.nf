@@ -1,17 +1,17 @@
 process FILTER_OMARK_CONTAMINATIONS_IN_GFF {
     tag "${annotation_method}/${id}"
-    label 'exogap_python'
+    stageInMode 'copy'
     memory '20 GB'
     scratch false
-    
+
     input:
-    tuple val(id), val(meta), val(annotation_method), path(gff), path(contaminations)
+    tuple val(id), val(meta), val(annotation_method), path(contaminations), path(gff)
 
     output:
-    tuple val(id), val(meta), val(annotation_method), path("${id}_${annotation_method}_contaminations-filtered-c-${threshold}.gff")
+    tuple val(id), val(meta), val(annotation_method), path("${id}_${annotation_method}_contaminations-filtered.gff")
 
     script:
-    def contaminations_filtered = "${id}_${annotation_method}_contaminations-filtered-c-${threshold}"
+    def contaminations_filtered = "${id}_${annotation_method}_contaminations-filtered"
     """
     # generation of filtered gff
     awk '
@@ -32,11 +32,13 @@ process FILTER_OMARK_CONTAMINATIONS_IN_GFF {
     }
     ' ${contaminations} | sort -u > contaminant_genes.txt
 
-    agat_sp_filter_feature_from_keep_list.pl --gff $gff --keep_list contaminant_genes.txt --output ${contaminations_filtered}.gff
+
+    module load agat
+    agat_sp_filter_feature_from_kill_list.pl --gff $gff --kill_list contaminant_genes.txt --output ${contaminations_filtered}.gff
     """
 
     stub:
     """
-    touch ${id}_${annotation_method}_contaminations-filtered-c-${threshold}.gff
+    touch ${id}_${annotation_method}_contaminations-filtered.gff
     """
 }

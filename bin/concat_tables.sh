@@ -2,19 +2,25 @@
 set -euo pipefail
 
 if [[ $# -lt 2 ]]; then
-    echo "Usage: $(basename "$0") output.tsv input1.tsv [input2.tsv ...]" >&2
+    echo "Usage: concat_table.sh output.tsv input1.tsv [input2.tsv ...]"
     exit 1
 fi
 
 output="$1"
 shift
 
-awk '
-FNR == 1 && NR != 1 { next }
-{ print }
-' "$@" > "$output"
+first_file="$1"
 
-if [[ ! -s "$output" ]]; then
-    echo "ERROR: output file is empty: $output" >&2
+# Write header
+head -n 1 "$first_file" > "$output"
+
+# Append data from all files, skipping headers
+for file in "$@"; do
+    tail -n +2 "$file" >> "$output"
+done
+
+# Check output is not empty
+[[ -s "$output" ]] || {
+    echo "ERROR: Output file '$output' is empty."
     exit 1
-fi
+}

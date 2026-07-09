@@ -5,14 +5,14 @@ process GENERATE_RUNLIST {
     label "retry_with_backoff"
 
     input:
-    tuple val(id), val(meta), val(specie_name)
+    tuple val(id), val(meta)
 
     output:
     tuple val(id), val(meta), path("Runlist.txt")
 
     script:
-    def sra_list = meta.SRA ? meta.SRA.replaceAll(';', ' ') : null
-    def name    = specie_name.replaceAll(/\s+/, '_').replace('.','')
+    def sra_list = meta.SRA ? meta.SRA.join(' ') : null
+    def name    = meta.lineage.species.name.replaceAll(/\s+/, '_').replace('.','')
     def toks    = name.tokenize('_')
     def genus   = toks.size() > 0 ? toks[0] : name
     def species = toks.size() > 1 ? toks[1..-1].join('_') : ''

@@ -38,3 +38,5 @@ workflow NCGENES_ANNOTATION {
         //     barrnap_mito = BARRNAP_MITO.out
         //     rnammer = RNAMMER.out
 }
+
+

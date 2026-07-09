@@ -15,9 +15,6 @@ process MERGE_BAM {
     script:
     """
     samtools merge --threads ${task.cpus} -o ${id}.bam bams/*.bam
-
-    # calculate the number of mapped reads 
-    samtools view -c -F 4  ${id}.bam > ${id}_mapped_read_count.txt
     """
 
     stub:

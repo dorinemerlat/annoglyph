@@ -1,8 +1,9 @@
-include { GET_TAXONOMY } from "$projectDir/modules/local/module_preprocessing/get_taxonomy.nf"
-include { SEQKIT_STATS } from "$projectDir/modules/local/module_preprocessing/seqkit_stats.nf"
-include { REFORMAT_GENOME } from "$projectDir/modules/local/module_preprocessing/reformat_genome.nf"
-include { DOWNLOAD_NEWICK } from "$projectDir/modules/local/module_preprocessing/download_newick.nf"
-include { SELECT_BUSCO_DATASET } from "$projectDir/modules/local/module_preprocessing/select_busco_dataset.nf"
+include { GET_TAXONOMY                          } from "$projectDir/modules/local/module_preprocessing/get_taxonomy.nf"
+include { SEQKIT_STATS                          } from "$projectDir/modules/local/module_preprocessing/seqkit_stats.nf"
+include { MERGE_TABLES as MERGE_SEQKIT          } from "$projectDir/modules/local/merge_tables.nf"
+include { REFORMAT_GENOME                       } from "$projectDir/modules/local/module_preprocessing/reformat_genome.nf"
+include { DOWNLOAD_NEWICK                       } from "$projectDir/modules/local/module_preprocessing/download_newick.nf"
+include { SELECT_BUSCO_DATASET                  } from "$projectDir/modules/local/module_preprocessing/select_busco_dataset.nf"
 
 def extract_lineage(lineage_file) {
     def lines = lineage_file.text.readLines()
@@ -72,13 +73,50 @@ workflow PREPROCESSING {
         SEQKIT_STATS.out
             .map { id, meta, seqkit -> [ id, file(seqkit).splitText()[1].replaceAll('\n', '').split('\t')[4] ]}
             .set { size }
+        
+        SEQKIT_STATS.out
+            .map {id, meta, seqkit -> ['size', seqkit]}
+            .groupTuple(by: 0)
+            .map {id, files -> [id, files, 'all_seqkit.stats']} 
+            .set {input_for_size_merge}
+
+        MERGE_SEQKIT(input_for_size_merge)
+
         genomes
             .join(lineage)
             .join(official_mnemonic)
             .join(exogap_mnemonic)
             .join(size)
             .map { id, meta, genome, lineage, official_mnemonic, exogap_mnemonic, size ->
-                def updatedMeta = meta + ["lineage": lineage, "mnemonic": ['official': official_mnemonic, 'exogap': exogap_mnemonic], "assembly_size": size]
+
+                // Check whether a mnemonic was explicitly provided in the samplesheet
+                def hasMnemonic =
+                    meta.containsKey('mnemonic') &&
+                    meta.mnemonic &&
+                    meta.mnemonic.toString().trim() &&
+                    meta.mnemonic.toString() != 'NA'
+
+                // If a mnemonic was provided by the user, use it for both
+                // official and exogap mnemonic fields.
+                // Otherwise, use the automatically generated mnemonics.
+                def mnemonic = hasMnemonic ?
+                    [
+                        official: meta.mnemonic,
+                        exogap  : meta.mnemonic
+                    ] :
+                    [
+                        official: official_mnemonic,
+                        exogap  : exogap_mnemonic
+                    ]
+
+                // Add lineage, mnemonic and assembly size information
+                // to the genome metadata map.
+                def updatedMeta = meta + [
+                    lineage      : lineage,
+                    mnemonic     : mnemonic,
+                    assembly_size: size
+                ]
+
                 [ id, updatedMeta, genome ]
             }
             .set { genomes }
@@ -113,8 +151,12 @@ workflow PREPROCESSING {
                 .set { genomes }
         }
         
+        // run busco 
+        
     emit:
         genomes = genomes
         newick = DOWNLOAD_NEWICK.out
         genome_stats = SEQKIT_STATS.out
+        all_genome_stats = MERGE_SEQKIT.out
 }
+

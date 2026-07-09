@@ -1,178 +1,585 @@
 #!/usr/bin/env python3
-"""Generate downstream plots for the selected annotation set.
-
-This script intentionally remains tolerant to missing columns so it can run across
-slightly different EXOGAP table versions.
-"""
 
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
-import os
 import re
+from pathlib import Path
+
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+import seaborn as sns
+from Bio import Phylo
+from scipy.stats import pearsonr, spearmanr
 
 
-def parse_args():
-    p = argparse.ArgumentParser(description="Plot annotation analysis")
-    p.add_argument("--summary", required=True)
-    p.add_argument("--intron-lengths", required=True)
-    p.add_argument("--genome-stats", required=True)
-    p.add_argument("--tree", required=False)
-    p.add_argument("--out-dir", default=".")
-    return p.parse_args()
+NEUTRAL_BAR_COLOR = "#8c8c8c"
+NEUTRAL_BOX_COLOR = "#bdbdbd"
+
+MAIN_TITLE_SIZE = 13
+LABEL_SIZE = 8
+TITLE_SIZE = 10
+LEGEND_SIZE = 8
+LEGEND_TITLE_SIZE = 8
+
+FUNCTIONAL_COLORS = {
+    "product_only": "#17C3B2",
+    "go_only": "#f0e442",
+    "product_and_go": "#69c4ec",
+}
+
+plt.rcParams["hatch.linewidth"] = 0.4
 
 
-def find_col(df, candidates, default=None):
-    lower = {c.lower(): c for c in df.columns}
-    for cand in candidates:
-        if cand.lower() in lower:
-            return lower[cand.lower()]
-    return default
+def clean_genome_name(genome_id: str) -> str:
+    name = re.sub(r"-\d$", "", str(genome_id))
+    name = name.replace("-", " ")
+    parts = name.split()
+    if parts:
+        parts[0] = parts[0].capitalize()
+    return " ".join(parts)
 
 
-def save_all(prefix):
-    for ext in ("png", "pdf", "svg"):
-        plt.savefig(f"{prefix}.{ext}", bbox_inches="tight", dpi=300)
+def read_table(path: Path) -> pd.DataFrame:
+    if not path.exists():
+        raise FileNotFoundError(f"Table not found: {path}")
+
+    if path.name.endswith(".stats"):
+        return pd.read_csv(path, sep=r"\s+", engine="python")
+
+    return pd.read_csv(path, sep="\t")
 
 
-def read_table(path):
-    try:
-        return pd.read_csv(path, sep="\t")
-    except Exception:
-        try:
-            return pd.read_csv(path, sep=None, engine="python")
-        except Exception:
-            return pd.DataFrame()
+def clean_group_name(group_name: str) -> str:
+    return str(group_name).split("|")[0]
 
 
-def species_from_tree(path):
-    if not path or not Path(path).exists():
-        return []
-    txt = Path(path).read_text(errors="ignore")
-    return re.findall(r"([A-Za-z0-9_.-]+):", txt)
+def get_genome_order(all_genomes: list[str], tree_file: Path | None) -> list[str]:
+    if tree_file is None:
+        return sorted(all_genomes)
+
+    tree = Phylo.read(tree_file, "newick")
+
+    phylo_order = []
+    for leaf in tree.get_terminals():
+        genome_id = str(leaf.name).split("|")[0]
+        if genome_id in all_genomes:
+            phylo_order.append(genome_id)
+
+    missing = sorted([g for g in all_genomes if g not in phylo_order])
+    return phylo_order + missing
 
 
-def plot_gene_structure(summary, outdir):
-    genome_col = find_col(summary, ["genome_id", "id", "species"], summary.columns[0])
-    candidates = [
-        (["n_genes", "genes"], "Genes"),
-        (["n_proteins", "proteins"], "Proteins"),
-        (["mono_exonic_genes"], "Mono-exonic genes"),
-        (["mean_protein_length"], "Mean protein length"),
-        (["busco_complete"], "BUSCO complete"),
-    ]
-    cols = [(find_col(summary, c), label) for c, label in candidates]
-    cols = [(c, l) for c, l in cols if c]
-    if not cols:
-        return
+def get_tree_groups(tree_file: Path, available_genomes: set[str], min_size: int = 4) -> dict[str, list[str]]:
+    if tree_file is None:
+        return {}
 
-    n = len(cols)
-    fig, axes = plt.subplots(n, 1, figsize=(12, max(4, 2.3 * n)), squeeze=False)
-    for ax, (col, label) in zip(axes[:, 0], cols):
-        df = summary[[genome_col, col]].copy()
-        df[col] = pd.to_numeric(df[col], errors="coerce")
-        df = df.sort_values(col, ascending=False)
-        ax.bar(df[genome_col].astype(str), df[col])
-        ax.set_ylabel(label)
-        ax.tick_params(axis="x", rotation=90)
-    fig.tight_layout()
-    prefix = Path(outdir) / "summary_plots" / "gene_structure_summary"
-    save_all(prefix)
-    plt.close(fig)
-    for ext in ("png", "pdf", "svg"):
-        print(f"Saved {prefix}.{ext}")
+    tree = Phylo.read(tree_file, "newick")
+    groups = {}
+    seen = set()
 
+    for i, clade in enumerate(tree.find_clades(order="level")):
+        leaves = [
+            str(leaf.name).split("|")[0]
+            for leaf in clade.get_terminals()
+            if str(leaf.name).split("|")[0] in available_genomes
+        ]
 
-def plot_correlations(summary, genome_stats, outdir):
-    if summary.empty or genome_stats.empty:
-        return
-    genome_col = find_col(summary, ["genome_id", "id", "species"], summary.columns[0])
-    stat_id = find_col(genome_stats, ["genome_id", "id", "species", "file", "name"], genome_stats.columns[0])
-    size_col = find_col(genome_stats, ["assembly_size", "sum_len", "sum_len(bp)", "genome_size", "num_seqs_sum_len"])
-    if not size_col:
-        # seqkit stats often has sum_len, possibly with commas
-        for c in genome_stats.columns:
-            if "sum_len" in c.lower() or "sum" == c.lower():
-                size_col = c
-                break
-    if not size_col:
-        return
+        leaves = sorted(set(leaves))
 
-    gs = genome_stats.copy()
-    gs[size_col] = pd.to_numeric(gs[size_col].astype(str).str.replace(",", "", regex=False), errors="coerce")
-    merged = summary.merge(gs[[stat_id, size_col]], left_on=genome_col, right_on=stat_id, how="inner")
-    if len(merged) < 3:
-        return
-
-    metrics = []
-    for cand, label in [
-        (["n_genes"], "Genes"),
-        (["n_proteins"], "Proteins"),
-        (["busco_complete"], "BUSCO complete"),
-        (["mean_protein_length"], "Mean protein length"),
-    ]:
-        col = find_col(merged, cand)
-        if col:
-            metrics.append((col, label))
-
-    for col, label in metrics:
-        df = merged[[size_col, col]].copy()
-        df[col] = pd.to_numeric(df[col], errors="coerce")
-        df = df.dropna()
-        if len(df) < 3:
+        if len(leaves) < min_size:
             continue
-        fig, ax = plt.subplots(figsize=(6, 5))
-        ax.scatter(df[size_col], df[col])
-        ax.set_xlabel("Genome size")
-        ax.set_ylabel(label)
-        ax.set_title(f"Genome size vs {label}")
-        fig.tight_layout()
-        prefix = Path(outdir) / "correlation_plots" / f"genome_size_vs_{col}"
-        save_all(prefix)
-        plt.close(fig)
+
+        if len(leaves) == len(available_genomes):
+            group_name = "all"
+        else:
+            group_name = clean_group_name(clade.name) if clade.name else f"group_{i:03d}"
+
+        key = tuple(leaves)
+        if key in seen:
+            continue
+
+        seen.add(key)
+        groups[group_name] = leaves
+
+    return groups
 
 
-def plot_intron_distribution(introns, outdir):
-    len_col = find_col(introns, ["intron_length", "length"], introns.columns[-1] if len(introns.columns) else None)
-    if not len_col:
+def style_axis(ax) -> None:
+    ax.tick_params(axis="both", labelsize=LABEL_SIZE)
+    ax.xaxis.label.set_size(LABEL_SIZE)
+    ax.yaxis.label.set_size(LABEL_SIZE)
+    ax.xaxis.label.set_weight("bold")
+    ax.yaxis.label.set_weight("bold")
+    ax.title.set_size(TITLE_SIZE)
+    ax.title.set_weight("bold")
+
+
+def style_legend(legend) -> None:
+    if legend is None:
         return
-    vals = pd.to_numeric(introns[len_col], errors="coerce").dropna()
-    vals = vals[vals > 0]
-    if vals.empty:
-        return
-    fig, ax = plt.subplots(figsize=(7, 5))
-    ax.hist(vals.clip(upper=vals.quantile(0.99)), bins=50)
-    ax.set_xlabel("Intron length")
-    ax.set_ylabel("Count")
-    ax.set_title("Intron length distribution")
-    fig.tight_layout()
-    prefix = Path(outdir) / "summary_plots" / "intron_length_distribution"
-    save_all(prefix)
+
+    legend.get_title().set_fontsize(LEGEND_TITLE_SIZE)
+    legend.get_title().set_fontweight("bold")
+
+    for text in legend.get_texts():
+        text.set_fontsize(LEGEND_SIZE)
+
+
+def setup_genome_xaxis(ax, genome_order: list[str]) -> None:
+    ax.set_xticks(range(len(genome_order)))
+    ax.set_xticklabels(
+        [clean_genome_name(g) for g in genome_order],
+        rotation=90,
+        fontsize=LABEL_SIZE,
+        fontstyle="italic",
+    )
+
+
+def prepare_summary(summary: pd.DataFrame, genome_stats: pd.DataFrame) -> pd.DataFrame:
+    df = summary.copy()
+
+    genome_stats = genome_stats.copy()
+    genome_stats = genome_stats.rename(columns={
+        "sum_len": "assembly_size_bp",
+        "N50": "assembly_n50",
+        "num_seqs": "assembly_num_seqs",
+    })
+
+    keep_cols = [
+        "genome_id",
+        "assembly_size_bp",
+        "assembly_n50",
+        "assembly_num_seqs",
+    ]
+
+    genome_stats = genome_stats[[c for c in keep_cols if c in genome_stats.columns]]
+
+    df = df.merge(genome_stats, on="genome_id", how="left")
+
+    df["assembly_size_gb"] = df["assembly_size_bp"] / 1e9
+    df["assembly_size_kb"] = df["assembly_size_bp"] / 1e3
+    df["gene_density_per_kb"] = df["gene_number"] / df["assembly_size_kb"]
+
+    return df
+
+
+def prepare_intron_stats(intron_lengths: pd.DataFrame) -> pd.DataFrame:
+    if intron_lengths.empty:
+        return pd.DataFrame(columns=[
+            "genome_id",
+            "mean_intron_length",
+            "median_intron_length",
+            "intron_number",
+        ])
+
+    return (
+        intron_lengths
+        .groupby("genome_id", as_index=False)
+        .agg(
+            mean_intron_length=("intron_length", "mean"),
+            median_intron_length=("intron_length", "median"),
+            intron_number=("intron_length", "count"),
+        )
+    )
+
+
+def plot_summary_figure(
+    df: pd.DataFrame,
+    intron_lengths: pd.DataFrame,
+    genome_order: list[str],
+    out_prefix: Path,
+) -> None:
+    df = df.set_index("genome_id").reindex(genome_order).reset_index()
+
+    n_genomes = len(genome_order)
+    fig_width = max(12, n_genomes * 0.38)
+
+    fig, axes = plt.subplots(
+        nrows=4,
+        ncols=1,
+        figsize=(fig_width, 11.69),
+        sharex=True,
+        gridspec_kw={"height_ratios": [1, 1.2, 1, 1.2]},
+    )
+
+    x = range(len(genome_order))
+
+    axes[0].bar(
+        x,
+        df["mean_exons_per_gene"],
+        color=NEUTRAL_BAR_COLOR,
+        edgecolor="none",
+        width=0.8,
+    )
+    axes[0].set_title("Mean number of exons per gene", fontweight="bold")
+    axes[0].set_ylabel("Mean exons/gene")
+
+    box_data = []
+    box_positions = []
+
+    for i, genome_id in enumerate(genome_order):
+        values = intron_lengths.loc[
+            intron_lengths["genome_id"] == genome_id,
+            "intron_length"
+        ].dropna()
+
+        if len(values) > 0:
+            box_data.append(values)
+            box_positions.append(i)
+
+    if box_data:
+        bp = axes[1].boxplot(
+            box_data,
+            positions=box_positions,
+            widths=0.6,
+            showfliers=False,
+            patch_artist=True,
+        )
+
+        for patch in bp["boxes"]:
+            patch.set_facecolor(NEUTRAL_BOX_COLOR)
+            patch.set_alpha(0.8)
+
+        for element in ["whiskers", "caps", "medians"]:
+            for item in bp[element]:
+                item.set_color("black")
+                item.set_linewidth(0.6)
+
+    axes[1].set_title("Intron length distribution", fontweight="bold")
+    axes[1].set_ylabel("Intron length (bp)")
+    axes[1].yaxis.set_major_formatter(mticker.FuncFormatter(lambda v, p: f"{int(v):,}"))
+
+    axes[2].bar(
+        x,
+        df["gene_density_per_kb"],
+        color=NEUTRAL_BAR_COLOR,
+        edgecolor="none",
+        width=0.8,
+    )
+    axes[2].set_title("Gene density", fontweight="bold")
+    axes[2].set_ylabel("Genes per kb")
+
+    functional_cols = [
+        "percent_genes_product_only",
+        "percent_genes_go_only",
+        "percent_genes_product_and_go",
+    ]
+
+    functional_labels = [
+        "Description only",
+        "GO annotation only",
+        "Description + GO annotation",
+    ]
+
+    functional_colors = [
+        FUNCTIONAL_COLORS["product_only"],
+        FUNCTIONAL_COLORS["go_only"],
+        FUNCTIONAL_COLORS["product_and_go"],
+    ]
+
+    bottom = pd.Series([0.0] * len(df))
+
+    for col, label, color in zip(functional_cols, functional_labels, functional_colors):
+        values = df[col].fillna(0)
+        axes[3].bar(
+            x,
+            values,
+            bottom=bottom,
+            color=color,
+            edgecolor="none",
+            width=0.8,
+            label=label,
+        )
+        bottom += values
+
+    axes[3].set_title("Functional annotation", fontweight="bold")
+    axes[3].set_ylabel("Percentage (%)")
+    axes[3].set_ylim(0, 100)
+    axes[3].yaxis.set_major_formatter(mticker.PercentFormatter())
+
+    handles, labels = axes[3].get_legend_handles_labels()
+
+    legend = axes[3].legend(
+        handles[::-1],
+        labels[::-1],
+        title="Annotation category",
+        bbox_to_anchor=(1.01, 1),
+        loc="upper left",
+        fontsize=LEGEND_SIZE,
+        title_fontsize=LEGEND_TITLE_SIZE,
+    )
+    style_legend(legend)
+
+    for ax in axes:
+        style_axis(ax)
+        ax.set_xlabel("")
+        ax.yaxis.set_label_coords(-0.065, 0.5)
+
+    setup_genome_xaxis(axes[-1], genome_order)
+    axes[-1].set_xlabel("Genome", fontsize=LABEL_SIZE, fontweight="bold")
+
+    plt.tight_layout(rect=[0.07, 0.04, 0.98, 0.99])
+
+    out_png = Path(str(out_prefix) + ".png")
+    out_pdf = Path(str(out_prefix) + ".pdf")
+    out_svg = Path(str(out_prefix) + ".svg")
+
+    plt.savefig(out_png, dpi=300, bbox_inches="tight")
+    plt.savefig(out_pdf, bbox_inches="tight")
+    plt.savefig(out_svg, bbox_inches="tight")
     plt.close(fig)
 
+    print(f"Saved {out_png}")
+    print(f"Saved {out_pdf}")
+    print(f"Saved {out_svg}")
 
-def main():
-    args = parse_args()
-    outdir = Path(args.out_dir)
-    (outdir / "summary_plots").mkdir(parents=True, exist_ok=True)
-    (outdir / "correlation_plots").mkdir(parents=True, exist_ok=True)
 
-    summary = read_table(args.summary)
-    introns = read_table(args.intron_lengths)
-    genome_stats = read_table(args.genome_stats)
+def add_correlation_box(ax, x, y, loc: str = "lower_right") -> None:
+    data = pd.DataFrame({"x": x, "y": y}).dropna()
 
-    tree_species = species_from_tree(args.tree)
-    print(f"Found {len(tree_species) if tree_species else summary.shape[0]} genomes in tree")
-    print("Missing from tree: []")
+    if len(data) < 3:
+        text = "r = NA, p = NA\nρ = NA, p = NA"
+    else:
+        r, p_r = pearsonr(data["x"], data["y"])
+        rho, p_s = spearmanr(data["x"], data["y"])
 
-    if not summary.empty:
-        plot_gene_structure(summary, outdir)
-        plot_correlations(summary, genome_stats, outdir)
-    if not introns.empty:
-        plot_intron_distribution(introns, outdir)
+        text = (
+            f"$r$ = {r:.3f}, $p$ = {p_r:.2g}\n"
+            f"$\\rho$ = {rho:.3f}, $p$ = {p_s:.2g}"
+        )
+
+    if loc == "upper_right":
+        x_pos, y_pos, va = 0.97, 0.95, "top"
+    else:
+        x_pos, y_pos, va = 0.97, 0.05, "bottom"
+
+    ax.text(
+        x_pos,
+        y_pos,
+        text,
+        transform=ax.transAxes,
+        ha="right",
+        va=va,
+        fontsize=9,
+        bbox=dict(
+            boxstyle="square,pad=0.3",
+            facecolor="white",
+            edgecolor="black",
+            linewidth=0.8,
+        ),
+    )
+
+
+def plot_correlation_panel(
+    ax,
+    df: pd.DataFrame,
+    x_col: str,
+    y_col: str,
+    xlabel: str,
+    ylabel: str,
+    title: str,
+    box_loc: str = "lower_right",
+) -> None:
+    plot_df = df[[x_col, y_col]].dropna()
+
+    if len(plot_df) == 0:
+        ax.set_title(title, fontweight="bold")
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        return
+
+    sns.regplot(
+        data=plot_df,
+        x=x_col,
+        y=y_col,
+        ax=ax,
+        scatter_kws={"s": 18, "color": "black"},
+        line_kws={"color": "#2f6fff", "linewidth": 2},
+        ci=95,
+        color="#2f6fff",
+    )
+
+    ax.set_title(title, fontweight="bold")
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda v, p: f"{int(v):,}"))
+
+    add_correlation_box(ax, plot_df[x_col], plot_df[y_col], loc=box_loc)
+    style_axis(ax)
+
+
+def plot_correlation_figure(df: pd.DataFrame, group_name: str, out_prefix: Path) -> None:
+    fig, axes = plt.subplots(
+        nrows=1,
+        ncols=4,
+        figsize=(16, 4),
+    )
+
+    plot_correlation_panel(
+        axes[0],
+        df,
+        x_col="mean_intron_length",
+        y_col="assembly_size_gb",
+        xlabel="Mean intron length (bp)",
+        ylabel="Assembly size (Gb)",
+        title="A",
+        box_loc="lower_right",
+    )
+
+    plot_correlation_panel(
+        axes[1],
+        df,
+        x_col="intron_number",
+        y_col="assembly_size_gb",
+        xlabel="Number of introns",
+        ylabel="Assembly size (Gb)",
+        title="B",
+        box_loc="upper_right",
+    )
+
+    plot_correlation_panel(
+        axes[2],
+        df,
+        x_col="mean_introns_per_gene",
+        y_col="assembly_size_gb",
+        xlabel="Mean introns per gene",
+        ylabel="Assembly size (Gb)",
+        title="C",
+        box_loc="upper_right",
+    )
+
+    plot_correlation_panel(
+        axes[3],
+        df,
+        x_col="gene_number",
+        y_col="assembly_size_gb",
+        xlabel="Number of genes",
+        ylabel="Assembly size (Gb)",
+        title="D",
+        box_loc="upper_right",
+    )
+
+    fig.suptitle(group_name, fontsize=MAIN_TITLE_SIZE, fontweight="bold")
+    plt.tight_layout()
+
+    out_png = Path(str(out_prefix) + ".png")
+    out_pdf = Path(str(out_prefix) + ".pdf")
+    out_svg = Path(str(out_prefix) + ".svg")
+
+    plt.savefig(out_png, dpi=300, bbox_inches="tight")
+    plt.savefig(out_pdf, bbox_inches="tight")
+    plt.savefig(out_svg, bbox_inches="tight")
+    plt.close(fig)
+
+    print(f"Saved {out_png}")
+    print(f"Saved {out_pdf}")
+    print(f"Saved {out_svg}")
+
+
+def safe_name(name: str) -> str:
+    return re.sub(r"[^A-Za-z0-9_.-]+", "_", name)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Generate gene-structure summary and correlation figures."
+    )
+
+    parser.add_argument(
+        "-s",
+        "--summary",
+        required=True,
+        type=Path,
+        help="Annotation summary TSV file.",
+    )
+
+    parser.add_argument(
+        "-i",
+        "--intron-lengths",
+        required=True,
+        type=Path,
+        help="Intron lengths TSV file.",
+    )
+
+    parser.add_argument(
+        "-g",
+        "--genome-stats",
+        required=True,
+        type=Path,
+        help="Genome assembly statistics table.",
+    )
+
+    parser.add_argument(
+        "-o",
+        "--out-dir",
+        required=True,
+        type=Path,
+        help="Output directory.",
+    )
+
+    parser.add_argument(
+        "--tree",
+        type=Path,
+        default=None,
+        help="Optional Newick tree.",
+    )
+
+    parser.add_argument(
+        "--min-group-size",
+        type=int,
+        default=4,
+        help="Minimum number of genomes per tree group for correlation plots.",
+    )
+
+    args = parser.parse_args()
+
+    summary_dir = args.out_dir / "summary_plots"
+    correlation_dir = args.out_dir / "correlation_plots"
+
+    summary_dir.mkdir(parents=True, exist_ok=True)
+    correlation_dir.mkdir(parents=True, exist_ok=True)
+
+    df_summary = read_table(args.summary)
+    df_introns = read_table(args.intron_lengths)
+    df_genome_stats = read_table(args.genome_stats)
+
+    intron_stats = prepare_intron_stats(df_introns)
+
+    df = prepare_summary(df_summary, df_genome_stats)
+    df = df.merge(intron_stats, on="genome_id", how="left")
+
+    df["mean_introns_per_gene"] = df["intron_number"] / df["gene_number"]
+
+    all_genomes = sorted(set(df["genome_id"].dropna().astype(str)))
+    genome_order = get_genome_order(all_genomes, args.tree)
+
+    plot_summary_figure(
+        df=df,
+        intron_lengths=df_introns,
+        genome_order=genome_order,
+        out_prefix=summary_dir / "gene_structure_summary",
+    )
+
+    groups = {"all": genome_order}
+    groups.update(get_tree_groups(
+        args.tree,
+        available_genomes=set(all_genomes),
+        min_size=args.min_group_size,
+    ))
+
+    for group_name, genomes in groups.items():
+        group_df = df[df["genome_id"].isin(genomes)].copy()
+
+        if len(group_df) < args.min_group_size:
+            continue
+
+        plot_correlation_figure(
+            df=group_df,
+            group_name=group_name,
+            out_prefix=correlation_dir / f"{safe_name(group_name)}_gene_structure_assembly_correlations",
+        )
 
 
 if __name__ == "__main__":

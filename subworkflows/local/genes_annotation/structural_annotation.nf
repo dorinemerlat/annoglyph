@@ -24,7 +24,7 @@ workflow STRUCTURAL_ANNOTATION {
         masked_genomes
             .combine(bams, by: [0, 1])
             .map { id, meta, genome, aligner, bam ->
-                tuple(id, meta, aligner, genome, bam, file(params.protein_set))
+                [ id, meta, aligner, genome, bam, file(params.protein_set) ]
             }
             .set { braker3_input }
 
@@ -36,7 +36,7 @@ workflow STRUCTURAL_ANNOTATION {
          */
         masked_genomes
             .map { id, meta, genome ->
-                tuple(id, meta, genome, file(params.protein_set))
+                [ id, meta, genome, file(params.protein_set) ]
             }
             .set { braker2_and_galba_input }
 
@@ -51,16 +51,16 @@ workflow STRUCTURAL_ANNOTATION {
          */
         BRAKER3.out.gff
             .map { id, meta, rnaseq_aligner, gff ->
-                tuple(id, meta, "braker-with-${rnaseq_aligner}", gff)
+                [ id, meta, "braker-with-${rnaseq_aligner}", gff ]
             }
             .concat(
                 BRAKER2.out.gff.map { id, meta, gff ->
-                    tuple(id, meta, "braker2", gff)
+                    [ id, meta, "braker2", gff ]
                 }
             )
             .concat(
                 GALBA.out.gff.map { id, meta, gff ->
-                    tuple(id, meta, "galba", gff)
+                    [ id, meta, "galba", gff ]
                 }
             )
             .filter { id, meta, annotation_method, gff ->
@@ -81,7 +81,7 @@ workflow STRUCTURAL_ANNOTATION {
          */
         REFORMAT_GFF3.out
             .map { id, meta, annotation_method, gff ->
-                tuple(id, meta, annotation_method, gff, 90)
+                [ id, meta, annotation_method, gff, 90 ]
             }
             .set { gff_for_length_filtering }
 
@@ -97,7 +97,7 @@ workflow STRUCTURAL_ANNOTATION {
         AGAT_FILTER_GENE_BY_LENGTH.out
             .combine(masked_genomes, by: [0, 1])
             .map { id, meta, annotation_method, gff, genome ->
-                tuple(id, meta, annotation_method, genome, gff)
+                [ id, meta, annotation_method, genome, gff ]
             }
             .set { gff_and_genome }
 
@@ -105,9 +105,9 @@ workflow STRUCTURAL_ANNOTATION {
 
 
     emit:
-        raw_gff       = raw_gff
+        raw_gff         = raw_gff
         reformatted_gff = REFORMAT_GFF3.out
-        filtered_gff = AGAT_FILTER_GENE_BY_LENGTH.out
-        gff          = EXTRACT_CANONICAL_PROTEINS.out.gff
-        proteins     = EXTRACT_CANONICAL_PROTEINS.out.fasta
+        filtered_gff    = AGAT_FILTER_GENE_BY_LENGTH.out
+        gff             = EXTRACT_CANONICAL_PROTEINS.out.gff
+        proteins        = EXTRACT_CANONICAL_PROTEINS.out.fasta
 }

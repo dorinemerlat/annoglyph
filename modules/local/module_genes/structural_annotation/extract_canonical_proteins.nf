@@ -12,6 +12,7 @@ process EXTRACT_CANONICAL_PROTEINS {
     output:
     tuple val(id), val(meta), val(annotation_method), path("${id}_${annotation_method}_canonical.gff"), emit: gff
     tuple val(id), val(meta), val(annotation_method), path("${id}_${annotation_method}_proteins.fasta"), emit: fasta
+    
     script:
     """
     # extract the longest isoform for each gene using AGAT

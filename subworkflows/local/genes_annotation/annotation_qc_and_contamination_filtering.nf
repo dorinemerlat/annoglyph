@@ -71,8 +71,8 @@ workflow ANNOTATION_QC_AND_CONTAMINATION_FILTERING {
             .join(gff, by: [0, 1, 2])
             .join(proteins, by: [0, 1, 2])
             .join(OMARK.out.ump, by: [0, 1, 2])
-            .map { id, meta, annotation_method, contaminants_count, gff_file, fasta, ump ->
-                [ id, meta, annotation_method, gff_file, fasta, ump, contamination_threshold ]
+            .map { id, meta, annotation_method, contaminants_count, gff, fasta, ump ->
+                [ id, meta, annotation_method, gff, fasta, ump, contamination_threshold ]
             }
             .set { contamination_filtering_input }
 
@@ -118,20 +118,10 @@ workflow ANNOTATION_QC_AND_CONTAMINATION_FILTERING {
             .join(gff, by: [0, 1, 2])
             .join(BUSCO.out.json, by: [0, 1, 2])
             .join(OMARK.out.sum, by: [0, 1, 2])
-            .map { id, meta, annotation_method, fasta, gff_file, busco_json, omark_sum ->
-                [ id, meta, annotation_method, 'before-contamination-filtering', fasta, gff_file, busco_json, omark_sum ]
+            .map { id, meta, annotation_method, fasta, gff, busco_json, omark_sum ->
+                [ id, meta, annotation_method, 'before-contamination-filtering', fasta, gff, busco_json, omark_sum ]
             }
             .set { qc_metrics_before_filtering }
-
-
-        /*
-        * Keys present after contamination filtering.
-        */
-        FILTER_OMARK_CONTAMINATIONS.out.fasta
-            .map { id, meta, annotation_method, fasta ->
-                tuple(id, annotation_method)
-            }
-            .set { filtered_keys }
 
 
         /*
@@ -143,36 +133,33 @@ workflow ANNOTATION_QC_AND_CONTAMINATION_FILTERING {
             .join(FILTER_OMARK_CONTAMINATIONS_IN_GFF.out, by: [0, 1, 2])
             .join(BUSCO_ON_CONTAMINATION_FILTERED.out.json, by: [0, 1, 2])
             .join(OMARK_ON_CONTAMINATION_FILTERED.out.sum, by: [0, 1, 2])
-            .map { id, meta, annotation_method, fasta, gff_file, busco_json, omark_sum ->
-                tuple(id, meta, annotation_method, 'after-contamination-filtering', fasta, gff_file, busco_json, omark_sum)
+            .map { id, meta, annotation_method, fasta, gff, busco_json, omark_sum ->
+                [ id, meta, annotation_method, 'after-contamination-filtering', fasta, gff, busco_json, omark_sum ]
             }
             .set { qc_metrics_after_filtering_filtered_only }
 
 
-        /*
-        * Recover annotations that were not filtered.
-        *
-        * These are present before filtering but absent from the filtered outputs.
-        * For them, before and after are identical.
-        */
-        qc_metrics_before_filtering
-            .map { id, meta, annotation_method, filtering_status, fasta, gff_file, busco_json, omark_sum ->
-                tuple(id, annotation_method, meta, fasta, gff_file, busco_json, omark_sum)
-            }
-            .join(filtered_keys, by: [0, 1], remainder: true)
-            .filter { id, annotation_method, meta, fasta, gff_file, busco_json, omark_sum, filtered_key ->
-                filtered_key == null
-            }
-            .map { id, annotation_method, meta, fasta, gff_file, busco_json, omark_sum, filtered_key ->
-                tuple(id, meta, annotation_method, 'after-contamination-filtering', fasta, gff_file, busco_json, omark_sum)
-            }
-            .set { qc_metrics_after_filtering_unfiltered }
+    qc_metrics_before_filtering
+        .join(qc_metrics_after_filtering_filtered_only, by: [0, 1, 2], remainder: true)
+        .map { row ->
 
+            if (row.size() == 13) {
+                def (id, meta, annotation_method,
+                    before_status, before_fasta, before_gff, before_busco_json, before_omark_sum,
+                    after_status, after_fasta, after_gff, after_busco_json, after_omark_sum) = row
 
-        qc_metrics_after_filtering_filtered_only
-            .concat(qc_metrics_after_filtering_unfiltered)
-            .set { qc_metrics_after_filtering }
+                return [ id, meta + [ 'contamination_filtering': true ], annotation_method, after_status, after_fasta, after_gff, after_busco_json, after_omark_sum ]
+            }
 
+            if (row.size() == 9) {
+                def (id, meta, annotation_method, before_status, before_fasta, before_gff, 
+                    before_busco_json, before_omark_sum, missing_after) = row
+
+                return [ id, meta + [ 'contamination_filtering': false ], annotation_method, 'after-contamination-filtering', before_fasta, before_gff, before_busco_json, before_omark_sum     ]
+
+            }
+        }
+        .set { qc_metrics_after_filtering }
 
     emit:
         /*
@@ -191,4 +178,4 @@ workflow ANNOTATION_QC_AND_CONTAMINATION_FILTERING {
          */
         qc_metrics_before_filtering = qc_metrics_before_filtering
         qc_metrics_after_filtering  = qc_metrics_after_filtering
-}
+} 

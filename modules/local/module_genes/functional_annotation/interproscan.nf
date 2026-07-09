@@ -1,6 +1,6 @@
 process INTERPROSCAN {
     tag "${annotation_method}/${id}"
-    label 'interproscan'
+    // label 'interproscan'
     cpus 10
 
     input:

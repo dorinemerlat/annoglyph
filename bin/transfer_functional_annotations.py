@@ -1,193 +1,252 @@
 #!/usr/bin/env python3
-"""Transfer BLASTP, InterProScan and eggNOG-mapper annotations to a GFF3 file.
-
-The script appends functional annotation attributes to mRNA/CDS features when IDs match
-protein identifiers used by the external tools.
-"""
-
-from __future__ import annotations
 
 import argparse
+import re
+import csv
+import gffutils
 from collections import defaultdict
-from pathlib import Path
-from urllib.parse import quote
 
 
-def parse_args():
-    p = argparse.ArgumentParser(description="Add functional annotations to GFF3")
-    p.add_argument("--gff", required=True)
-    p.add_argument("--blast", required=True)
-    p.add_argument("--interpro", required=True)
-    p.add_argument("--eggnog", required=True)
-    p.add_argument("--output", required=True)
-    return p.parse_args()
+BAD_TERMS = re.compile(r"\b(hypothetical|unknown|putative)\b", re.IGNORECASE)
+GO_RE = re.compile(r"GO:\d+")
+IPR_RE = re.compile(r"IPR\d+")
+PFAM_RE = re.compile(r"PF\d+")
 
 
-def parse_attrs(s):
-    d = {}
-    for x in s.strip().split(";"):
-        if not x:
-            continue
-        if "=" in x:
-            k, v = x.split("=", 1)
-            d[k] = v
-    return d
+def split_values(value, sep=","):
+    if value in ("", "-", None):
+        return []
+    return [x.strip() for x in value.split(sep) if x.strip() and x.strip() != "-"]
 
 
-def format_attrs(d):
-    return ";".join(f"{k}={v}" for k, v in d.items() if v not in (None, ""))
+def clean_description(stitle):
+    return re.sub(r"\s+OS=.*$", "", stitle).strip()
 
 
-def safe(v):
-    return quote(str(v).replace(";", ","), safe="/:|,._- ")
+def is_bad(description):
+    return BAD_TERMS.search(description) is not None
 
 
-def load_blast(path: Path):
-    ann = {}
-    if not path.exists():
-        return ann
-    with path.open(errors="ignore") as handle:
-        header = None
-        for line in handle:
+def add_unique(attr, key, values):
+    if not values:
+        return
+
+    if key not in attr:
+        attr[key] = []
+
+    old = list(attr[key])
+    seen = set(old)
+
+    for v in values:
+        if v not in seen:
+            old.append(v)
+            seen.add(v)
+
+    attr[key] = old
+
+
+def parse_blast(blast_file):
+    hits_by_query = {}
+
+    with open(blast_file) as f:
+        header = re.split(r"\s+", f.readline().strip())
+
+        for line in f:
             if not line.strip():
                 continue
-            cols = line.rstrip("\n").split("\t")
-            if cols[0] == "qseqid":
-                header = cols
-                continue
-            qid = cols[0]
-            if qid in ann:
-                continue
-            if header and len(cols) == len(header):
-                row = dict(zip(header, cols))
-                ann[qid] = {
-                    "blastp_hit": row.get("sseqid", ""),
-                    "blastp_accession": row.get("sacc", row.get("saccver", "")),
-                    "blastp_evalue": row.get("evalue", ""),
-                    "blastp_bitscore": row.get("bitscore", row.get("bitscor", "")),
-                    "blastp_description": row.get("stitle", ""),
-                }
-            elif len(cols) >= 12:
-                ann[qid] = {
-                    "blastp_hit": cols[1],
-                    "blastp_evalue": cols[10],
-                    "blastp_bitscore": cols[11],
-                    "blastp_description": cols[-1] if len(cols) > 12 else "",
-                }
-    return ann
+
+            values = re.split(r"\s+", line.strip(), maxsplit=len(header) - 1)
+            row = dict(zip(header, values))
+
+            q = row["qseqid"]
+            desc = clean_description(row["stitle"])
+
+            hit = {
+                "evalue": float(row["evalue"]),
+                "bitscore": float(row["bitscore"]),
+                "desc": desc,
+                "sacc": row["sacc"],
+                "bad": is_bad(desc),
+            }
+
+            hits_by_query.setdefault(q, []).append(hit)
+
+    best_hits = {}
+
+    for q, hits in hits_by_query.items():
+        non_bad = [h for h in hits if not h["bad"]]
+        candidates = non_bad if non_bad else hits
+        best_hits[q] = sorted(candidates, key=lambda h: (h["evalue"], -h["bitscore"]))[0]
+
+    return best_hits
 
 
-def load_interpro(path: Path):
-    ann = defaultdict(lambda: defaultdict(set))
-    if not path.exists():
-        return ann
-    with path.open(errors="ignore") as handle:
-        for line in handle:
-            if not line.strip() or line.startswith("#"):
+def parse_interproscan(ipr_file):
+    """
+    InterProScan TSV columns:
+    0 protein_id
+    3 analysis
+    4 signature_accession
+    5 signature_description
+    11 interpro_accession
+    12 interpro_description
+    13 GO terms
+    14 pathways
+    """
+    annotations = defaultdict(lambda: defaultdict(set))
+
+    with open(ipr_file) as f:
+        for line in f:
+            if not line.strip():
                 continue
+
             cols = line.rstrip("\n").split("\t")
-            if len(cols) < 12:
+            if len(cols) < 15:
                 continue
-            qid = cols[0]
+
+            protein_id = cols[0]
             analysis = cols[3]
-            signature = cols[4]
-            desc = cols[5] if len(cols) > 5 else ""
-            ipr = cols[11] if len(cols) > 11 else ""
-            ipr_desc = cols[12] if len(cols) > 12 else ""
-            if signature and signature != "-":
-                ann[qid]["interpro_signatures"].add(f"{analysis}:{signature}")
-            if desc and desc != "-":
-                ann[qid]["interpro_descriptions"].add(desc)
-            if ipr and ipr != "-":
-                ann[qid]["interpro_ids"].add(ipr)
-            if ipr_desc and ipr_desc != "-":
-                ann[qid]["interpro_descriptions"].add(ipr_desc)
-    return ann
+            sig_acc = cols[4]
+            sig_desc = cols[5]
+            ipr_acc = cols[11]
+            ipr_desc = cols[12]
+            go_col = cols[13]
+
+            gos = GO_RE.findall(go_col)
+            iprs = IPR_RE.findall(ipr_acc)
+            pfams = PFAM_RE.findall(sig_acc)
+
+            annotations[protein_id]["GO"].update(gos)
+            annotations[protein_id]["InterPro"].update(iprs)
+            annotations[protein_id]["PFAM"].update(pfams)
+
+            if ipr_acc != "-" and ipr_desc != "-":
+                annotations[protein_id]["Note"].add(f"{ipr_acc}:{ipr_desc}")
+
+            if analysis in {"Phobius", "SignalP", "TMHMM"} and sig_acc != "-":
+                annotations[protein_id]["Note"].add(f"{analysis}:{sig_acc}")
+
+            if sig_desc != "-":
+                annotations[protein_id]["domain"].add(sig_desc)
+
+    return annotations
 
 
-def load_eggnog(path: Path):
-    ann = {}
-    if not path.exists():
-        return ann
-    with path.open(errors="ignore") as handle:
+def parse_eggnog(eggnog_file):
+    annotations = defaultdict(lambda: defaultdict(set))
+
+    with open(eggnog_file) as f:
         header = None
-        for line in handle:
-            if not line.strip():
-                continue
+
+        for line in f:
             if line.startswith("##"):
                 continue
-            if line.startswith("#query") or line.startswith("query"):
-                header = [x.lstrip("#") for x in line.rstrip("\n").split("\t")]
+
+            if line.startswith("#query"):
+                header = line.lstrip("#").rstrip("\n").split("\t")
                 continue
+
+            if not line.strip():
+                continue
+
             cols = line.rstrip("\n").split("\t")
-            if header and len(cols) == len(header):
-                row = dict(zip(header, cols))
-            else:
-                row = {}
-                if len(cols) >= 1:
-                    row["query"] = cols[0]
-                if len(cols) >= 8:
-                    row["Description"] = cols[7]
-                if len(cols) >= 10:
-                    row["GOs"] = cols[9]
-                if len(cols) >= 12:
-                    row["KEGG_ko"] = cols[11]
-            qid = row.get("query") or row.get("query_name") or cols[0]
-            ann[qid] = {
-                "eggnog_description": row.get("Description", row.get("description", "")),
-                "eggnog_go": row.get("GOs", row.get("GO_terms", "")),
-                "eggnog_ko": row.get("KEGG_ko", row.get("KEGG KO", "")),
-                "eggnog_cog_category": row.get("COG_category", ""),
-                "eggnog_preferred_name": row.get("Preferred_name", ""),
-            }
-    return ann
+            row = dict(zip(header, cols))
+
+            protein_id = row["query"]
+
+            desc = row.get("Description", "-")
+            name = row.get("Preferred_name", "-")
+
+            gos = split_values(row.get("GOs", "-"), ",")
+            ecs = split_values(row.get("EC", "-"), ",")
+            kos = split_values(row.get("KEGG_ko", "-"), ",")
+            pfams = split_values(row.get("PFAMs", "-"), ",")
+
+            annotations[protein_id]["GO"].update(gos)
+            annotations[protein_id]["EC_number"].update(ecs)
+            annotations[protein_id]["KEGG_ko"].update(kos)
+            annotations[protein_id]["PFAM"].update(pfams)
+
+            if name != "-":
+                annotations[protein_id]["Name"].add(name)
+
+            if desc != "-" and not is_bad(desc):
+                annotations[protein_id]["Note"].add(desc)
+
+    return annotations
 
 
-def candidate_ids(attrs):
-    ids = []
-    for key in ("ID", "Name", "protein_id", "transcript_id", "Parent"):
-        if key in attrs:
-            ids.extend(attrs[key].split(","))
-    # Also try common transcript/protein suffix normalization.
-    out = []
-    for x in ids:
-        out.append(x)
-        out.append(x.replace(".t1", ".p1"))
-        out.append(x.replace(".mRNA", ".protein"))
-    return out
+def annotate_gff(gff_file, output_file, blast_hits, ipr_annots, eggnog_annots):
+    db = gffutils.create_db(
+        gff_file,
+        ":memory:",
+        merge_strategy="create_unique",
+        keep_order=True
+    )
+
+    with open(output_file, "w") as out:
+        out.write("##gff-version 3\n")
+
+        for feature in db.all_features(order_by=("seqid", "start")):
+
+            if feature.featuretype == "mRNA":
+                mrna_id = feature.id
+
+                # BLASTp
+                if mrna_id in blast_hits:
+                    hit = blast_hits[mrna_id]
+                    feature.attributes["product"] = [hit["desc"]]
+                    add_unique(feature.attributes, "Dbxref", [f"UniProtKB:{hit['sacc']}"])
+                    feature.attributes["blastp_evalue"] = [str(hit["evalue"])]
+                    feature.attributes["blastp_bitscore"] = [str(hit["bitscore"])]
+
+                # InterProScan
+                if mrna_id in ipr_annots:
+                    ann = ipr_annots[mrna_id]
+                    add_unique(feature.attributes, "Ontology_term", sorted(ann["GO"]))
+                    add_unique(feature.attributes, "Dbxref", [f"InterPro:{x}" for x in sorted(ann["InterPro"])])
+                    add_unique(feature.attributes, "Dbxref", [f"PFAM:{x}" for x in sorted(ann["PFAM"])])
+                    add_unique(feature.attributes, "Note", sorted(ann["Note"]))
+
+                # eggNOG
+                if mrna_id in eggnog_annots:
+                    ann = eggnog_annots[mrna_id]
+                    add_unique(feature.attributes, "Ontology_term", sorted(ann["GO"]))
+                    add_unique(feature.attributes, "ec_number", sorted(ann["EC_number"]))
+                    add_unique(feature.attributes, "Dbxref", sorted(ann["KEGG_ko"]))
+                    add_unique(feature.attributes, "Dbxref", [f"PFAM:{x}" for x in sorted(ann["PFAM"])])
+                    add_unique(feature.attributes, "Note", sorted(ann["Note"]))
+
+                    if "Name" in ann and ann["Name"]:
+                        feature.attributes["Name"] = [sorted(ann["Name"])[0]]
+
+            out.write(str(feature) + "\n")
 
 
 def main():
-    args = parse_args()
-    blast = load_blast(Path(args.blast))
-    interpro = load_interpro(Path(args.interpro))
-    eggnog = load_eggnog(Path(args.eggnog))
+    parser = argparse.ArgumentParser(
+        description="Integrate BLASTp, InterProScan and eggNOG annotations into a GFF3 file."
+    )
 
-    with Path(args.gff).open(errors="ignore") as inp, Path(args.output).open("w") as out:
-        for line in inp:
-            if not line.strip() or line.startswith("#"):
-                out.write(line)
-                continue
-            cols = line.rstrip("\n").split("\t")
-            if len(cols) < 9:
-                out.write(line)
-                continue
-            attrs = parse_attrs(cols[8])
-            keys = candidate_ids(attrs)
-            merged = {}
-            for k in keys:
-                if k in blast:
-                    merged.update(blast[k])
-                if k in interpro:
-                    for akey, vals in interpro[k].items():
-                        merged[akey] = ",".join(sorted(vals))
-                if k in eggnog:
-                    merged.update(eggnog[k])
-            for k, v in merged.items():
-                if v and v != "-":
-                    attrs[k] = safe(v)
-            cols[8] = format_attrs(attrs)
-            out.write("\t".join(cols) + "\n")
+    parser.add_argument("--gff","-g", required=True)
+    parser.add_argument("--output", "-o", required=True)
+    parser.add_argument("--blast", "-b", required=False)
+    parser.add_argument("--interproscan", "-i", required=False)
+    parser.add_argument("--eggnog", "-e", required=False)
+
+    args = parser.parse_args()
+
+    blast_hits = parse_blast(args.blast) if args.blast else {}
+    ipr_annots = parse_interproscan(args.interproscan) if args.interproscan else {}
+    eggnog_annots = parse_eggnog(args.eggnog) if args.eggnog else {}
+
+    annotate_gff(
+        args.gff,
+        args.output,
+        blast_hits,
+        ipr_annots,
+        eggnog_annots
+    )
 
 
 if __name__ == "__main__":

@@ -8,18 +8,18 @@ process PLOT_ANNOTATION_ANALYSIS {
 
     output:
     tuple val(status), path("summary_plots/gene_structure_summary.{png,pdf,svg}"), emit: structure
-    tuple val(status), path("correlation_plots/*.{png,pdf,svg}", optional: true), emit: correlations
+    tuple val(status), path("correlation_plots/*.{png,pdf,svg}"), emit: correlations
 
     script:
     """
     export MPLCONFIGDIR=\$PWD/.matplotlib
     mkdir -p "\$MPLCONFIGDIR"
 
-    plot_annotation_analysis.py \\
-        --summary ${summary} \\
-        --intron-lengths ${intron_lengths} \\
-        --genome-stats ${seqkit_stats} \\
-        --tree ${newick} \\
+    plot_annotation_analysis.py \
+        --summary $summary \
+        --intron-lengths $intron_lengths \
+        --genome-stats ${seqkit_stats} \
+        --tree ${newick} \
         --out-dir .
     """
 
