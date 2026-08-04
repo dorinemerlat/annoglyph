@@ -1,23 +1,17 @@
-        {
-            "name": "reference_library",
-            "type": "file",
-            "description": "Optional reference library file (e.g. Repbase)",
-            "label": "Reference library (optional)",
-            "required": false
-        },
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/nf-core/exogap/master/nextflow_schema.json",
-    "title": "nf-core/exogap pipeline parameters",
-    "description": "Annotation tool for eukaryotic non-model species",
+    "$id": "https://raw.githubusercontent.com/exogap/master/nextflow_schema.json",
+    "title": "EXOGAP pipeline parameters",
+    "description": "Genome annotation pipeline for non-model eukaryotic species.",
     "type": "object",
     "definitions": {
         "input_output_options": {
             "title": "Input/output options",
             "type": "object",
-            "fa_icon": "fas fa-folder-open", // Dossier pour entrée/sortie
-            "description": "Define where the pipeline should find input data and save output data.",
-            "required": ["input"],
+            "description": "Define the pipeline input and output locations.",
+            "required": [
+                "input"
+            ],
             "properties": {
                 "input": {
                     "type": "string",
@@ -25,271 +19,17 @@
                     "exists": true,
                     "mimetype": "text/csv",
                     "pattern": "^\\S+\\.csv$",
-                    "description": "Path to comma-separated file containing information about the samples in the experiment.",
-                    "help_text": "Path to a samplesheet CSV (header + 3 columns). See the usage docs for the required columns and examples: https://nf-co.re/exogap/usage#samplesheet-input",
-                    "fa_icon": "fas fa-file-csv"
+                    "schema": "assets/schema_input.json",
+                    "description": "Path to the input samplesheet in CSV format."
                 },
                 "outdir": {
                     "type": "string",
                     "format": "directory-path",
-                    "description": "The output directory where the results will be saved.",
-                    "help_text": "Path to the directory where pipeline outputs will be written. Use absolute paths for cloud storage targets.",
-                    "fa_icon": "fas fa-folder"
-                },
-                "email": {
-                    "type": [
-                        "string",
-                        "null"
-                    ],
-                    "description": "Email address for completion summary.",
-                    "fa_icon": "fas fa-envelope",
-                    "help_text": "Set this to receive a summary email when the workflow finishes. If configured in your user Nextflow config (~/.nextflow/config) you don't need to pass it on each run.",
-                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
-                },
-                "comparative_genomics": {
-                    "type": "boolean",
-                    "description": "Enable comparative genomics options for each activated module (requires at least 2 genomes).",
-                    "fa_icon": "fas fa-dna",
-                    "default": false,
-                    "help_text": "Set to true to enable comparative genomics features. Requires at least two input genomes."
-                }
-            }
-        },
-        "modules": {
-            "title": "Module to activate",
-            "type": "object",
-            "fa_icon": "fas fa-puzzle-piece", // Modules = puzzle
-            "description": "Define which module you want to use.",
-            "properties": {
-                "module_repeats": {
-                    "type": "boolean",
-                    "description": "Activate the module for repetitive elements annotation.",
-                    "fa_icon": "fas fa-redo", // Répétition
-                    "default": true,
-                    "help_text": "Set to true to enable the repetitive elements annotation module. When enabled, fill in the module_repeats-related parameters."
-                },
-                "module_genes": {
-                    "type": "boolean",
-                    "description": "Activate the module for protein-coding genes annotation.",
-                    "fa_icon": "fas fa-dna", // Gènes
-                    "default": true,
-                    "help_text": "Set to true to enable the protein-coding genes annotation module. When enabled, fill in the module_genes-related parameters."
-                },
-                "module_ncgenes": {
-                    "type": "boolean",
-                    "description": "Activate the module for non-coding genes annotation.",
-                    "fa_icon": "fas fa-dna", // Gènes non codants
-                    "default": true,
-                    "help_text": "Set to true to enable the non-coding genes annotation module. When enabled, fill in the module_ncgenes-related parameters."
-                }
-            }
-        },
-        "module_repeats_option": {
-            "title": "module_repeats options",
-            "type": "object",
-            "fa_icon": "fas fa-redo", // Répétition
-            "description": "Options for the module annotating repetitive elements.",
-            "properties": {
-                "download_famdb": {
-                    "type": ["boolean", "null"],
-                    "description": "",
-                    "fa_icon": "fas fa-download",
-                    "help_text": "Set to true to download a FamDB library from dfam.org. If false, provide a local path via famdb_path."
-                },
-                "famdb_path": {
-                    "type": ["string", "null"],
-                    "format": "file-path",
-                    "exists": true,
-                    "mimetype": "text/h5",
-                    "pattern": "^\\S+\\.h5$",
-                    "description": "Path to the FamDB/dfam library in HDF5 format for repeat annotation.",
-                    "help_text": "Local path to a .h5 dfam/famdb file. If not provided, use famdb_to_download to fetch a library from dfam.org.",
-                    "fa_icon": "fas fa-file-import"
-                },
-                "famdb_to_download": {
-                    "type": ["string", "null"],
-                    "description": "ID of a FamDB library to download from dfam.org (1-16).",
-                    "pattern": "^(?:[1-9]|1[0-6])$",
-                    "help_text": "If you don't provide a local famdb_path, set this to a string '1'..'16' to download the corresponding library from dfam.org. Leave null if you provide famdb_path locally.",
-                    "fa_icon": "fas fa-cloud-download-alt"
-                },
-                "group_consensus_sequences": {
-                    "type": ["boolean", "null"],
-                    "description": "Use the same consensus library for all genomes processed in the run.",
-                    "fa_icon": "fas fa-layer-group",
-                    "default": true,
-                    "help_text": "If true, the pipeline will use one shared consensus sequence library across all input genomes; otherwise separate libraries may be used per genome."
-                }
-            },
-            "allOf": [
-                {
-                    "if": {
-                        "properties": {
-                            "download_famdb": { "const": true }
-                        },
-                        "required": ["download_famdb"]
-                    },
-                    "then": {
-                        "required": ["famdb_to_download"],
-                        "properties": {
-                            "famdb_to_download": {
-                                "type": "string",
-                                "pattern": "^(?:[1-9]|1[0-6])$",
-                                "description": "ID of a FamDB library to download from dfam.org (1-16)."
-                            }
-                        }
-                    },
-                    "else": {
-                        "required": ["famdb_path"],
-                        "properties": {
-                            "famdb_path": {
-                                "type": "string",
-                                "format": "file-path",
-                                "pattern": "^\\S+\\.h5$",
-                                "description": "Path to a local FamDB .h5 file (required when download_famdb is false)."
-                            }
-                        }
-                    }
-                }
-            ]
-        },
-        "module_comparative_genomics_option": {
-        "title": "module_comparative_genomics options",
-        "type": "object",
-        "fa_icon": "fas fa-dna",
-        "description": "Options for the optional module of comparative genomics.",
-        "properties": {
-            "comparative_genomics": {
-                "type": ["boolean"],
-                "description": "Enable comparative genomics options for each activated module (requires at least 2 genomes).",
-                "fa_icon": "fas fa-dna",
-                "default": false,
-                "help_text": "Set to true to enable comparative genomics features. Requires at least two input genomes."
-            }
-        }
-    },
-    "institutional_config_options": {
-            "title": "Institutional config options",
-            "type": "object",
-            "fa_icon": "fas fa-university",
-            "description": "Parameters used to describe centralised config profiles. These should not be edited.",
-            "help_text": "Centralised nf-core configuration profiles use a few pipeline parameters to describe themselves. These are printed to the Nextflow log and typically do not need editing.",
-            "properties": {
-                "custom_config_version": {
-                    "type": "string",
-                    "description": "Git commit id or branch for institutional configs.",
-                    "default": "master",
-                    "hidden": true,
-                    "fa_icon": "fas fa-users-cog"
-                },
-                "custom_config_base": {
-                    "type": "string",
-                    "description": "Base URL or directory for institutional config files.",
-                    "default": "https://raw.githubusercontent.com/nf-core/configs/master",
-                    "hidden": true,
-                    "help_text": "If running offline, download the institutional config files and point this parameter to their local location.",
-                    "fa_icon": "fas fa-users-cog"
-                },
-                "config_profile_name": {j
-                    "type": [
-                        "string",
-                        "null"
-                    ],
-                    "description": "Institutional config profile name.",
-                    "hidden": true,
-                    "fa_icon": "fas fa-users-cog"
-                },
-                "config_profile_description": {
-                    "type": [
-                        "string",
-                        "null"
-                    ],
-                    "description": "Institutional config profile description.",
-                    "hidden": true,
-                    "fa_icon": "fas fa-users-cog"
-                },
-                "config_profile_contact": {
-                    "type": [
-                        "string",
-                        "null"
-                    ],
-                    "description": "Institutional config profile contact information.",
-                    "hidden": true,
-                    "fa_icon": "fas fa-users-cog"
-                },
-                "config_profile_url": {
-                    "type": [
-                        "string",
-                        "null"
-                    ],
-                    "description": "Institutional config profile URL.",
-                    "hidden": true,
-                    "fa_icon": "fas fa-users-cog"
-                }
-            }
-        },
-        "max_job_request_options": {
-            "title": "Max job request options",
-            "type": "object",
-            "fa_icon": "fab fa-acquisitions-incorporated",
-            "description": "Set the top limit for requested resources for any single job.",
-            "help_text": "These options cap the maximum resources any single process can request so pipelines run on smaller clusters. They cannot be used to increase a process's resource requests.",
-            "properties": {
-                "max_cpus": {
-                    "type": "integer",
-                    "description": "Maximum number of CPUs that can be requested for any single job.",
-                    "default": 16,
-                    "fa_icon": "fas fa-microchip",
-                    "hidden": true,
-                    "help_text": "Upper limit for CPU requests per process (integer). Example: --max_cpus 4"
-                },
-                "max_memory": {
-                    "type": "string",
-                    "description": "Maximum amount of memory that can be requested for any single job.",
-                    "default": "128.GB",
-                    "fa_icon": "fas fa-memory",
-                    "pattern": "^\\d+(\\.\\d+)?\\.?\\s*(K|M|G|T)?B$",
-                    "hidden": true,
-                    "help_text": "Upper limit for memory requests. Use Nextflow memory format, e.g. '8.GB'."
-                },
-                "max_time": {
-                    "type": "string",
-                    "description": "Maximum amount of time that can be requested for any single job.",
-                    "default": "240.h",
-                    "fa_icon": "far fa-clock",
-                    "pattern": "^(\\d+\\.?\\s*(s|m|h|d|day)\\s*)+$",
-                    "hidden": true,
-                    "help_text": "Upper limit for walltime per process. Use format like '2.h' or '30.m'."
-                }
-            }
-        },
-        "generic_options": {
-            "title": "Generic options",
-            "type": "object",
-            "fa_icon": "fas fa-file-import",
-            "description": "Less common options for the pipeline, typically set in a config file.",
-            "help_text": "Common nf-core options to customise pipeline preferences. Typically set in ~/.nextflow/config.",
-            "properties": {
-                "help": {
-                    "type": "boolean",
-                    "description": "Display help text.",
-                    "fa_icon": "fas fa-question-circle",
-                    "default": false,
-                    "hidden": true
-                },
-                "version": {
-                    "type": "boolean",
-                    "description": "Display version and exit.",
-                    "fa_icon": "fas fa-question-circle",
-                    "default": false,
-                    "hidden": true
+                    "description": "Directory where pipeline results are written.",
+                    "default": "results"
                 },
                 "publish_dir_mode": {
                     "type": "string",
-                    "default": "copy",
-                    "description": "Method used to save pipeline results to output directory.",
-                    "help_text": "Controls how Nextflow's publishDir moves/saves files. Options: symlink, rellink, link, copy, copyNoFollow, move. See Nextflow docs: https://www.nextflow.io/docs/latest/process.html#publishdir",
-                    "fa_icon": "fas fa-copy",
                     "enum": [
                         "symlink",
                         "rellink",
@@ -298,76 +38,145 @@
                         "copyNoFollow",
                         "move"
                     ],
+                    "description": "Method used to publish pipeline results.",
+                    "default": "copy",
                     "hidden": true
+                }
+            }
+        },
+        "module_options": {
+            "title": "Annotation modules",
+            "type": "object",
+            "description": "Select the annotation modules to run.",
+            "properties": {
+                "module_repeats": {
+                    "type": "boolean",
+                    "description": "Run repeat annotation.",
+                    "default": true
                 },
-                "email_on_fail": {
+                "module_genes": {
+                    "type": "boolean",
+                    "description": "Run protein-coding gene annotation.",
+                    "default": true
+                },
+                "module_ncgenes": {
+                    "type": "boolean",
+                    "description": "Run non-coding gene annotation.",
+                    "default": true
+                },
+                "comparative_genomics": {
+                    "type": "boolean",
+                    "description": "Run comparative genomics analyses for enabled modules.",
+                    "default": true
+                }
+            },
+            "anyOf": [
+                {
+                    "properties": {
+                        "module_repeats": {
+                            "const": true
+                        }
+                    }
+                },
+                {
+                    "properties": {
+                        "module_genes": {
+                            "const": true
+                        }
+                    }
+                },
+                {
+                    "properties": {
+                        "module_ncgenes": {
+                            "const": true
+                        }
+                    }
+                }
+            ]
+        },
+        "shared_annotation_options": {
+            "title": "Shared annotation options",
+            "type": "object",
+            "properties": {
+                "busco_lineage": {
                     "type": [
                         "string",
                         "null"
                     ],
-                    "description": "Email address for completion summary, sent only when the pipeline fails.",
-                    "fa_icon": "fas fa-exclamation-triangle",
-                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$",
-                    "help_text": "Email address to receive a failure-only summary when the pipeline exits with an error.",
-                    "hidden": true
-                },
-                "plaintext_email": {
-                    "type": "boolean",
-                    "description": "Send plain-text email instead of HTML.",
-                    "fa_icon": "fas fa-remove-format",
-                    "default": false,
-                    "hidden": true,
-                    "help_text": "When true, summary emails are sent as plain text rather than HTML."
-                },
-                "monochrome_logs": {
-                    "type": "boolean",
-                    "description": "Do not use coloured log outputs.",
-                    "fa_icon": "fas fa-palette",
-                    "default": false,
-                    "hidden": true,
-                    "help_text": "Disable coloured logging output to generate monochrome logs."
-                },
-                "hook_url": {
+                    "description": "BUSCO lineage used for assessment and gene annotation. When null, EXOGAP selects a lineage from the input taxonomy.",
+                    "default": null
+                }
+            }
+        },
+        "repeat_annotation_options": {
+            "title": "Repeat annotation options",
+            "type": "object",
+            "properties": {
+                "reference_library": {
                     "type": [
                         "string",
                         "null"
                     ],
-                    "description": "Incoming hook URL for messaging service.",
-                    "fa_icon": "fas fa-people-group",
-                    "help_text": "Webhook URL for notifications (e.g. Slack or MS Teams). Leave unset if not using hooks.",
-                    "hidden": true
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional reference repeat library in FASTA format.",
+                    "default": null
                 },
-                "validate_params": {
+                "group_consensus_sequences": {
                     "type": "boolean",
-                    "description": "Validate runtime parameters against the schema.",
-                    "default": true,
-                    "fa_icon": "fas fa-check-square",
-                    "hidden": true,
-                    "help_text": "When true, the pipeline will validate provided parameters against this JSON schema at startup."
+                    "description": "Build and use a shared consensus repeat library across input genomes.",
+                    "default": true
+                }
+            }
+        },
+        "gene_annotation_options": {
+            "title": "Protein-coding gene annotation options",
+            "type": "object",
+            "properties": {
+                "protein_set": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Protein evidence set used for gene prediction.",
+                    "default": null
                 },
-                "validationShowHiddenParams": {
-                    "type": "boolean",
-                    "fa_icon": "far fa-eye-slash",
-                    "description": "Show all params when using `--help`.",
-                    "default": false,
-                    "hidden": true,
-                    "help_text": "By default, schema parameters marked as hidden are omitted from `--help`. Enable to show them."
+                "blast_db": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "BLAST protein database prefix used for functional annotation.",
+                    "default": null
                 },
-                "validationFailUnrecognisedParams": {
-                    "type": "boolean",
-                    "fa_icon": "far fa-check-circle",
-                    "description": "Fail validation when an unrecognised parameter is found.",
-                    "default": false,
-                    "hidden": true,
-                    "help_text": "When true, the pipeline will error if unknown parameters are supplied. By default unknown parameters produce a warning."
+                "omark_contamination_threshold": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "OMArk contamination filtering threshold.",
+                    "default": 0.1
                 },
-                "validationLenientMode": {
-                    "type": "boolean",
-                    "fa_icon": "far fa-check-circle",
-                    "description": "Enable lenient validation mode.",
-                    "default": false,
-                    "hidden": true,
-                    "help_text": "Allows string values that can be parsed as numbers or booleans during validation. See the JSONSchema validator docs for details."
+                "rna_seq_aligner": {
+                    "type": "string",
+                    "enum": [
+                        "star",
+                        "varus",
+                        "both"
+                    ],
+                    "description": "RNA-seq alignment strategy used for gene annotation.",
+                    "default": "both"
+                },
+                "tool_only_protein_evidence": {
+                    "type": "string",
+                    "enum": [
+                        "galba",
+                        "braker2",
+                        "both"
+                    ],
+                    "description": "Gene prediction tool used when only protein evidence is available.",
+                    "default": "both"
                 }
             }
         }
@@ -377,29 +186,39 @@
             "$ref": "#/definitions/input_output_options"
         },
         {
-            "$ref": "#/definitions/modules"
+            "$ref": "#/definitions/module_options"
         },
         {
-            "$ref": "#/definitions/institutional_config_options"
-        },
-        {
-            "$ref": "#/definitions/max_job_request_options"
-        },
-        {
-            "$ref": "#/definitions/generic_options"
-        },
-        {
-            "$ref": "#/definitions/module_comparative_genomics_option"
+            "$ref": "#/definitions/shared_annotation_options"
         },
         {
             "if": {
                 "properties": {
-                    "module_repeats": { "const": true }
+                    "module_repeats": {
+                        "const": true
+                    }
                 },
-                "required": ["module_repeats"]
+                "required": [
+                    "module_repeats"
+                ]
             },
             "then": {
-                "$ref": "#/definitions/module_repeats_option"
+                "$ref": "#/definitions/repeat_annotation_options"
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "module_genes": {
+                        "const": true
+                    }
+                },
+                "required": [
+                    "module_genes"
+                ]
+            },
+            "then": {
+                "$ref": "#/definitions/gene_annotation_options"
             }
         }
     ]

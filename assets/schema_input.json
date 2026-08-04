@@ -9,46 +9,65 @@
         "properties": {
             "name": {
                 "type": "string",
-                "pattern": "^(\\w|\\s)+$",
-                "errorMessage": "Sample genome must be provided (can contain spaces).",
+                "pattern": "^[A-Za-z0-9._ -]+$",
+                "description": "Unique genome name used throughout the pipeline.",
+                "errorMessage": "Genome name must contain only letters, numbers, spaces, dots (.), underscores (_) and hyphens (-).",
                 "unique": true,
                 "meta": ["name"]
             },
+
             "taxid": {
                 "type": ["string", "integer"],
                 "pattern": "^[0-9]+$",
-                "errorMessage": "TaxID must be provided and contain only numbers.",
+                "description": "NCBI Taxonomy identifier of the species.",
+                "errorMessage": "TaxID must contain only digits.",
                 "meta": ["taxid"]
             },
+
             "fasta": {
                 "type": "string",
                 "format": "file-path",
                 "exists": true,
-                "errorMessage": "Fasta file for reads must be provided, cannot contain spaces and must have extension '.fa', '.fna' or '.fasta'.",
+                "description": "Path to the genome assembly FASTA file.",
+                "errorMessage": "FASTA must be the path to an existing genome assembly file.",
                 "unique": true
             },
+
             "RNASeq-dir": {
-                "type": "string",
+                "type": ["string", "null"],
                 "pattern": "^$|^\\S+$",
                 "format": "directory-path",
                 "exists": true,
-                "errorMessage": "RNASeq-file must be an existing directory path when provided.",
-                "meta": ["RNASeq-file"]
+                "description": "Optional directory containing RNA-seq FASTQ files.",
+                "errorMessage": "RNASeq-dir must be the path to an existing directory when provided.",
+                "meta": ["RNASeq-dir"]
             },
+
             "SRA": {
                 "type": "string",
                 "pattern": "^$|^(SRR|ERR|DRR)[0-9]+$|^[^\\n]+$",
-                "errorMessage": "Provide either: (1) a valid SRA run accession (SRR/ERR/DRR...), (2) multiple accessions separated by ';', (3) a path to RNA-seq read files, or leave empty to let the pipeline fetch data automatically.",
+                "description": "Optional SRA accession(s), separated by ';' if multiple.",
+                "errorMessage": "SRA must be empty or contain one or more valid SRA accessions (SRR, ERR or DRR), separated by ';'.",
                 "meta": ["SRA"]
             },
+
             "repeats_set": {
-                "type": "string",
+                "type": ["string", "null"],
                 "format": "file-path",
                 "exists": true,
-                "pattern": "^\\S+\\.f(ast|n)?a$",
-                "errorMessage": "Fasta library for repetitive elements annotation can be provided, cannot contain spaces and must have extension '.fa', '.fna' or '.fasta'.",
+                "pattern": "^$|^\\S+\\.f(ast|n)?a$",
+                "description": "Optional repeat library in FASTA format.",
+                "errorMessage": "repeats_set must be the path to an existing FASTA file (.fa, .fna or .fasta).",
                 "unique": true,
                 "meta": ["repeat_set"]
+            },
+
+            "mnemonic": {
+                "type": ["string", "null"],
+                "pattern": "^$|^[A-Za-z0-9]+$",
+                "description": "Optional short species identifier used in comparative analyses.",
+                "errorMessage": "Mnemonic must contain only letters and numbers, with no spaces or special characters.",
+                "meta": ["mnemonic"]
             }
         },
         "required": ["name", "taxid", "fasta"]
