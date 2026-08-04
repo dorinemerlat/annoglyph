@@ -2,12 +2,8 @@
 
 nextflow.enable.dsl = 2
 
-include {
-    validateParameters
-    samplesheetToList
-} from 'plugin/nf-schema'
-
-// include { EXOGAP } from './workflows/exogap'
+include { validateParameters; samplesheetToList } from 'plugin/nf-schema'
+include { EXOGAP                                } from './workflows/exogap'
 
 validateParameters()
 
@@ -34,5 +30,5 @@ LogUtils.printExecutionSummary(
 workflow {
     log.info 'Starting EXOGAP'
 
-    // EXOGAP(genomes)
+    EXOGAP(genomes)
 }

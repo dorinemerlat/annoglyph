@@ -15,6 +15,10 @@ process DOWNLOAD_NEWICK {
 
     stub:
     """
-    tree stub.nwk
+    # Check that the executable is available
+    command -v download_newick.py >/dev/null
+
+    # Minimal valid Newick tree
+    echo "(taxon1,taxon2);" > tree.nwk
     """
 }

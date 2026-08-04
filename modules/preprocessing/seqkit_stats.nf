@@ -22,6 +22,12 @@ process SEQKIT_STATS {
 
     stub:
     """
-    touch ${id}.stats
+    # Check that seqkit is available
+    command -v seqkit >/dev/null
+
+    cat > ${id}.stats << EOF
+genome_id	format	type	num_seqs	sum_len	min_len	avg_len	max_len	Q1	Q2	Q3	sum_gap	N50	Q20(%)	Q30(%)	GC(%)
+${id}	FASTA	DNA	0	0	0	0	0	0	0	0	0	0	0	0	0
+EOF
     """
 }

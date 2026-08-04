@@ -1,8 +1,6 @@
 process REFORMAT_GENOME {
     tag "$id"
-    // publishDir "${params.outdir}/out/$id"
     label 'bioawk'
-    memory '10 GB'
 
     input:
     tuple val(id), val(meta), path(genome)
@@ -27,7 +25,19 @@ process REFORMAT_GENOME {
 
     stub:
     """
-    touch genome_${id}.fa
-    touch genome_${id}.fa.tsv
+    # Check that bioawk is available
+    command -v bioawk >/dev/null
+
+    # Minimal reformatted genome
+    cat > genome_${id}.fa << EOF
+>${meta.mnemonic.exogap}_1
+ATGC
+EOF
+
+    # Sequence identifier mapping
+    cat > genome_${id}.fa.tsv << EOF
+previous_IDs	EXOGAP_IDs
+stub_sequence	${meta.mnemonic.exogap}_1
+EOF
     """
 }

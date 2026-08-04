@@ -1,110 +1,101 @@
 #!/usr/bin/env python3
 """
-Simple utility to download a Newick tree from a list of species/taxid,
-with all nodes (feuilles et internes) étiquetés Name|taxID.
+Build a Newick taxonomy tree from species names and NCBI Taxonomy identifiers.
 
 Usage:
     download_newick.py [--outfile FILE] species/taxid [...]
 
 Examples:
-    download_newick.py Homo_sapiens/9606 Mus_musculus/10090 Drosophila_melanogaster/7227
+    download_newick.py Homo_sapiens/9606 Mus_musculus/10090
     download_newick.py --outfile tree.nwk Homo_sapiens/9606 Mus_musculus/10090
 """
 
 import argparse
-import warnings
 import re
+import warnings
+from pathlib import Path
+
 warnings.filterwarnings("ignore", category=SyntaxWarning)
+
 from ete3 import NCBITaxa
 
 
-def parse_list(list_of_taxids):
-    """Parse a list of species/taxid and return dict {taxid: [species_name, ...]}"""
-    result = {}
-    for item in list_of_taxids:
-        if '/' in item:
-            species, taxid = item.rsplit('/', 1)
-            taxid = int(taxid)
-            if taxid in result:
-                if isinstance(result[taxid], list):
-                    result[taxid].append(species)
-                else:
-                    result[taxid] = [result[taxid], species]
-            else:
-                result[taxid] = species
-    return result
+def parse_args():
+    parser = argparse.ArgumentParser(description="Build a Newick tree from NCBI Taxonomy identifiers.")
+    parser.add_argument("taxa", nargs="+", help="Taxa formatted as species/taxid.")
+    parser.add_argument("--outfile", type=Path, help="Output Newick file. Defaults to stdout.")
+    parser.add_argument("--database", type=Path, default=Path("taxa.sqlite"), help="ETE3 taxonomy database path.")
+    parser.add_argument("--with-distances", action="store_true", help="Keep branch lengths in the Newick tree.")
+    return parser.parse_args()
 
 
-def extract_taxid(parsed_list):
-    """Return list of taxids"""
-    return list(parsed_list.keys())
+def parse_taxa(items):
+    """Parse species/taxid entries into a taxid-to-name mapping."""
+    taxa = {}
+
+    for item in items:
+        if "/" not in item:
+            raise ValueError(f"Invalid taxon entry: {item}. Expected species/taxid.")
+
+        species, taxid = item.rsplit("/", 1)
+
+        if not taxid.isdigit():
+            raise ValueError(f"Invalid TaxID in entry: {item}.")
+
+        taxa.setdefault(int(taxid), []).append(species)
+
+    return taxa
 
 
-def download_newick(taxids):
-    """Build a Newick tree from a list of taxids and rename leaves with Name|taxID"""
-    ncbi = NCBITaxa()
-    tree = ncbi.get_topology(taxids)
-    return tree.write(format=1, format_root_node=True)
-
-def rename_leafs(tree, name_map):
-    """
-    Remplace chaque taxid dans la chaîne Newick par le label Name|taxID.
-    Si plusieurs noms pour un taxid, utilise le premier.
-    """
+def rename_leaves(newick, name_map):
+    """Replace leaf TaxIDs with species_name|taxid labels."""
     for taxid, names in name_map.items():
-        if isinstance(names, list):
-            label = f"{names[0]}|{taxid}"
-        else:
-            label = f"{names}|{taxid}"
-        # Remplace le taxid suivi de ')' ou ',' ou ':' (feuille ou interne)
-        tree = tree.replace(f"{taxid}", label)
-    return tree
+        label = f"{names[0]}|{taxid}"
+        newick = re.sub(rf"(?<=[(,]){taxid}(?=[:,)])", label, newick)
+
+    return newick
 
 
-def find_nodes(tree):
-    """
-    Affiche tous les taxids (nœuds) trouvés dans la chaîne Newick,
-    encadrés à gauche par '(' ou ',' et à droite par ',' ou ')' ou ';'
-    """
-    pattern = r'\)(\d+):'
-    matches = re.findall(pattern, tree)
-    for taxid in matches:
-        name = get_name(taxid)
-        label = f"{name}|{taxid}"
-        tree = tree.replace(f"{taxid}", label)
+def rename_internal_nodes(newick, ncbi):
+    """Replace internal-node TaxIDs with scientific_name|taxid labels."""
+    taxids = {int(taxid) for taxid in re.findall(r"\)(\d+)(?=:|,|\)|;)", newick)}
 
-    return tree
+    if not taxids:
+        return newick
+
+    names = ncbi.get_taxid_translator(taxids)
+
+    for taxid, name in names.items():
+        label = f"{name.replace(' ', '-')}|{taxid}"
+        newick = re.sub(rf"(?<=\)){taxid}(?=:|,|\)|;)", label, newick)
+
+    return newick
 
 
-def get_name(taxid):
-    ncbi = NCBITaxa()
-    taxid_int = int(taxid)
-    name = ncbi.get_taxid_translator([taxid_int])
-    return name[taxid_int]
+def build_newick(taxids, database):
+    """Build a taxonomy tree using the local ETE3 taxonomy database."""
+    ncbi = NCBITaxa(dbfile=str(database))
+    tree = ncbi.get_topology(taxids)
+    return tree.write(format=1, format_root_node=True), ncbi
+
 
 def main():
-    parser = argparse.ArgumentParser(description="Build a Newick tree from a list of species/taxid")
-    parser.add_argument("taxa", nargs="+", help="List of species/taxid, e.g. Homo_sapiens/9606")
-    parser.add_argument("--with-distances", action="store_true", help="Add dummy branch lengths (=1)")
-    parser.add_argument("--outfile", type=str, help="Output file (default: stdout)")
+    args = parse_args()
+    name_map = parse_taxa(args.taxa)
 
-    args = parser.parse_args()
-
-    name_map = parse_list(args.taxa)
-    taxids = extract_taxid(name_map)
-    newick = download_newick(taxids)
-    newick = rename_leafs(newick, name_map)
-    newick = find_nodes(newick)
+    newick, ncbi = build_newick(list(name_map), args.database)
+    newick = rename_leaves(newick, name_map)
+    newick = rename_internal_nodes(newick, ncbi)
 
     if not args.with_distances:
-        newick = newick.replace(":1", "")
+        newick = re.sub(r":1(?:\.0+)?", "", newick)
 
     if args.outfile:
-        with open(args.outfile, "w") as f:
-            f.write(newick + "\n")
+        args.outfile.write_text(f"{newick}\n", encoding="utf-8")
         print(f"Newick tree saved to {args.outfile}")
     else:
         print(newick)
+
 
 if __name__ == "__main__":
     main()
