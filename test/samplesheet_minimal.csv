@@ -1,0 +1,2 @@
+name,taxid,fasta,mnemonic,RNASeq-dir,SRA
+Hanseniaspora uvarum,29833,test/test_minimal/genomes/hanseniaspora_uvarum_chr1-3.fa,,,
