@@ -12,11 +12,15 @@ process REPEATMASKER {
     tuple val(id), val(meta), path("genome_${id}.fa.out.gff"), emit: gff
     tuple val(id), val(meta), path("genome_${id}.fa.tbl"), emit: tbl
     tuple val(id), val(meta), path("genome_${id}.fa.align"), emit: align
+    tuple val(id), val(meta), path("${id}_repeatmasker.log"), emit: log
 
     script:
     def staged_genome = "genome_${id}.fa"
 
     """
+    set -o pipefail
+
+    # Stage the genome file to a new name to avoid issues with RepeatMasker output files
     ln -s ${genome} ${staged_genome}
 
     RepeatMasker \
@@ -30,7 +34,8 @@ process REPEATMASKER {
         -s \
         -xsmall \
         -gff \
-        ${staged_genome}
+        ${staged_genome} \
+        2>&1 | tee -a ${id}_repeatmasker.log
     """
 
     stub:

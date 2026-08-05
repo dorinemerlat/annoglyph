@@ -6,7 +6,7 @@ process DOWNLOAD_BUSCO_DATASET {
     val busco_dataset
 
     output:
-    tuple val(busco_dataset), path("lineages/${busco_dataset}"), emit: dataset
+    tuple val(busco_dataset), path("lineages/${busco_dataset}")
 
     script:
     """
@@ -18,6 +18,9 @@ process DOWNLOAD_BUSCO_DATASET {
     stub:
     """
     command -v busco >/dev/null
-    mkdir -p lineages/${busco_dataset}
+
+    mkdir -p lineages/${busco_dataset}/hmms
+    touch lineages/${busco_dataset}/dataset.cfg
+    touch lineages/${busco_dataset}/hmms/stub.hmm
     """
 }

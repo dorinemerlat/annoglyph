@@ -15,8 +15,13 @@ workflow EXOGAP {
 
         if (params.module_repeats == true) {
             log.info "Running module repeat annotation"
-            REPEATS_ANNOTATION(PREPROCESSING.out.genomes, PREPROCESSING.out.newick, PREPROCESSING.out.genome_stats)
 
+            REPEATS_ANNOTATION(
+                PREPROCESSING.out.genomes, 
+                PREPROCESSING.out.newick, 
+                PREPROCESSING.out.genome_stats, 
+                PREPROCESSING.out.busco_datasets
+            )
         }
 
         // if (params.module_genes == true) {

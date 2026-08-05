@@ -1,7 +1,5 @@
 process SUMMARIZE_REPEATS_BY_LEVEL {
     tag "${id}"
-    memory { 10.GB }
-    maxRetries 5
     label "exogap_python"
 
     input:

@@ -11,7 +11,7 @@ process SEQKIT_STATS {
 
     script:
     """
-    # compute genome stats
+    # Compute sequence statistics
     seqkit stats --tabular --seq-type $seqtype --all $genome \
         | awk -v id="${id}" 'BEGIN { FS=OFS="\\t" }
             NR == 1 { \$1 = "genome_id" }

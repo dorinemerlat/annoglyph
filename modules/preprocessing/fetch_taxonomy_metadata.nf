@@ -3,7 +3,7 @@ process FETCH_TAXONOMY_METADATA {
     label 'exogap_python'
 
     input:
-    tuple val(id), val(meta), val(genome)
+    tuple val(id), val(meta), path(genome)
 
     output:
     tuple val(id), val(meta), path("${meta.taxid}_lineage.tsv"), emit: lineage

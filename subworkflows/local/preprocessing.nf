@@ -34,9 +34,14 @@ workflow PREPROCESSING {
 
     official_mnemonics
         .map { id, mnemonic ->
-            def exogapMnemonic = mnemonic.startsWith('9')
-                ? PreprocessingUtils.generateFallbackMnemonic(id)
-                : mnemonic
+            def normalizedMnemonic = mnemonic?.trim()
+            def hasValidMnemonic = normalizedMnemonic &&
+                normalizedMnemonic != 'NA' &&
+                !normalizedMnemonic.startsWith('9')
+
+            def exogapMnemonic = hasValidMnemonic
+                ? normalizedMnemonic
+                : PreprocessingUtils.generateFallbackMnemonic(id)
 
             [id, exogapMnemonic]
         }
@@ -172,7 +177,7 @@ workflow PREPROCESSING {
         .map { id, meta, genome ->
             [ meta.busco_dataset, id, meta, genome ]
         }
-        .combine(DOWNLOAD_BUSCO_DATASET.out.dataset, by: 0)
+        .combine(DOWNLOAD_BUSCO_DATASET.out, by: 0)
         .map { busco_dataset, id, meta, genome, busco_dataset_path ->
             [ id, meta, genome, 'genome', "${id}_on_assembly", busco_dataset, busco_dataset_path ]
         }

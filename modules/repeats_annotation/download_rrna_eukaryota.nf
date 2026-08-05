@@ -11,8 +11,7 @@ process DOWNLOAD_RRNA_EUKARYOTA {
     """
     bsdtar -xf /opt/MCHelper/db/rRNA_Eukaryota.zip
 
-    conda run -p /opt/conda/envs/MCHelper \
-        hmmpress rRNA_Eukaryota.hmm
+    hmmpress rRNA_Eukaryota.hmm
     """
 
     stub:

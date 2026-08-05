@@ -12,6 +12,8 @@ process REPEATMODELER {
 
     script:
     """
+    set -o pipefail
+    
     BuildDatabase \
         -name ${id} \
         -engine ncbi \

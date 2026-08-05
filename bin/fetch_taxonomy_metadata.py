@@ -23,7 +23,7 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 from pathlib import Path
-
+import time
 
 NCBI_EFETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 UNIPROT_TAXONOMY_URL = "https://rest.uniprot.org/taxonomy/{taxid}"
