@@ -130,6 +130,16 @@ workflow PREPROCESSING {
                 ]
             }
             .set { preprocessed_genomes }
+        
+        // Log the selected BUSCO datasets for each genome.
+        busco_datasets
+            .map { id, busco_dataset -> busco_dataset }
+            .unique()
+            .collect()
+            .view { datasets ->
+                "Selected BUSCO datasets: ${datasets.join(', ')}"
+        }
+
     } else {
         log.info "Using the provided BUSCO lineage: ${params.busco_lineage}"
 

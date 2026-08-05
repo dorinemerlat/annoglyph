@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Simplified cleaner for repeat families FASTA headers.
-Usage: clean_repeat_families_simple.py -f <fasta> -c <classification.csv> -m <mnemonic>
+Usage: clean_repeat_families.py -f <fasta> -c <classification.csv> -m <mnemonic>
 
 This script renames headers to the format:
   {MNEMONIC}_TE{N}#{clean_classification}

@@ -26,6 +26,8 @@ process POSTPROCESS_MCHELPER {
 
     stub:
     """
-    touch ${id}_families_processed.tsv ${id}_families_processed.fa ${id}_mchelper_postprocess.log
+    touch ${id}_families_processed.tsv
+    touch ${id}_families_processed.fa
+    touch ${id}_mchelper_postprocess.log
     """
 }

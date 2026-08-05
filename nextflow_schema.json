@@ -122,6 +122,13 @@
                     "description": "Optional reference repeat library in FASTA format.",
                     "default": null
                 },
+                "repeat_classification_table": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Repeat classification table used to standardize and post-process repeat family annotations.",
+                    "default": "data/repeats_classification.csv"
+                },
                 "group_consensus_sequences": {
                     "type": "boolean",
                     "description": "Build and use a shared consensus repeat library across input genomes.",

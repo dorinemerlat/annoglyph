@@ -2,7 +2,7 @@ process UNMASK_GENOME {
     tag "${id}"
 
     input:
-    tuple  val(id), val(meta), path(genome)
+    tuple val(id), val(meta), path(genome)
 
     output:
     tuple val(id), val(meta), path("${id}_unmasked.fa")
@@ -14,6 +14,11 @@ process UNMASK_GENOME {
 
     stub:
     """
-    touch ${id}_unmasked.fa
+    command -v awk >/dev/null
+
+    cat > ${id}_unmasked.fa << EOF
+>${id}
+ACGTACGTACGT
+EOF
     """
 }

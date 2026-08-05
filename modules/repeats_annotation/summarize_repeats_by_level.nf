@@ -21,11 +21,20 @@ process SUMMARIZE_REPEATS_BY_LEVEL {
 
     script:
     """
-    summarize_repeats_by_level.py -i $gff -s ${meta.assembly_size}
+    summarize_repeats_by_level.py -i ${gff} -s ${meta.assembly_size}
     """
 
     stub:
     """
-    touch ${id}_RE_summary.tsv
+    touch ${id}_repeats_summary_by_all.tsv
+    touch ${id}_repeats_summary_by_all_only_repetitive_elements.tsv
+    touch ${id}_repeats_summary_by_feature.tsv
+    touch ${id}_repeats_summary_stub_type.tsv
+    touch ${id}_repeats_summary_stub_class.tsv
+    touch ${id}_repeats_summary_stub_order.tsv
+    touch ${id}_repeats_summary_stub_superfamily.tsv
+    touch ${id}_repeats_summary_stub_family.tsv
+    touch ${id}_repeats_summary_stub_subfamily.tsv
+    touch ${id}_repeats_summary_stub_subfamily2.tsv
     """
 }

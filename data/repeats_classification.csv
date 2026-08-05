@@ -1,0 +1,281 @@
+Type,Class,Order,SuperFamily,Family,SubFamily,Subfamily2,Code
+Unknown,,,,,,,Other/Unknown;Other/Other;Unknown/Unknown;Unknown;Unk;Other
+Accidental,Normally Non-integrating Virus,,,,,,Other/DNA_virus;Integrated-virus/Unknown;Integrated-virus
+Artifact,,,,,,,ARTEFACT/Unknown;ARTEFACT
+Low Complexity,,,,,,,Low_complexity/Unknown;Low_complexity
+Pseudogene,RNA,rRNA,5S,,,,rRNA/5S
+Pseudogene,RNA,rRNA,,,,,rRNA
+Pseudogene,RNA,scRNA,7SK,,,,scRNA/7SK
+Pseudogene,RNA,scRNA,,,,,scRNA
+Pseudogene,RNA,scRNA,Y1,,,,scRNA/Y1;scRNA/Y2;scRNA/Y3
+Pseudogene,RNA,scRNA,Y4,,,,scRNA/Y4
+Pseudogene,RNA,snRNA,,,,,snRNA
+Pseudogene,RNA,snRNA,U11,,,,snRNA/U11
+Pseudogene,RNA,snRNA,U12,,,,snRNA/U12
+Pseudogene,RNA,snRNA,U13,,,,snRNA/U13
+Pseudogene,RNA,snRNA,U14,,,,snRNA/U14
+Pseudogene,RNA,snRNA,U15,,,,snRNA/U15
+Pseudogene,RNA,snRNA,U1,,,,snRNA/U1
+Pseudogene,RNA,snRNA,U2,,,,snRNA/U2
+Pseudogene,RNA,snRNA,U3,,,,snRNA/U3
+Pseudogene,RNA,snRNA,U4,,,,snRNA/U4
+Pseudogene,RNA,snRNA,U5,,,,snRNA/U5
+Pseudogene,RNA,snRNA,U6,,,,snRNA/U6
+Pseudogene,RNA,snRNA,U7,,,,snRNA/U7
+Pseudogene,RNA,snRNA,U8,,,,snRNA/U8
+Pseudogene,RNA,snRNA,U9,,,,snRNA/U9
+Pseudogene,RNA,tRNA,,,,,tRNA
+Pseudogene,RNA,Unknown,,,,,RNA
+Segmental Duplication,,,,,,,Segmental
+Tandem Repeat,Satellite,,,,,,Satellite/Unknown;Satellite;Satellite/Satellite
+Tandem Repeat,Satellite,Acromeric,,,,,Satellite/acromeric
+Tandem Repeat,Satellite,Centromeric,,,,,Satellite/centromeric;Unknown/centromeric
+Tandem Repeat,Satellite,Macro,,,,,Satellite/macro
+Tandem Repeat,Satellite,Subtelomeric,,,,,Satellite/subtelomeric
+Tandem Repeat,Satellite,W-chromosomal,,,,,Satellite/W-chromosome
+Tandem Repeat,Satellite,Y-chromosomal,,,,,Satellite/Y-chromosome
+Tandem Repeat,Minisatellite,,,,,,tandem_repeat/Minisatellite
+Tandem Repeat,Microsatellite,,,,,,tandem_repeat/Microsatellite
+Tandem Repeat,Simple,,,,,,Simple_repeat/Unknown;Simple_repeat;Simple
+Transposable Element,ClassI,Unknown,,,,,nonLTR
+Transposable Element,ClassI,LTR,Unknown,,,,LTR;LTR/Unknown;
+Transposable Element,ClassI,LTR,Copia,Ty1-Copia,,,LTR/Copia
+Transposable Element,ClassI,LTR,Gypsy,Caulimoviridae,,,LTR/Caulimovirus
+Transposable Element,ClassI,LTR,Gypsy,Gypsy,,,LTR/Gypsy
+Transposable Element,ClassI,LTR,Gypsy,Micropia,,,LTR/Micropia
+Transposable Element,ClassI,LTR,Gypsy,Retroviridae,Cassandra,,LTR/Cassandra
+Transposable Element,ClassI,LTR,Gypsy,Cigr,,,LTR/Gypsy-Cigr
+Transposable Element,ClassI,LTR,Bel-Pao,,,,LTR/Pao;LTR/BEL;LTR/Bel-Pao
+Transposable Element,ClassI,LTR,Retrovirus,,,,LTR/Retrovirus
+Transposable Element,ClassI,LTR,Retrovirus,TRIM,,,LTR/TRIM
+Transposable Element,ClassI,LTR,ERV,,,,LTR/ERV
+Transposable Element,ClassI,LTR,ERV,ERV1,,,LTR/ERV1
+Transposable Element,ClassI,LTR,ERV,ERV1,SINE-like,,SINE/ERV1
+Transposable Element,ClassI,LTR,ERV,ERV2,,,LTR/ERVK
+Transposable Element,ClassI,LTR,ERV,ERV3,,,LTR/ERVL
+Transposable Element,ClassI,LTR,ERV,ERV3,MaLR,,LTR/ERVL-MaLR
+Transposable Element,ClassI,LTR,ERV,ERV4,,,LTR/ERV4
+Transposable Element,ClassI,LTR,ERV,Lenti,,,LTR/ERV-Lenti
+Transposable Element,ClassI,LTR,ERV,Spumaretrovirinae,,,LTR/ERV-Foamy
+Transposable Element,ClassI,DIRS,DIRS,,,,LTR/DIRS
+Transposable Element,ClassI,DIRS,DIRS,Q,,,LTR/DIRS-Q
+Transposable Element,ClassI,DIRS,Ngaro,,,,LTR/Ngaro
+Transposable Element,ClassI,DIRS,Viper,TATE,,,Unknown/TATE
+Transposable Element,ClassI,DIRS,Viper,Viper,,,LTR/Viper
+Transposable Element,ClassI,PLE,Penelope,Athena,,,PLE/Athena
+Transposable Element,ClassI,PLE,Penelope,Chlamys,,,PLE/Chlamys
+Transposable Element,ClassI,PLE,Penelope,Coprina,,,PLE/Coprina
+Transposable Element,ClassI,PLE,Penelope,Hydra,,,PLE/Hydra
+Transposable Element,ClassI,PLE,Penelope,Naiad,,,PLE/Naiad
+Transposable Element,ClassI,PLE,Penelope,Nematis,,,PLE/Nematis
+Transposable Element,ClassI,PLE,Penelope,Neptune,,,PLE/Neptune
+Transposable Element,ClassI,PLE,Penelope,,,,PLE;LINE/Penelope
+Transposable Element,ClassI,PLE,Penelope,Poseidon,,,PLE/Poseidon
+Transposable Element,ClassI,LINE,Unknown,Genie,,,LINE/Genie
+Transposable Element,ClassI,LINE,Unknown,,,,LINE;LINE/Unknown;LINE/telomeric;LTR/Composite
+Transposable Element,ClassI,LINE,R2,CRE,,,LINE/CRE
+Transposable Element,ClassI,LINE,R2,CRE,Ambal,,LINE/CRE-Ambal
+Transposable Element,ClassI,LINE,R2,CRE,CRE-1,,LINE/CRE-1
+Transposable Element,ClassI,LINE,R2,CRE,CRE-2,,LINE/CRE-2;LINE/CRE-II
+Transposable Element,ClassI,LINE,R2,CRE,Odin,,LINE/CRE-Odin
+Transposable Element,ClassI,LINE,R2,Hero,,,LINE/R2-Hero
+Transposable Element,ClassI,LINE,R2,NeSL,,,LINE/R2-NeSL;LINE/NeSL
+Transposable Element,ClassI,LINE,R2,R2,,,LINE/R2
+Transposable Element,ClassI,LINE,R2,R4,Deceiver,,LINE/Deceiver
+Transposable Element,ClassI,LINE,R2,R4,Dong-R4,,LINE/Dong-R4
+Transposable Element,ClassI,LINE,R2,R4,Dualen,,LINE/Dualen
+Transposable Element,ClassI,LINE,R2,R4,,,LINE/R4
+Transposable Element,ClassI,LINE,RTE,,,,LINE/RTE
+Transposable Element,ClassI,LINE,RTE,BovB,,,LINE/RTE-BovB
+Transposable Element,ClassI,LINE,RTE,ORTE,,,LINE/RTE-ORTE
+Transposable Element,ClassI,LINE,RTE,Proto-1,,,LINE/Proto1
+Transposable Element,ClassI,LINE,RTE,Proto-2,,,LINE/Proto2
+Transposable Element,ClassI,LINE,RTE,RTE,,,LINE/RTE-RTE
+Transposable Element,ClassI,LINE,RTE,RTE-X,,,LINE/RTEX;LINE/RTE-X
+Transposable Element,ClassI,LINE,Jockey,CR1,L2,,LINE/L2
+Transposable Element,ClassI,LINE,Jockey,CR1,,,LINE/CR1
+Transposable Element,ClassI,LINE,Jockey,CR1,Rex-Babar,,LINE/Rex-Babar
+Transposable Element,ClassI,LINE,Jockey,CR1,Zenon,,LINE/CR1-Zenon
+Transposable Element,ClassI,LINE,Jockey,Crack,,,LINE/Crack
+Transposable Element,ClassI,LINE,Jockey,Daphne,,,LINE/Daphne
+Transposable Element,ClassI,LINE,Jockey,L2B,,,LINE/L2B
+Transposable Element,ClassI,LINE,Jockey,L2,Kiri,,LINE/Kiri
+Transposable Element,ClassI,LINE,Jockey,L2,L2A,,LINE/L2A
+Transposable Element,ClassI,LINE,Jockey,,,,LINE/I-Jockey;LINE/Tad1;LINE/Jockey
+Transposable Element,ClassI,LINE,Jockey,Loa,,,LINE/R1-LOA;LINE/LOA
+Transposable Element,ClassI,LINE,Jockey,Outcast,,,LINE/Outcast
+Transposable Element,ClassI,LINE,Jockey,Rex1,,,LINE/Rex1;Rex1
+Transposable Element,ClassI,LINE,Jockey,Vingi,,,LINE/Vingi
+Transposable Element,ClassI,LINE,L1,DRE,,,LINE/L1-DRE
+Transposable Element,ClassI,LINE,L1,L1,,,LINE/L1
+Transposable Element,ClassI,LINE,L1,Tx1,,,LINE/L1-Tx1;LINE/Tx1
+Transposable Element,ClassI,LINE,L1,Zorro,,,LINE/L1-Zorro
+Transposable Element,ClassI,LINE,I,Ingi,,,LINE/Ingi
+Transposable Element,ClassI,LINE,I,,,,LINE/I
+Transposable Element,ClassI,LINE,I,Nimb,,,LINE/Nimb;LINE/I-Nimb
+Transposable Element,ClassI,LINE,I,R1,,,LINE/R1
+Transposable Element,ClassI,LINE,I,R1,LOA,,LINE/Loa
+Transposable Element,ClassI,SINE,Unknown,,,,SINE;SINE?;SINE/Unknown;SINE/I
+Transposable Element,ClassI,SINE,Unknown,Ceph-core,RTE-end,,SINE/Ceph
+Transposable Element,ClassI,SINE,Unknown,MIR-core,RTE-end,,SINE/Core-RTE
+Transposable Element,ClassI,SINE,Unknown,MIR-core,Unknown_LINE-dependent,,SINE/Core
+Transposable Element,ClassI,SINE,tRNA,Ceph-core,RTE-end,,SINE/tRNA-Ceph-RTE
+Transposable Element,ClassI,SINE,tRNA,Ceph-core,Unknown_LINE-dependent,,SINE/tRNA-Ceph
+Transposable Element,ClassI,SINE,tRNA,Deu-core,CR1-end,,SINE/tRNA-Deu-CR1
+Transposable Element,ClassI,SINE,tRNA,Deu-core,I-end,,SINE/tRNA-Deu-I
+Transposable Element,ClassI,SINE,tRNA,Deu-core,L2-end,,SINE/tRNA-Deu-L2
+Transposable Element,ClassI,SINE,tRNA,Deu-core,RTE-end,,SINE/tRNA-Deu-RTE
+Transposable Element,ClassI,SINE,tRNA,Deu-core,Unknown_LINE-dependent,,SINE/tRNA-Deu
+Transposable Element,ClassI,SINE,tRNA,Meta-core,Unknown_LINE-dependent,,SINE/tRNA-Meta
+Transposable Element,ClassI,SINE,tRNA,MIR-core,L2-end,,SINE/MIR
+Transposable Element,ClassI,SINE,tRNA,MIR-core,Mermaid,,SINE/tRNA-Mermaid
+Transposable Element,ClassI,SINE,tRNA,MIR-core,RTE-end,,SINE/tRNA-Core-RTE
+Transposable Element,ClassI,SINE,tRNA,MIR-core,Unknown_LINE-dependent,,SINE/tRNA-Core
+Transposable Element,ClassI,SINE,tRNA,No-core,L1-dependent,B2,SINE/B2
+Transposable Element,ClassI,SINE,tRNA,No-core,L1-dependent,,SINE/ID
+Transposable Element,ClassI,SINE,tRNA,No_or_Unknown_Core,BovB-end,,SINE/RTE-BovB
+Transposable Element,ClassI,SINE,tRNA,No_or_Unknown_Core,CR1-end,,SINE/tRNA-CR1
+Transposable Element,ClassI,SINE,tRNA,No_or_Unknown_Core,I-end,,SINE/tRNA-I
+Transposable Element,ClassI,SINE,tRNA,No_or_Unknown_Core,Jockey-end,,SINE/tRNA-Jockey
+Transposable Element,ClassI,SINE,tRNA,No_or_Unknown_Core,L1-dependent,,SINE/tRNA-L1;SINE/tRNA-BC1
+Transposable Element,ClassI,SINE,tRNA,No_or_Unknown_Core,L2-end,,SINE/tRNA-L2
+Transposable Element,ClassI,SINE,tRNA,No_or_Unknown_Core,R1-end,,SINE/R1
+Transposable Element,ClassI,SINE,tRNA,No_or_Unknown_Core,R2-end,,SINE/tRNA-R2
+Transposable Element,ClassI,SINE,tRNA,No_or_Unknown_Core,Rex-end,,SINE/tRNA-Rex
+Transposable Element,ClassI,SINE,tRNA,No_or_Unknown_Core,RTE-end,,SINE/tRNA-RTE
+Transposable Element,ClassI,SINE,tRNA,No_or_Unknown_Core,Tad1_End,,SINE/tRNA-Tad1
+Transposable Element,ClassI,SINE,tRNA,No_or_Unknown_Core,Unknown_LINE-dependent,,SINE/tRNA
+Transposable Element,ClassI,SINE,tRNA,Sauria-core,L2-end,,SINE/tRNA-Sauria-L2
+Transposable Element,ClassI,SINE,tRNA,Sauria-core,RTE-end,,SINE/tRNA-Sauria-RTE
+Transposable Element,ClassI,SINE,tRNA,Sauria-core,Unknown_LINE-dependent,,SINE/tRNA-Sauria
+Transposable Element,ClassI,SINE,tRNA,V_and_MIR-core,L2-end,,SINE/tRNA-V-Core-L2
+Transposable Element,ClassI,SINE,tRNA,V-core,CR1-end,,SINE/tRNA-V-CR1
+Transposable Element,ClassI,SINE,tRNA,V-core,L2-end,,SINE/tRNA-V-L2
+Transposable Element,ClassI,SINE,tRNA,V-core,RTE-end,,SINE/tRNA-V-RTE
+Transposable Element,ClassI,SINE,tRNA,V-core,Unknown_LINE-dependent,,SINE/tRNA-V
+Transposable Element,ClassI,SINE,7SL,No-core,L1-dependent,Alu,SINE/Alu
+Transposable Element,ClassI,SINE,7SL,,,,SINE/7SL
+Transposable Element,ClassI,SINE,5S,Deu-core,L2-end,,SINE/5S-Deu-L2
+Transposable Element,ClassI,SINE,5S,Deu-core,Unknown_LINE-dependent,,SINE/5S-Deu
+Transposable Element,ClassI,SINE,5S,MIR-core,RTE-end,,SINE/5S-Core-RTE
+Transposable Element,ClassI,SINE,5S,No_or_Unknown_Core,RTE-end,,SINE/5S-RTE
+Transposable Element,ClassI,SINE,5S,Sauria-core,RTE-end,,SINE/5S-Sauria-RTE
+Transposable Element,ClassI,SINE,5S,,,,SINE/5S
+Transposable Element,ClassI,SINE,tRNA and 5S,No_or_Unknown_Core,Unknown_LINE-dependent,,SINE/tRNA-5S
+Transposable Element,ClassI,SINE,tRNA and 7SL,No-core,L1-dependent,,SINE/B4
+Transposable Element,ClassI,SINE,tRNA and 7SL,No_or_Unknown_Core,Unknown_LINE-dependent,,SINE/tRNA-7SL
+Transposable Element,ClassI,SINE,snRNA,No_or_Unknown_Core,L1-dependent,,SINE/U-L1
+Transposable Element,ClassI,SINE,snRNA,No_or_Unknown_Core,Unknown_LINE-dependent,,SINE/U
+Transposable Element,ClassI,SINE,Lacking Small RNA pol III Promoter,I-derived,,,Retroposon/I-derived
+Transposable Element,ClassI,SINE,Lacking Small RNA pol III Promoter,L1-dependent,,,Retroposon/L1-dep
+Transposable Element,ClassI,SINE,Lacking Small RNA pol III Promoter,L1-dependent,SVA,,Retroposon/SVA
+Transposable Element,ClassI,SINE,Lacking Small RNA pol III Promoter,L1-derived,,,Retroposon/L1-derived
+Transposable Element,ClassI,SINE,Lacking Small RNA pol III Promoter,L2-derived,,,Retroposon/L2-derived
+Transposable Element,ClassI,SINE,Lacking Small RNA pol III Promoter,R4-derived,,,Retroposon/R4-derived
+Transposable Element,ClassI,SINE,Lacking Small RNA pol III Promoter,,,,Retroposon;Retro
+Transposable Element,ClassI,SINE,Lacking Small RNA pol III Promoter,RTE-derived,,,Retroposon/RTE-derived
+Transposable Element,ClassI,Unknown,,,,,ClassI
+Transposable Element,ClassI,Unknown,snoRNA,L1-derived,,,Retroposon/sno-L1
+Transposable Element,ClassI,Unknown,snoRNA,,,,Retroposon/sno
+Transposable Element,ClassII,Crypton,Crypton,Crypton-A,,,DNA/Crypton-A
+Transposable Element,ClassII,Crypton,Crypton,Crypton-C,,,DNA/Crypton-C
+Transposable Element,ClassII,Crypton,Crypton,Crypton-F,,,DNA/Crypton-F
+Transposable Element,ClassII,Crypton,Crypton,Crypton-H,,,DNA/Crypton-H
+Transposable Element,ClassII,Crypton,Crypton,Crypton-I,,,DNA/Crypton-I
+Transposable Element,ClassII,Crypton,Crypton,Crypton-R,,,DNA/Crypton-R
+Transposable Element,ClassII,Crypton,Crypton,Crypton-S,,,DNA/Crypton-S
+Transposable Element,ClassII,Crypton,Crypton,Crypton-V,,,DNA/Crypton-V
+Transposable Element,ClassII,Crypton,Crypton,Crypton-X,,,DNA/Crypton-X
+Transposable Element,ClassII,Crypton,Crypton,,,,DNA/Crypton
+Transposable Element,ClassII,Helitron,Helitron,Helitron-1,,,RC/Helitron
+Transposable Element,ClassII,Helitron,Helitron,Helitron-2,,,RC/Helitron-2
+Transposable Element,ClassII,Helitron,Helitron,,,,RC;DNA/Helitron
+Transposable Element,ClassII,Maverick,Maverick,,,,DNA/Maverick;DNA/Polinton
+Transposable Element,ClassII,Maverick,Maverick,Maverick-Mavirus,,,DNA/Maverick-Mavirus
+Transposable Element,ClassII,TIR,CACTA,CMC,Chapaev-3,,DNA/CMC-Chapaev-3
+Transposable Element,ClassII,TIR,CACTA,CMC,Chapaev,,DNA/CMC-Chapaev
+Transposable Element,ClassII,TIR,CACTA,CMC,,,DNA/CMC
+Transposable Element,ClassII,TIR,CACTA,CMC,EnSpm,,DNA/CMC-EnSpm;DNA/EnSpm-CACTA
+Transposable Element,ClassII,TIR,CACTA,CMC,Mirage,,DNA/CMC-Mirage
+Transposable Element,ClassII,TIR,CACTA,,,,MITE/DTC;DNA/DTC
+Transposable Element,ClassII,TIR,CACTA,Transib,,,DNA/CMC-Transib;DNA/Transib
+Transposable Element,ClassII,TIR,hAT,Activator,,,DNA/hAT-Ac
+Transposable Element,ClassII,TIR,hAT,Blackjack,,,DNA/hAT-Blackjack
+Transposable Element,ClassII,TIR,hAT,Charlie,,,DNA/hAT-Charlie
+Transposable Element,ClassII,TIR,hAT,hAT19,,,DNA/hAT-hAT19
+Transposable Element,ClassII,TIR,hAT,hAT1,,,DNA/hAT-hAT1
+Transposable Element,ClassII,TIR,hAT,hAT5,,,DNA/hAT-hAT5
+Transposable Element,ClassII,TIR,hAT,hAT6,,,DNA/hAT-hAT6
+Transposable Element,ClassII,TIR,hAT,hATm,,,DNA/hAT-hATm
+Transposable Element,ClassII,TIR,hAT,hATw,,,DNA/hAT-hATw
+Transposable Element,ClassII,TIR,hAT,hATx,,,DNA/hAT-hATx
+Transposable Element,ClassII,TIR,hAT,hobo,,,DNA/hAT-hobo
+Transposable Element,ClassII,TIR,hAT,,,,MITE/DTA;DNA/hAT;DNA/DTA
+Transposable Element,ClassII,TIR,hAT,Pegasus,,,DNA/hAT-Pegasus
+Transposable Element,ClassII,TIR,hAT,Restless,,,DNA/hAT-Restless
+Transposable Element,ClassII,TIR,hAT,Tag1,,,DNA/hAT-Tag1
+Transposable Element,ClassII,TIR,hAT,Tip100,,,DNA/hAT-Tip100
+Transposable Element,ClassII,TIR,hAT,Tol2,,,DNA/hAT-Tol2
+Transposable Element,ClassII,TIR,Merlin,,,,DNA/Merlin
+Transposable Element,ClassII,TIR,Mutator,F,,,DNA/MULE-F
+Transposable Element,ClassII,TIR,Mutator,,,,MITE/DTM;DNA/MULE;DNA/DTM
+Transposable Element,ClassII,TIR,Mutator,MuDR,,,DNA/MULE-MuDR
+Transposable Element,ClassII,TIR,Mutator,MULE-MuDR,,,DNA/MULE-MuDR;DNA/MuLE-MuDR
+Transposable Element,ClassII,TIR,Mutator,NOF,,,DNA/MULE-NOF
+Transposable Element,ClassII,TIR,Mutator,Ricksha,,,DNA/MULE-Ricksha
+Transposable Element,ClassII,TIR,P,,,,DNA/P
+Transposable Element,ClassII,TIR,P,Fungi-specific_Branch,,,DNA/P-Fungi
+Transposable Element,ClassII,TIR,PIF-Harbinger,Harbinger,,,DNA/PIF-Harbinger
+Transposable Element,ClassII,TIR,PIF-Harbinger,HarbS,,,DNA/PIF-HarbS
+Transposable Element,ClassII,TIR,PIF-Harbinger,ISL2EU,,,DNA/PIF-ISL2EU;DNA/ISL2EU
+Transposable Element,ClassII,TIR,PIF-Harbinger,,,,MITE/DTH;DNA/PIF;DNA/Harbinger;DNA/DTH
+Transposable Element,ClassII,TIR,PIF-Harbinger,Spy,,,DNA/PIF-Spy
+Transposable Element,ClassII,TIR,PiggyBac,Looper,,,DNA/Looper
+Transposable Element,ClassII,TIR,PiggyBac,PiggyBac-A,,,DNA/PiggyBac-A
+Transposable Element,ClassII,TIR,PiggyBac,PiggyBac,,,DNA/PiggyBac
+Transposable Element,ClassII,TIR,PiggyBac,PiggyBac-X,,,DNA/PiggyBac-X
+Transposable Element,ClassII,TIR,Tc1-Mariner,Ant1,,,DNA/TcMar-Ant1
+Transposable Element,ClassII,TIR,Tc1-Mariner,Cweed,,,DNA/TcMar-Cweed
+Transposable Element,ClassII,TIR,Tc1-Mariner,,,,DNA/TcMar;DNA/DTT;DNA/Tc1;DNA/Mariner-Tc1;MITE/DTT
+Transposable Element,ClassII,TIR,Tc1-Mariner,Fot1,,,DNA/TcMar-Fot1
+Transposable Element,ClassII,TIR,Tc1-Mariner,Gizmo,,,DNA/TcMar-Gizmo
+Transposable Element,ClassII,TIR,Tc1-Mariner,IS885,,,DNA/TcMar-IS885
+Transposable Element,ClassII,TIR,Tc1-Mariner,ISRm11,,,DNA/TcMar-ISRm11
+Transposable Element,ClassII,TIR,Tc1-Mariner,m44,,,DNA/TcMar-m44
+Transposable Element,ClassII,TIR,Tc1-Mariner,Mariner,,,DNA/TcMar-Mariner
+Transposable Element,ClassII,TIR,Tc1-Mariner,Mogwai,,,DNA/TcMar-Mogwai
+Transposable Element,ClassII,TIR,Tc1-Mariner,Pogo,,,DNA/TcMar-Pogo;DNA/Pogo
+Transposable Element,ClassII,TIR,Tc1-Mariner,Sagan,,,DNA/TcMar-Sagan
+Transposable Element,ClassII,TIR,Tc1-Mariner,Stowaway,,,DNA/TcMar-Stowaway
+Transposable Element,ClassII,TIR,Tc1-Mariner,Tc1,,,DNA/TcMar-Tc1
+Transposable Element,ClassII,TIR,Tc1-Mariner,Tc2,,,DNA/TcMar-Tc2
+Transposable Element,ClassII,TIR,Tc1-Mariner,Tc3,,,DNA/Tc3
+Transposable Element,ClassII,TIR,Tc1-Mariner,Tc4,,,DNA/TcMar-Tc4;DNA/Tc4
+Transposable Element,ClassII,TIR,Tc1-Mariner,Tigger,,,DNA/TcMar-Tigger
+Transposable Element,ClassII,TIR,Unknown,,,,DNA;DNA/other
+Transposable Element,ClassII,Unknown,,,,,DNA/Unknown;DNA/DNA
+Transposable Element,ClassII,Unknown,Academ,Academ-1,,,DNA/Academ-1
+Transposable Element,ClassII,Unknown,Academ,Academ-2,,,DNA/Academ-2
+Transposable Element,ClassII,Unknown,Academ,Academ-H,,,DNA/Academ-H
+Transposable Element,ClassII,Unknown,Academ,Helitron,,,DNA/Academ
+Transposable Element,ClassII,Unknown,Casposon,,,,DNA/Casposons
+Transposable Element,ClassII,Unknown,Dada,,,,DNA/Dada
+Transposable Element,ClassII,Unknown,Ginger,,,,DNA/Ginger1;DNA/Ginger
+Transposable Element,ClassII,Unknown,Ginger,Ginger-1,,,DNA/Ginger-1
+Transposable Element,ClassII,Unknown,Ginger,Ginger-2,,,DNA/Ginger-2
+Transposable Element,ClassII,Unknown,Ginger,Ginger-2,TDD,,DNA/Ginger2-TDD
+Transposable Element,ClassII,Unknown,IR4,,,,DNA/IR4
+Transposable Element,ClassII,Unknown,IS3EU,,,,DNA/IS3EU
+Transposable Element,ClassII,Unknown,Kolobok,,,,DNA/Kolobok
+Transposable Element,ClassII,Unknown,Kolobok,Hydra-specific_Branch,,,DNA/Kolobok-Hydra
+Transposable Element,ClassII,Unknown,Kolobok,Kolobok-E,,,DNA/Kolobok-E
+Transposable Element,ClassII,Unknown,Kolobok,Kolobok-H,,,DNA/Kolobok-H
+Transposable Element,ClassII,Unknown,Kolobok,T2,,,DNA/Kolobok-T2
+Transposable Element,ClassII,Unknown,MITE,,,,DNA/MITE
+Transposable Element,ClassII,Unknown,Novosib,,,,DNA/Novosib
+Transposable Element,ClassII,Unknown,Sola,,,,DNA/Sola
+Transposable Element,ClassII,Unknown,Sola,Sola-1,,,DNA/Sola-1
+Transposable Element,ClassII,Unknown,Sola,Sola-2,,,DNA/Sola-2
+Transposable Element,ClassII,Unknown,Sola,Sola-3,,,DNA/Sola-3
+Transposable Element,ClassII,Unknown,Zator,,,,DNA/Zator
+Transposable Element,ClassII,Unknown,Zisupton,,,,DNA/Zisupton

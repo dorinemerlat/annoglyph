@@ -1,28 +1,21 @@
-include { UNMASK_GENOME } from "$projectDir/modules/local/module_repeats/unmask_genome.nf"
-include { REPEATMODELER } from "$projectDir/modules/local/module_repeats/repeatmodeler.nf"
-include { CLEAN_REPEAT_FAMILIES } from "$projectDir/modules/local/module_repeats/clean_repeat_families.nf"
-include { DOWNLOAD_RRNA_EUKARYOTA } from "$projectDir/modules/local/module_repeats/download_rrna_eukaryota.nf"
-include { DOWNLOAD_BUSCO_HMM } from "$projectDir/modules/local/module_repeats/download_busco_hmm.nf"
-include { MCHELPER } from "$projectDir/modules/local/module_repeats/mchelper.nf"
-include { HMMSCAN } from "$projectDir/modules/local/module_repeats/hmmscan.nf"
-include { POSTPROCESS_MCHELPER } from "$projectDir/modules/local/module_repeats/postprocess_mchelper.nf"
-include { MERGE_TABLES } from "$projectDir/modules/local/merge_tables.nf"
-include { CD_HIT } from "$projectDir/modules/local/module_repeats/cd_hit.nf"
-include { REPEATMASKER } from "$projectDir/modules/local/module_repeats/repeatmasker.nf"
-include { REPEATMASKER_OUT_TO_GFF } from "$projectDir/modules/local/module_repeats/repeatmasker_out_to_gff.nf"
-// include { PLOT_REPEATS } from "$projectDir/modules/local/module_repeats/plot_repeats.nf"
-include { SUMMARIZE_REPEATS_BY_LEVEL } from "$projectDir/modules/local/module_repeats/summarize_repeats_by_level.nf"
-include { MERGE_TABLES as MERGE_SUMMARIES} from "$projectDir/modules/local/merge_tables.nf"
-include { REPEATLANDSCAPE } from "$projectDir/modules/local/module_repeats/repeatlandscape.nf"
-include { REFORMAT_REPEATLANDSCAPE } from "$projectDir/modules/local/module_repeats/reformat_repeatlandscape.nf"
-include { MERGE_TABLES as MERGE_REPEATLANDSCAPE} from "$projectDir/modules/local/merge_tables.nf"
-
-def gather_summary_ch(ch, prefix) {
-    ch
-      .map { id, meta, file -> [prefix, file] }
-      .groupTuple()
-      .map { key, files -> [key, files, prefix + '.tsv'] }
-}
+include { UNMASK_GENOME                             } from "$projectDir/modules/repeats_annotation/unmask_genome.nf"
+include { REPEATMODELER                             } from "$projectDir/modules/repeats_annotation/repeatmodeler.nf"
+include { CLEAN_REPEAT_FAMILIES                     } from "$projectDir/modules/repeats_annotation/clean_repeat_families.nf"
+include { DOWNLOAD_RRNA_EUKARYOTA                   } from "$projectDir/modules/repeats_annotation/download_rrna_eukaryota.nf"
+include { DOWNLOAD_BUSCO_HMM                        } from "$projectDir/modules/repeats_annotation/download_busco_hmm.nf"
+include { MCHELPER                                  } from "$projectDir/modules/repeats_annotation/mchelper.nf"
+include { HMMSCAN                                   } from "$projectDir/modules/repeats_annotation/hmmscan.nf"
+include { POSTPROCESS_MCHELPER                      } from "$projectDir/modules/repeats_annotation/postprocess_mchelper.nf"
+include { MERGE_TABLES as MERGE_POSTPROCESS_MCHELER } from "$projectDir/modules/shared_modules/merge_tables.nf"
+include { CD_HIT_EST                                } from "$projectDir/modules/repeats_annotation/cd_hit_est.nf"
+include { REPEATMASKER                              } from "$projectDir/modules/repeats_annotation/repeatmasker.nf"
+include { REPEATMASKER_OUT_TO_GFF                   } from "$projectDir/modules/repeats_annotation/repeatmasker_out_to_gff.nf"
+// include { PLOT_REPEATS } from "$projectDir/modules/repeats_annotation/plot_repeats.nf"
+include { SUMMARIZE_REPEATS_BY_LEVEL                } from "$projectDir/modules/repeats_annotation/summarize_repeats_by_level.nf"
+include { MERGE_TABLES as MERGE_SUMMARIES           } from "$projectDir/modules/shared_modules/merge_tables.nf"
+include { REPEATLANDSCAPE                           } from "$projectDir/modules/repeats_annotation/repeatlandscape.nf"
+include { REFORMAT_REPEATLANDSCAPE                  } from "$projectDir/modules/repeats_annotation/reformat_repeatlandscape.nf"
+include { MERGE_TABLES as MERGE_REPEATLANDSCAPE     } from "$projectDir/modules/shared_modules/merge_tables.nf"
 
 workflow REPEATS_ANNOTATION {
     take:
@@ -34,13 +27,14 @@ workflow REPEATS_ANNOTATION {
         // Some genomes have softmasked regions, which can correspond to low complexity or low coverage regions.
         // These softmasked regions can cause problems for repeat annotation, so we will unmask them before running RepeatModeler.
         UNMASK_GENOME(genomes)
-        UNMASK_GENOME.out.set { genomes }
+        genomes = UNMASK_GENOME.out
 
         // Run RepeatModeler to identify de novo repeats
         REPEATMODELER( genomes )
 
         // Clean up repeat libraries name
-        CLEAN_REPEAT_FAMILIES( REPEATMODELER.out, file("$projectDir/data/repeats_classification.csv") )
+        repeat_classification_table = file(params.repeat_classification_table, checkIfExists: true)
+        CLEAN_REPEAT_FAMILIES( REPEATMODELER.out.families, repeat_classification_table )
 
         // Download rRNA HMM database and prepare it for hmmscan
         DOWNLOAD_RRNA_EUKARYOTA()
@@ -86,7 +80,7 @@ workflow REPEATS_ANNOTATION {
             .join(hmmscan_results.gene, by: [0])
             .join(hmmscan_results.rrna, by: [0])
             .map {id, meta, table, rm2_families, mchelper_classif, classified_module, unclassified_module, gene_name, gene_tbl, rrna_name, rrna_tbl ->
-                [id, meta, table, rm2_families, mchelper_classif, classified_module, unclassified_module, gene_tbl, rrna_tbl, file("$projectDir/data/repeats_classification.csv")]
+                [id, meta, table, rm2_families, mchelper_classif, classified_module, unclassified_module, gene_tbl, rrna_tbl, repeat_classification_table]
             }
             .set { postprocess_mchelper_inputs }
 
@@ -98,7 +92,7 @@ workflow REPEATS_ANNOTATION {
             .map { id, tables -> [id, tables, "all_families.tsv"] }
             .set { tables_for_collecting }
 
-        MERGE_TABLES( tables_for_collecting )
+        MERGE_POSTPROCESS_MCHELER( tables_for_collecting )
 
         // CD-HIT to remove redundancy
         POSTPROCESS_MCHELPER.out.families
@@ -107,18 +101,18 @@ workflow REPEATS_ANNOTATION {
             .map{id, families_list -> [id, 'meta', families_list + params.reference_library, "nucleotide", "0.8", "80", "0.8"]}
             .set { all_repeat_libraries }
 
-        CD_HIT(all_repeat_libraries)
+        CD_HIT_EST(all_repeat_libraries)
 
     //     // // ANALYZE_FAMILIES_CLUSTER(CD_HIT.out.clusters.map { id, meta, cluster -> [id, meta, cluster, 'repeat_cluster' ] } )
 
         genomes
-            .combine( CD_HIT.out.library.map { id, meta, library -> library } )
+            .combine( CD_HIT_EST.out.library.map { id, meta, library -> library } )
             .set { genome_with_libraries }
 
         REPEATMASKER(genome_with_libraries)
 
         REPEATMASKER.out.out
-            .combine( MERGE_TABLES.out )
+            .combine( MERGE_POSTPROCESS_MCHELER.out )
             .map { id, meta, out, collect_id, collect_table -> [id, meta, out, collect_table, file("$projectDir/data/repeats_classification.csv")] }
             .set { repeatmasker_outputs_for_gff }
 
@@ -132,16 +126,16 @@ workflow REPEATS_ANNOTATION {
         SUMMARIZE_REPEATS_BY_LEVEL( REPEATMASKER_OUT_TO_GFF.out )
 
         // gather summaries
-        summaries_by_all            = gather_summary_ch(SUMMARIZE_REPEATS_BY_LEVEL.out.all, 'repeats_summary_by_all')
-        summaries_by_all_filtered   = gather_summary_ch(SUMMARIZE_REPEATS_BY_LEVEL.out.all, 'repeats_summary_all_only_repetitive_elements')
-        summaries_by_feature        = gather_summary_ch(SUMMARIZE_REPEATS_BY_LEVEL.out.by_feature, 'repeats_summary_by_feature')
-        summaries_by_type           = gather_summary_ch(SUMMARIZE_REPEATS_BY_LEVEL.out.by_type, 'repeats_summary_by_type')
-        summaries_by_class          = gather_summary_ch(SUMMARIZE_REPEATS_BY_LEVEL.out.by_class, 'repeats_summary_by_class')
-        summaries_by_order          = gather_summary_ch(SUMMARIZE_REPEATS_BY_LEVEL.out.by_order, 'repeats_summary_by_order')
-        summaries_by_superfamily    = gather_summary_ch(SUMMARIZE_REPEATS_BY_LEVEL.out.by_superfamily, 'repeats_summary_by_superfamily')
-        summaries_by_family         = gather_summary_ch(SUMMARIZE_REPEATS_BY_LEVEL.out.by_family, 'repeats_summary_by_family')
-        summaries_by_subfamily      = gather_summary_ch(SUMMARIZE_REPEATS_BY_LEVEL.out.by_subfamily, 'repeats_summary_by_subfamily')
-        summaries_by_subfamily2     = gather_summary_ch(SUMMARIZE_REPEATS_BY_LEVEL.out.by_subfamily2, 'repeats_summary_by_subfamily2')
+        summaries_by_all            = RepeatAnnotationUtils.gatherSummaryTables(SUMMARIZE_REPEATS_BY_LEVEL.out.all, 'repeats_summary_by_all')
+        summaries_by_all_filtered   = RepeatAnnotationUtils.gatherSummaryTables(SUMMARIZE_REPEATS_BY_LEVEL.out.all, 'repeats_summary_all_only_repetitive_elements')
+        summaries_by_feature        = RepeatAnnotationUtils.gatherSummaryTables(SUMMARIZE_REPEATS_BY_LEVEL.out.by_feature, 'repeats_summary_by_feature')
+        summaries_by_type           = RepeatAnnotationUtils.gatherSummaryTables(SUMMARIZE_REPEATS_BY_LEVEL.out.by_type, 'repeats_summary_by_type')
+        summaries_by_class          = RepeatAnnotationUtils.gatherSummaryTables(SUMMARIZE_REPEATS_BY_LEVEL.out.by_class, 'repeats_summary_by_class')
+        summaries_by_order          = RepeatAnnotationUtils.gatherSummaryTables(SUMMARIZE_REPEATS_BY_LEVEL.out.by_order, 'repeats_summary_by_order')
+        summaries_by_superfamily    = RepeatAnnotationUtils.gatherSummaryTables(SUMMARIZE_REPEATS_BY_LEVEL.out.by_superfamily, 'repeats_summary_by_superfamily')
+        summaries_by_family         = RepeatAnnotationUtils.gatherSummaryTables(SUMMARIZE_REPEATS_BY_LEVEL.out.by_family, 'repeats_summary_by_family')
+        summaries_by_subfamily      = RepeatAnnotationUtils.gatherSummaryTables(SUMMARIZE_REPEATS_BY_LEVEL.out.by_subfamily, 'repeats_summary_by_subfamily')
+        summaries_by_subfamily2     = RepeatAnnotationUtils.gatherSummaryTables(SUMMARIZE_REPEATS_BY_LEVEL.out.by_subfamily2, 'repeats_summary_by_subfamily2')
 
 
         summaries_by_all

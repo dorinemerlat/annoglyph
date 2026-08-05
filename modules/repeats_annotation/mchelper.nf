@@ -14,6 +14,7 @@ process MCHELPER {
     tuple val(id), val(meta), path("classifiedModule/fullLengthFrag.txt"), emit: full_length_frag
     tuple val(id), val(meta), path("classifiedModule/MSA_plots"), path("classifiedModule/MSA_seeds"), path("classifiedModule/te_aid"), emit: plots
     tuple val(id), val(meta), path("sequences_with_problems.txt"), emit: seqs_with_problems
+
     script:
     """
     conda run -p /opt/conda/envs/MCHelper \
@@ -30,6 +31,20 @@ process MCHELPER {
 
     stub:
     """
-    touch
+    mkdir -p classifiedModule
+    mkdir -p unclassifiedModule
+    mkdir -p classifiedModule/MSA_plots
+    mkdir -p classifiedModule/MSA_seeds
+    mkdir -p classifiedModule/te_aid
+
+    touch classifiedModule/denovoLibTEs_PC.classif
+    touch classifiedModule/kept_seqs_classified_module.fa
+    touch unclassifiedModule/kept_seqs_unclassified_module.fa
+
+    touch classifiedModule/kept_seqs_classified_module_curated.fa
+    touch classifiedModule/kept_seqs_classified_module_non_curated.fa
+
+    touch classifiedModule/fullLengthFrag.txt
+    touch sequences_with_problems.txt
     """
 }

@@ -16,6 +16,7 @@ from pathlib import Path
 
 
 DATASET_PATTERN = re.compile(r"-\s+(\S+)\s+\[\d+\]")
+DATASET_VERSION_PATTERN = re.compile(r"(_odb\d+)\.\d+$")
 
 
 def parse_args():
@@ -61,6 +62,11 @@ def read_taxonomy_lineage(taxonomy_file):
     return reversed(lineage)
 
 
+def remove_dataset_version(dataset):
+    """Remove the BUSCO dataset revision suffix."""
+    return DATASET_VERSION_PATTERN.sub(r"\1", dataset)
+
+
 def find_matching_dataset(lineage_names, dataset_lines):
     """Return the first BUSCO dataset matching the taxonomy lineage."""
     for taxon_name in lineage_names:
@@ -71,7 +77,7 @@ def find_matching_dataset(lineage_names, dataset_lines):
             match = DATASET_PATTERN.search(line)
 
             if match:
-                return match.group(1)
+                return remove_dataset_version(match.group(1))
 
     return None
 

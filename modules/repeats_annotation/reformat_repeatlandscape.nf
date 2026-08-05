@@ -10,7 +10,11 @@ process REFORMAT_REPEATLANDSCAPE {
 
     script:
     """
-    reformat_repeatlandscape.py -i $tsv -c $classification --id $id -o ${id}_TE_repeat_landscape_reformated.tsv
+    reformat_repeatlandscape.py \
+        -i ${tsv} \
+        -c ${classification} \
+        --id ${id} \
+        -o ${id}_TE_repeat_landscape_reformated.tsv
     """
 
     stub:

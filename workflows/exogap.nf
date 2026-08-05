@@ -1,8 +1,8 @@
-include { PREPROCESSING } from "$projectDir/subworkflows/local/preprocessing.nf"
-// include { REPEATS_ANNOTATION } from "$projectDir/subworkflows/local/repeats_annotation.nf"
-// include { GENES_ANNOTATION } from "$projectDir/subworkflows/local/genes_annotation/genes_annotation.nf"
-// include { NCGENES_ANNOTATION } from "$projectDir/subworkflows/local/ncgenes_annotation.nf"
-// include { POSTPROCESSING } from "$projectDir/subworkflows/local/postprocessing.nf"
+include { PREPROCESSING         } from "$projectDir/subworkflows/local/preprocessing.nf"
+include { REPEATS_ANNOTATION    } from "$projectDir/subworkflows/local/repeats_annotation.nf"
+// include { GENES_ANNOTATION      } from "$projectDir/subworkflows/local/genes_annotation/genes_annotation.nf"
+// include { NCGENES_ANNOTATION    } from "$projectDir/subworkflows/local/ncgenes_annotation.nf"
+// include { POSTPROCESSING        } from "$projectDir/subworkflows/local/postprocessing.nf"
 
 
 workflow EXOGAP {
@@ -10,16 +10,14 @@ workflow EXOGAP {
         genomes
 
     main:
-        log.info "Running workflow EXOGAP"
 
-        log.info "Running module cleaning genomes"
         PREPROCESSING(genomes)
 
-        // if (params.module_repeats == true) {
-        //     log.info "Running module repeat annotation"
-        //     REPEATS_ANNOTATION(PREPROCESSING.out.genomes, PREPROCESSING.out.newick, PREPROCESSING.out.genome_stats)
+        if (params.module_repeats == true) {
+            log.info "Running module repeat annotation"
+            REPEATS_ANNOTATION(PREPROCESSING.out.genomes, PREPROCESSING.out.newick, PREPROCESSING.out.genome_stats)
 
-        // }
+        }
 
         // if (params.module_genes == true) {
         //     log.info "Running module gene annotation"
