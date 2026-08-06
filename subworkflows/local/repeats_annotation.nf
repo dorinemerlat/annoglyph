@@ -74,25 +74,36 @@ workflow REPEATS_ANNOTATION {
 
         MERGE_POSTPROCESS_MCHELPER( tables_for_collecting )
 
-        // CD-HIT to remove redundancy
-        POSTPROCESS_MCHELPER.out.families
-            .map { id, meta, families -> ['repeats_families', families] }
-            .groupTuple(by: 0)
-            .map { id, families_list ->
-                def libraries = (families_list + [params.reference_library]).findAll { it != null }
-                def inputs = libraries.size() == 1 ? libraries.first() : libraries
+        // CD-HIT-EST to remove redundancy
+        if (params.group_consensus_sequences) {
+            all_repeat_libraries = POSTPROCESS_MCHELPER.out.families
+                .map { id, meta, families -> ['repeats_families', families] }
+                .groupTuple(by: 0)
+                .map { id, families_list ->
+                    def libraries = (families_list + [params.reference_library]).findAll { it != null }
+                    def inputs = libraries.size() == 1 ? libraries.first() : libraries
 
-                [id, inputs, 0.8, 80, 0.8]
-            }
-            .set { all_repeat_libraries }
+                    [id, inputs, 0.8, 80, 0.8]
+                }
+        } else {
+            all_repeat_libraries = POSTPROCESS_MCHELPER.out.families
+                .map { id, meta, families ->
+                    def libraries = [families, params.reference_library].findAll { it != null }
+                    def inputs = libraries.size() == 1 ? libraries.first() : libraries
+
+                    [id, inputs, 0.8, 80, 0.8]
+                }
+        }
 
         CD_HIT_EST(all_repeat_libraries)
 
-    // // //     // // ANALYZE_FAMILIES_CLUSTER(CD_HIT.out.clusters.map { id, meta, cluster -> [id, meta, cluster, 'repeat_cluster' ] } )
+        if (params.group_consensus_sequences) {
+            def grouped_library = CD_HIT_EST.out.library.map { id, library -> library }
 
-        genomes
-            .combine( CD_HIT_EST.out.library.map { id, library -> library } )
-            .set { genome_with_libraries }
+            genome_with_libraries = genomes.combine(grouped_library)
+        } else {
+            genome_with_libraries = genomes.join(CD_HIT_EST.out.library)
+        }
 
         REPEATMASKER(genome_with_libraries)
 

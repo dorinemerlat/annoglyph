@@ -1,16 +1,17 @@
 process SELECT_BUSCO_DATASET {
-    tag "${id}"
     label 'busco'
 
     input:
-    tuple val(id), val(meta), path(lineage)
+    path taxonomy
 
     output:
-    tuple val(id), val(meta), path("dataset.txt")
+    path 'busco_datasets.tsv', emit: table
 
     script:
     """
-    select_busco_dataset.py ${lineage} > dataset.txt
+    select_busco_dataset.py \
+        --taxonomy ${taxonomy} \
+        --output busco_datasets.tsv
     """
 
     stub:
@@ -18,6 +19,9 @@ process SELECT_BUSCO_DATASET {
     command -v select_busco_dataset.py >/dev/null
     command -v busco >/dev/null
 
-    echo "eukaryota_odb10" > dataset.txt
+    cat > busco_datasets.tsv <<'EOF'
+id	busco_dataset
+test-species	eukaryota_odb12
+EOF
     """
 }

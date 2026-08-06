@@ -1,13 +1,13 @@
 process REPEATMASKER {
     tag "${id}"
     label 'repeatmasker'
-
+    scratch false
     input:
     tuple val(id), val(meta), path(genome), path(library)
 
     output:
     tuple val(id), val(meta), path("genome_${id}.fa.masked"), emit: masked
-    tuple val(id), val(meta), path("genome_${id}.fa.cat.gz"), emit: cat
+    tuple val(id), val(meta), path("genome_${id}.fa.cat*"), emit: cat
     tuple val(id), val(meta), path("genome_${id}.fa.out"), emit: out
     tuple val(id), val(meta), path("genome_${id}.fa.out.gff"), emit: gff
     tuple val(id), val(meta), path("genome_${id}.fa.tbl"), emit: tbl

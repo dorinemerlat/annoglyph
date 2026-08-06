@@ -82,24 +82,19 @@ workflow PREPROCESSING {
     if (!params.busco_lineage?.toString()?.trim()) {
         log.info 'Selecting BUSCO datasets from the input taxonomy'
 
-        SELECT_BUSCO_DATASET(genomes_with_metadata)
+        SELECT_BUSCO_DATASET(GENERATE_TAXONOMY_METADATA.out.table)
 
-        SELECT_BUSCO_DATASET.out
-            .map { id, meta, datasetFile ->
-                def buscoDataset = PreprocessingUtils.readFirstLine(datasetFile)
-
-                if (!buscoDataset) {
-                    error "No BUSCO dataset was selected for '${id}'."
-                }
-
-                [id, buscoDataset]
+        SELECT_BUSCO_DATASET.out.table
+            .splitCsv(header: true, sep: '\t')
+            .map { row ->
+                [row.id, row.busco_dataset]
             }
             .set { busco_datasets }
 
         busco_datasets
             .join(REFORMAT_GENOME.out.fasta)
             .map { id, buscoDataset, meta, genome ->
-                [ id, meta + [busco_dataset: buscoDataset], genome ]
+                [id, meta + [busco_dataset: buscoDataset], genome]
             }
             .set { preprocessed_genomes }
 
@@ -107,19 +102,22 @@ workflow PREPROCESSING {
             .map { id, buscoDataset -> buscoDataset }
             .unique()
             .collect()
-            .view { datasets -> "Selected BUSCO datasets: ${datasets.join(', ')}" }
-
+            .view { datasets ->
+                "Selected BUSCO datasets: ${datasets.join(', ')}"
+            }
     } else {
         log.info "Using the provided BUSCO lineage: ${params.busco_lineage}"
 
         REFORMAT_GENOME.out.fasta
             .map { id, meta, genome ->
-                [ id, meta + [busco_dataset: params.busco_lineage], genome ]
+                [id, meta + [busco_dataset: params.busco_lineage], genome]
             }
             .set { preprocessed_genomes }
 
         busco_datasets = preprocessed_genomes
-            .map { id, meta, genome -> [id, meta.busco_dataset] }
+            .map { id, meta, genome ->
+                [id, meta.busco_dataset]
+            }
     }
 
     // Download each required BUSCO dataset once.
