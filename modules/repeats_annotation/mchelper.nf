@@ -2,7 +2,7 @@ process MCHELPER {
     tag "${id}"
     label 'mchelper'
     scratch false
-    
+
     input:
     tuple val(id), val(meta), path(genome), path(families), val(busco_dataset), path(busco_dataset_dir)
 
@@ -16,7 +16,7 @@ process MCHELPER {
 
     script:
     """
-    set -o pipefail
+    set +e
 
     MCHelper.py \
         -g ${genome} \
@@ -28,22 +28,48 @@ process MCHELPER {
         -b ${busco_dataset_dir} \
         -a F \
         2>&1 | tee ${id}_mchelper.log
+
+    mchelper_status=\${PIPESTATUS[0]}
+
+    set -e
+
+    mkdir -p \
+        classifiedModule/MSA_plots \
+        classifiedModule/MSA_seeds \
+        classifiedModule/te_aid \
+        unclassifiedModule
+
+    touch \
+        classifiedModule/denovoLibTEs_PC.classif \
+        classifiedModule/kept_seqs_classified_module.fa \
+        classifiedModule/kept_seqs_classified_module_curated.fa \
+        classifiedModule/kept_seqs_classified_module_non_curated.fa \
+        classifiedModule/fullLengthFrag.txt \
+        unclassifiedModule/kept_seqs_unclassified_module.fa \
+        sequences_with_problems.txt
+
+    if [[ \$mchelper_status -ne 0 ]] && \
+       ! grep -q "Classified module didn't find any TE" ${id}_mchelper.log; then
+        exit \$mchelper_status
+    fi
     """
 
     stub:
     """
-    mkdir -p classifiedModule/MSA_plots
-    mkdir -p classifiedModule/MSA_seeds
-    mkdir -p classifiedModule/te_aid
-    mkdir -p unclassifiedModule
+    mkdir -p \
+        classifiedModule/MSA_plots \
+        classifiedModule/MSA_seeds \
+        classifiedModule/te_aid \
+        unclassifiedModule
 
-    touch classifiedModule/denovoLibTEs_PC.classif
-    touch classifiedModule/kept_seqs_classified_module.fa
-    touch unclassifiedModule/kept_seqs_unclassified_module.fa
-    touch classifiedModule/kept_seqs_classified_module_curated.fa
-    touch classifiedModule/kept_seqs_classified_module_non_curated.fa
-    touch classifiedModule/fullLengthFrag.txt
-    touch sequences_with_problems.txt
-    touch ${id}_mchelper.log
+    touch \
+        classifiedModule/denovoLibTEs_PC.classif \
+        classifiedModule/kept_seqs_classified_module.fa \
+        classifiedModule/kept_seqs_classified_module_curated.fa \
+        classifiedModule/kept_seqs_classified_module_non_curated.fa \
+        classifiedModule/fullLengthFrag.txt \
+        unclassifiedModule/kept_seqs_unclassified_module.fa \
+        sequences_with_problems.txt \
+        ${id}_mchelper.log
     """
 }
