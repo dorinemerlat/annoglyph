@@ -6,14 +6,20 @@ module load seqkit/2.13.0
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-TEST_FULL_DIR="${SCRIPT_DIR}/test_full"
+TEST_FULL1_DIR="${SCRIPT_DIR}/test_full1"
+TEST_FULL2_DIR="${SCRIPT_DIR}/test_full2"
 TEST_MINIMAL_DIR="${SCRIPT_DIR}/test_minimal"
 DOWNLOAD_DIR="${SCRIPT_DIR}/.test_data_download"
 
-ACCESSIONS=(
+FULL1_ACCESSIONS=(
     "GCA_001747055.1"
     "GCA_037102615.1"
     "GCA_050947715.1"
+)
+
+FULL2_ACCESSIONS=(
+    "GCF_000146045.2"
+    "GCF_002079055.1"
 )
 
 MINIMAL_ACCESSION="GCA_050947715.1"
@@ -23,25 +29,37 @@ MINIMAL_SEQUENCES=(
     "CM116926.1"
 )
 
-rm -rf "${DOWNLOAD_DIR}" "${TEST_FULL_DIR}" "${TEST_MINIMAL_DIR}"
+ALL_ACCESSIONS=(
+    "${FULL1_ACCESSIONS[@]}"
+    "${FULL2_ACCESSIONS[@]}"
+)
+
+rm -rf \
+    "${DOWNLOAD_DIR}" \
+    "${TEST_FULL1_DIR}" \
+    "${TEST_FULL2_DIR}" \
+    "${TEST_MINIMAL_DIR}"
 
 mkdir -p \
     "${DOWNLOAD_DIR}" \
-    "${TEST_FULL_DIR}/genomes" \
+    "${TEST_FULL1_DIR}/genomes" \
+    "${TEST_FULL2_DIR}/genomes" \
     "${TEST_MINIMAL_DIR}/genomes"
 
 # Download genome assemblies and reference annotations.
 datasets download genome accession \
-    "${ACCESSIONS[@]}" \
+    "${ALL_ACCESSIONS[@]}" \
     --include genome,gff3,protein,cds \
     --filename "${DOWNLOAD_DIR}/genomes.zip"
 
 unzip -q "${DOWNLOAD_DIR}/genomes.zip" -d "${DOWNLOAD_DIR}"
 
-# Copy and standardize the files used by the full test dataset.
-for accession in "${ACCESSIONS[@]}"; do
-    source_dir="${DOWNLOAD_DIR}/ncbi_dataset/data/${accession}"
-    target_dir="${TEST_FULL_DIR}/genomes/${accession}"
+copy_assembly_files() {
+    local accession=$1
+    local test_dir=$2
+    local source_dir="${DOWNLOAD_DIR}/ncbi_dataset/data/${accession}"
+    local target_dir="${test_dir}/genomes/${accession}"
+    local genome
 
     mkdir -p "${target_dir}"
 
@@ -63,10 +81,20 @@ for accession in "${ACCESSIONS[@]}"; do
     cp "${source_dir}/genomic.gff" "${target_dir}/annotation.gff"
     cp "${source_dir}/protein.faa" "${target_dir}/proteins.faa"
     cp "${source_dir}/cds_from_genomic.fna" "${target_dir}/cds.fna"
+}
+
+# Create the first full test dataset with Hanseniaspora uvarum assemblies.
+for accession in "${FULL1_ACCESSIONS[@]}"; do
+    copy_assembly_files "${accession}" "${TEST_FULL1_DIR}"
+done
+
+# Create the second full test dataset with Saccharomyces species.
+for accession in "${FULL2_ACCESSIONS[@]}"; do
+    copy_assembly_files "${accession}" "${TEST_FULL2_DIR}"
 done
 
 # Extract three chromosomes for the minimal test dataset.
-minimal_source="${TEST_FULL_DIR}/genomes/${MINIMAL_ACCESSION}"
+minimal_source="${TEST_FULL1_DIR}/genomes/${MINIMAL_ACCESSION}"
 minimal_fasta="${TEST_MINIMAL_DIR}/genomes/hanseniaspora_uvarum_chr1-3.fa"
 minimal_gff="${TEST_MINIMAL_DIR}/genomes/hanseniaspora_uvarum_chr1-3.gff"
 sequence_list="${DOWNLOAD_DIR}/minimal_sequences.txt"
@@ -120,16 +148,22 @@ if [[ "${extracted_sequence_count}" -ne "${#MINIMAL_SEQUENCES[@]}" ]]; then
 fi
 
 # Validate the generated datasets.
-seqkit stats \
-    "${TEST_FULL_DIR}"/genomes/*/genome.fa \
-    "${minimal_fasta}"
+echo "Full test dataset 1:"
+seqkit stats "${TEST_FULL1_DIR}"/genomes/*/genome.fa
+
+echo
+echo "Full test dataset 2:"
+seqkit stats "${TEST_FULL2_DIR}"/genomes/*/genome.fa
+
+echo
+echo "Minimal test dataset:"
+seqkit stats "${minimal_fasta}"
 
 minimal_gene_count=$(awk -F'\t' '$3 == "gene" {count++} END {print count + 0}' "${minimal_gff}")
 
+echo
 echo "Minimal test genome contains ${extracted_sequence_count} sequences."
 echo "Minimal test annotation contains ${minimal_gene_count} genes."
 
 # Remove temporary NCBI download files.
 rm -rf "${DOWNLOAD_DIR}"
-
-echo "Test datasets created successfully."
