@@ -7,7 +7,7 @@ process CD_HIT_EST {
     label 'exogap_tools'
 
     input:
-    tuple val(id), path(input), val(sequence_identity_threshold), val(length_of_throw_away_sequence), val(alignment_coverage_for_the_shorter_sequence)
+    tuple val(id), path(inputs), val(sequence_identity_threshold), val(length_of_throw_away_sequence), val(alignment_coverage_for_the_shorter_sequence)
 
     output:
     tuple val(id), path("${id}.nr.fa"), emit: library
@@ -16,7 +16,7 @@ process CD_HIT_EST {
     script:
     """
     # merge in case there is more than one input file
-    cat ${input} > ${id}_merged_input.fa
+    cat ${inputs} > ${id}_merged_input.fa
     
 
     cd-hit-est \

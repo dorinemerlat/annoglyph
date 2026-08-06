@@ -3,7 +3,7 @@ process POSTPROCESS_MCHELPER {
     label "exogap_python"
 
     input:
-    tuple val(id), val(meta), path(table), path(rm2_families), path(mchelper_classif), path(classified_module), path(unclassified_module), path(gene_tbl), path(rrna_tbl), path(classification)
+    tuple val(id), val(meta), path(repeats_table), path(repeats_families), path(mchelper_classif), path(classified_module), path(unclassified_module), path(gene_tbl), path(rrna_tbl), path(classification)
 
     output:
     tuple val(id), val(meta), path("${id}_families_processed.tsv"), emit: table
@@ -13,8 +13,8 @@ process POSTPROCESS_MCHELPER {
     script:
     """
     postprocess_mchelper.py \
-        --table ${table} \
-        --fasta ${rm2_families} \
+        --table ${repeats_table} \
+        --fasta ${repeats_families} \
         --mchelper-classified-fasta ${classified_module} \
         --mchelper-unclassified-fasta ${unclassified_module} \
         --mchelper-classif ${mchelper_classif} \

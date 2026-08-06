@@ -1,21 +1,20 @@
-include { UNMASK_GENOME                             } from "$projectDir/modules/repeats_annotation/unmask_genome.nf"
-include { REPEATMODELER                             } from "$projectDir/modules/repeats_annotation/repeatmodeler.nf"
-include { CLEAN_REPEAT_FAMILIES                     } from "$projectDir/modules/repeats_annotation/clean_repeat_families.nf"
-include { DOWNLOAD_RRNA_EUKARYOTA                   } from "$projectDir/modules/repeats_annotation/download_rrna_eukaryota.nf"
-include { PREPARE_BUSCO_HMM                         } from "$projectDir/modules/repeats_annotation/prepare_busco_hmm.nf"
-include { MCHELPER                                  } from "$projectDir/modules/repeats_annotation/mchelper.nf"
-include { HMMSCAN                                   } from "$projectDir/modules/repeats_annotation/hmmscan.nf"
-include { POSTPROCESS_MCHELPER                      } from "$projectDir/modules/repeats_annotation/postprocess_mchelper.nf"
-include { MERGE_TABLES as MERGE_POSTPROCESS_MCHELER } from "$projectDir/modules/shared_modules/merge_tables.nf"
-include { CD_HIT_EST                                } from "$projectDir/modules/repeats_annotation/cd_hit_est.nf"
-include { REPEATMASKER                              } from "$projectDir/modules/repeats_annotation/repeatmasker.nf"
-include { REPEATMASKER_OUT_TO_GFF                   } from "$projectDir/modules/repeats_annotation/repeatmasker_out_to_gff.nf"
+include { UNMASK_GENOME                                 } from "$projectDir/modules/repeats_annotation/unmask_genome.nf"
+include { REPEATMODELER                                 } from "$projectDir/modules/repeats_annotation/repeatmodeler.nf"
+include { CLEAN_REPEAT_FAMILIES                         } from "$projectDir/modules/repeats_annotation/clean_repeat_families.nf"
+include { HMMSCAN_RRNA                                  } from "$projectDir/modules/repeats_annotation/hmmscan_rrna.nf"
+include { HMMSCAN_BUSCO_GENES                           } from "$projectDir/modules/repeats_annotation/hmmscan_busco_genes.nf"
+include { MCHELPER                                      } from "$projectDir/modules/repeats_annotation/mchelper.nf"
+include { POSTPROCESS_MCHELPER                          } from "$projectDir/modules/repeats_annotation/postprocess_mchelper.nf"
+include { MERGE_TABLES as MERGE_POSTPROCESS_MCHELPER    } from "$projectDir/modules/shared_modules/merge_tables.nf"
+include { CD_HIT_EST                                    } from "$projectDir/modules/repeats_annotation/cd_hit_est.nf"
+include { REPEATMASKER                                  } from "$projectDir/modules/repeats_annotation/repeatmasker.nf"
+include { REPEATMASKER_OUT_TO_GFF                       } from "$projectDir/modules/repeats_annotation/repeatmasker_out_to_gff.nf"
 // include { PLOT_REPEATS } from "$projectDir/modules/repeats_annotation/plot_repeats.nf"
-include { SUMMARIZE_REPEATS_BY_LEVEL                } from "$projectDir/modules/repeats_annotation/summarize_repeats_by_level.nf"
-include { MERGE_TABLES as MERGE_SUMMARIES           } from "$projectDir/modules/shared_modules/merge_tables.nf"
-include { REPEATLANDSCAPE                           } from "$projectDir/modules/repeats_annotation/repeatlandscape.nf"
-include { REFORMAT_REPEATLANDSCAPE                  } from "$projectDir/modules/repeats_annotation/reformat_repeatlandscape.nf"
-include { MERGE_TABLES as MERGE_REPEATLANDSCAPE     } from "$projectDir/modules/shared_modules/merge_tables.nf"
+include { SUMMARIZE_REPEATS_BY_LEVEL                    } from "$projectDir/modules/repeats_annotation/summarize_repeats_by_level.nf"
+include { MERGE_TABLES as MERGE_SUMMARIES               } from "$projectDir/modules/shared_modules/merge_tables.nf"
+include { REPEATLANDSCAPE                               } from "$projectDir/modules/repeats_annotation/repeatlandscape.nf"
+include { REFORMAT_REPEATLANDSCAPE                      } from "$projectDir/modules/repeats_annotation/reformat_repeatlandscape.nf"
+include { MERGE_TABLES as MERGE_REPEATLANDSCAPE         } from "$projectDir/modules/shared_modules/merge_tables.nf"
 
 workflow REPEATS_ANNOTATION {
     take:
@@ -31,89 +30,69 @@ workflow REPEATS_ANNOTATION {
         genomes = UNMASK_GENOME.out
 
         // Run RepeatModeler to identify de novo repeats
-        REPEATMODELER( genomes )
+        REPEATMODELER(genomes)
 
         // Standardize repeat family identifiers and classifications
         repeat_classification_table = file(params.repeat_classification_table, checkIfExists: true)
-        CLEAN_REPEAT_FAMILIES( REPEATMODELER.out.families, repeat_classification_table )
+        CLEAN_REPEAT_FAMILIES(REPEATMODELER.out.families, repeat_classification_table)
 
-        // Download rRNA HMM database and prepare it for hmmscan
-        DOWNLOAD_RRNA_EUKARYOTA()
-        PREPARE_BUSCO_HMM(busco_datasets)
-
+        // Run hmmscan to identify rRNA and BUSCO genes in the genomes
         CLEAN_REPEAT_FAMILIES.out.for_mchelper
-            .combine( DOWNLOAD_RRNA_EUKARYOTA.out.map { it -> [it]} )
-            .map { id, meta, families, rRNA_hmm -> [id, 'rRNA', families, rRNA_hmm] }
-            .set { hmm_rRNA_inputs }
-            
-        PREPARE_BUSCO_HMM.out
-            .flatMap { dataset_name, species_list, dataset_hmms -> species_list.collect { id -> [id, dataset_hmms] }}
-            .set { busco_hmms }
+            .map {id, meta, families -> [meta.busco_dataset, id, meta, families] }
+            .combine( busco_datasets, by: 0 )
+            .map { busco_dataset, id, meta, families, busco_dataset_dir -> [id, meta, families, busco_dataset, busco_dataset_dir] }
+            .set { repeats_families_and_busco_datasets }
 
-        CLEAN_REPEAT_FAMILIES.out.for_mchelper
-            .join(busco_hmms, by: 0)
-            .map { id, meta, families, busco_hmm -> [id, 'genes', families, busco_hmm] }
-            .set { hmm_genes_inputs }
- 
-        hmm_rRNA_inputs.concat( hmm_genes_inputs )
-            .set { all_hmmscan_inputs }
-
-        HMMSCAN( all_hmmscan_inputs )
+        HMMSCAN_BUSCO_GENES(repeats_families_and_busco_datasets)
+        HMMSCAN_RRNA(CLEAN_REPEAT_FAMILIES.out.for_mchelper)
 
         // Run MCHelper
-        CLEAN_REPEAT_FAMILIES.out.for_mchelper
+        repeats_families_and_busco_datasets
             .join(genomes, by: [0, 1])
-            .map {id, meta, families, genome -> [id, meta, families, genome] }
-            .set { all_families }
+            .map {id, meta, families, busco_dataset, busco_dataset_dir, genome -> [id, meta, genome, families, busco_dataset, busco_dataset_dir] }
+            .set { mchelper_inputs }
 
-    //     MCHELPER( all_families )
+        MCHELPER(mchelper_inputs)
 
-    //     // Combine MCHelper and hmmscan results for post-processing
-    //     HMMSCAN.out.branch {id, molecule, tblout ->
-    //         gene: molecule == 'genes'
-    //         rrna: molecule == 'rRNA'
-    //         }
-    //         .set { hmmscan_results }
+        CLEAN_REPEAT_FAMILIES.out.table
+            .join(CLEAN_REPEAT_FAMILIES.out.for_mchelper, by: [0, 1])
+            .join(MCHELPER.out.main_results, by: [0, 1])
+            .join(HMMSCAN_BUSCO_GENES.out, by: [0, 1])
+            .join(HMMSCAN_RRNA.out, by: [0, 1])
+            .map {id, meta, repeats_table, families, mchelper_classif, classified_module, unclassified_module, gene_tbl, rrna_tbl ->
+                [ id, meta, repeats_table, families, mchelper_classif, classified_module, unclassified_module, gene_tbl, rrna_tbl, repeat_classification_table ]
+            }
+            .set { postprocess_mchelper_inputs }
 
-    //     CLEAN_REPEAT_FAMILIES.out.table
-    //         .join(CLEAN_REPEAT_FAMILIES.out.for_mchelper, by: [0,1])
-    //         .join(MCHELPER.out.main_results, by: [0,1])
-    //         .join(hmmscan_results.gene, by: [0])
-    //         .join(hmmscan_results.rrna, by: [0])
-    //         .map {id, meta, table, rm2_families, mchelper_classif, classified_module, unclassified_module, gene_name, gene_tbl, rrna_name, rrna_tbl ->
-    //             [id, meta, table, rm2_families, mchelper_classif, classified_module, unclassified_module, gene_tbl, rrna_tbl, repeat_classification_table]
-    //         }
-    //         .set { postprocess_mchelper_inputs }
+        POSTPROCESS_MCHELPER( postprocess_mchelper_inputs )
 
-    //     POSTPROCESS_MCHELPER( postprocess_mchelper_inputs )
+        POSTPROCESS_MCHELPER.out.table
+            .map { id, meta, table -> ['all', table] }
+            .groupTuple(by: [0])
+            .map { id, tables -> [id, tables, "all_families.tsv"] }
+            .set { tables_for_collecting }
 
-    //     POSTPROCESS_MCHELPER.out.table
-    //         .map { id, meta, table -> ['all', table] }
-    //         .groupTuple(by: [0])
-    //         .map { id, tables -> [id, tables, "all_families.tsv"] }
-    //         .set { tables_for_collecting }
+        MERGE_POSTPROCESS_MCHELPER( tables_for_collecting )
 
-    //     MERGE_POSTPROCESS_MCHELER( tables_for_collecting )
+        // CD-HIT to remove redundancy
+        POSTPROCESS_MCHELPER.out.families
+            .map { id, meta, families -> ['repeats_families', families] }
+            .groupTuple(by: [0])
+            .map{id, families_list -> [id, families_list + params.reference_library, 0.8, 80, 0.8]}
+            .set { all_repeat_libraries }
 
-    //     // CD-HIT to remove redundancy
-    //     POSTPROCESS_MCHELPER.out.families
-    //         .map { id, meta, families -> ['repeats_families', families] }
-    //         .groupTuple(by: [0])
-    //         .map{id, families_list -> [id, families_list + params.reference_library, 0.8, 80, 0.8]}
-    //         .set { all_repeat_libraries }
-
-    //     CD_HIT_EST(all_repeat_libraries)
+        CD_HIT_EST(all_repeat_libraries)
 
     // //     // // ANALYZE_FAMILIES_CLUSTER(CD_HIT.out.clusters.map { id, meta, cluster -> [id, meta, cluster, 'repeat_cluster' ] } )
 
-    //     genomes
-    //         .combine( CD_HIT_EST.out.library.map { id, meta, library -> library } )
-    //         .set { genome_with_libraries }
+        genomes
+            .combine( CD_HIT_EST.out.library.map { id, meta, library -> library } )
+            .set { genome_with_libraries }
 
-    //     REPEATMASKER(genome_with_libraries)
+        REPEATMASKER(genome_with_libraries)
 
     //     REPEATMASKER.out.out
-    //         .combine( MERGE_POSTPROCESS_MCHELER.out )
+    //         .combine( MERGE_POSTPROCESS_MCHELPER.out )
     //         .map { id, meta, out, collect_id, collect_table -> [id, meta, out, collect_table, file("$projectDir/data/repeats_classification.csv")] }
     //         .set { repeatmasker_outputs_for_gff }
 

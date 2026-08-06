@@ -1,9 +1,10 @@
 process MCHELPER {
     tag "${id}"
     label 'mchelper'
-
+    scratch false
+    
     input:
-    tuple val(id), val(meta), path(families), path(genome), path(busco_hmm)
+    tuple val(id), val(meta), path(genome), path(families), val(busco_dataset), path(busco_dataset_dir)
 
     output:
     tuple val(id), val(meta), path("classifiedModule/denovoLibTEs_PC.classif"), path("classifiedModule/kept_seqs_classified_module.fa"), path("unclassifiedModule/kept_seqs_unclassified_module.fa"), emit: main_results
@@ -24,7 +25,7 @@ process MCHELPER {
         --input_type fasta \
         -r A \
         -t ${task.cpus} \
-        -b ${busco_hmm} \
+        -b ${busco_dataset_dir} \
         -a F \
         2>&1 | tee ${id}_mchelper.log
     """
