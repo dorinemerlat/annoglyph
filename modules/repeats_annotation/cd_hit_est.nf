@@ -2,9 +2,7 @@
 
 process CD_HIT_EST {
     tag "${id}"
-    cpus 50
-    time '1d'
-    label 'exogap_tools'
+    label 'cdhit'
 
     input:
     tuple val(id), path(inputs), val(sequence_identity_threshold), val(length_of_throw_away_sequence), val(alignment_coverage_for_the_shorter_sequence)

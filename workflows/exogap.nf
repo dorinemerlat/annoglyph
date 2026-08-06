@@ -1,8 +1,8 @@
-include { PREPROCESSING         } from "$projectDir/subworkflows/local/preprocessing.nf"
-include { REPEATS_ANNOTATION    } from "$projectDir/subworkflows/local/repeats_annotation.nf"
-// include { GENES_ANNOTATION      } from "$projectDir/subworkflows/local/genes_annotation/genes_annotation.nf"
-// include { NCGENES_ANNOTATION    } from "$projectDir/subworkflows/local/ncgenes_annotation.nf"
-// include { POSTPROCESSING        } from "$projectDir/subworkflows/local/postprocessing.nf"
+include { PREPROCESSING         } from "$projectDir/subworkflows/preprocessing.nf"
+include { REPEATS_ANNOTATION    } from "$projectDir/subworkflows/repeats_annotation.nf"
+include { GENES_ANNOTATION      } from "$projectDir/subworkflows/genes_annotation/genes_annotation.nf"
+// include { NCGENES_ANNOTATION    } from "$projectDir/subworkflows/ncgenes_annotation.nf"
+// include { POSTPROCESSING        } from "$projectDir/subworkflows/postprocessing.nf"
 
 
 workflow EXOGAP {
@@ -14,7 +14,6 @@ workflow EXOGAP {
         PREPROCESSING(genomes)
 
         if (params.module_repeats == true) {
-            log.info "Running module repeat annotation"
 
             REPEATS_ANNOTATION(
                 PREPROCESSING.out.genomes, 
@@ -24,24 +23,26 @@ workflow EXOGAP {
             )
         }
 
-        // if (params.module_genes == true) {
-        //     log.info "Running module gene annotation"
+        if (params.module_genes == true) {
 
-        //     if (params.module_repeats == true) {
-        //         REPEATS_ANNOTATION.out.masked_genomes.set { masked_genomes }
-        //         REPEATS_ANNOTATION.out.repeat_gff.set { repeat_gff }
-        //     } else {
-        //         PREPROCESSING.out.genomes.set { masked_genomes }
-        //         Channel.empty().set { repeat_gff }
-        //     }
+            if (params.module_repeats == true) {
+                masked_genomes = REPEATS_ANNOTATION.out.masked_genomes
+                repeat_gff = REPEATS_ANNOTATION.out.repeat_gff
+            } else {
+                masked_genomes = PREPROCESSING.out.genomes
+                Channel.empty().set { repeat_gff }
+            }
             
-        //     GENES_ANNOTATION(
-        //         masked_genomes, 
-        //         repeat_gff, 
-        //         PREPROCESSING.out.newick,
-        //         PREPROCESSING.out.all_genome_stats 
-        //     )
-        // }
+            GENES_ANNOTATION(
+                PREPROCESSING.out.genomes,
+                masked_genomes, 
+                repeat_gff, 
+                PREPROCESSING.out.newick,
+                PREPROCESSING.out.genome_stats, 
+                PREPROCESSING.out.taxonomy_table,
+                PREPROCESSING.out.busco_dataset_table
+            )
+        }
 
         // if (params.module_ncgenes == true) {
         //     print "Running module ncRNA annotation"
