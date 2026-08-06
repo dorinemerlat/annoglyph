@@ -1,7 +1,7 @@
 process REPEATMASKER {
     tag "${id}"
     label 'repeatmasker'
-    scratch false
+
     input:
     tuple val(id), val(meta), path(genome), path(library)
 

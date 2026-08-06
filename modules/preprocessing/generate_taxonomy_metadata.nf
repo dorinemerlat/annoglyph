@@ -1,6 +1,5 @@
 process GENERATE_TAXONOMY_METADATA {
     label 'exogap_python'
-    scratch false
 
     input:
     path taxonomy_input
