@@ -77,31 +77,51 @@ workflow REPEATS_ANNOTATION {
         // CD-HIT to remove redundancy
         POSTPROCESS_MCHELPER.out.families
             .map { id, meta, families -> ['repeats_families', families] }
-            .groupTuple(by: [0])
-            .map{id, families_list -> [id, families_list + params.reference_library, 0.8, 80, 0.8]}
+            .groupTuple(by: 0)
+            .map { id, families_list ->
+                def libraries = (families_list + [params.reference_library]).findAll { it != null }
+                def inputs = libraries.size() == 1 ? libraries.first() : libraries
+
+                [id, inputs, 0.8, 80, 0.8]
+            }
             .set { all_repeat_libraries }
 
         CD_HIT_EST(all_repeat_libraries)
 
-    // //     // // ANALYZE_FAMILIES_CLUSTER(CD_HIT.out.clusters.map { id, meta, cluster -> [id, meta, cluster, 'repeat_cluster' ] } )
+    // // //     // // ANALYZE_FAMILIES_CLUSTER(CD_HIT.out.clusters.map { id, meta, cluster -> [id, meta, cluster, 'repeat_cluster' ] } )
 
         genomes
-            .combine( CD_HIT_EST.out.library.map { id, meta, library -> library } )
+            .combine( CD_HIT_EST.out.library.map { id, library -> library } )
             .set { genome_with_libraries }
 
         REPEATMASKER(genome_with_libraries)
 
-    //     REPEATMASKER.out.out
-    //         .combine( MERGE_POSTPROCESS_MCHELPER.out )
-    //         .map { id, meta, out, collect_id, collect_table -> [id, meta, out, collect_table, file("$projectDir/data/repeats_classification.csv")] }
-    //         .set { repeatmasker_outputs_for_gff }
+        REPEATMASKER.out.out
+            .combine( MERGE_POSTPROCESS_MCHELPER.out )
+            .map { id, meta, out, collect_id, collect_table -> [id, meta, out, collect_table, repeat_classification_table] }
+            .set { repeatmasker_outputs_for_gff }
 
-    //     REPEATMASKER_OUT_TO_GFF( repeatmasker_outputs_for_gff )
+        REPEATMASKER_OUT_TO_GFF( repeatmasker_outputs_for_gff )
 
-    //     REPEATMASKER_OUT_TO_GFF.out
-    //         .map { id, meta, gff -> ['all', gff] }
-    //         .groupTuple()
-    //         .set { gff_files }
+        REPEATMASKER_OUT_TO_GFF.out
+            .map { id, meta, gff -> ['all', gff] }
+            .groupTuple()
+            .set { gff_files }
+
+        REPEATLANDSCAPE(REPEATMASKER.out.align)
+
+        REPEATLANDSCAPE.out.tsv.map { id, meta, tsv -> [id, meta, tsv, file("$projectDir/data/repeats_classification.csv")] }
+            .set { reformat_repeatlandscape_inputs }
+
+        REFORMAT_REPEATLANDSCAPE(reformat_repeatlandscape_inputs)
+
+        REFORMAT_REPEATLANDSCAPE.out
+            .map { id, meta, table -> ['all', table] }
+            .groupTuple(by: [0])
+            .map { id, tables -> [id, tables, "all_repeatlandscape.tsv"] }
+            .set { tables_for_merge_repeatlandscape }
+
+        MERGE_REPEATLANDSCAPE( tables_for_merge_repeatlandscape )
 
     //     SUMMARIZE_REPEATS_BY_LEVEL( REPEATMASKER_OUT_TO_GFF.out )
 
@@ -147,21 +167,6 @@ workflow REPEATS_ANNOTATION {
     //     //     .set { inputs_for_plot_repeats }
 
     //     // PLOT_REPEATS(inputs_for_plot_repeats)
-
-    //     REPEATLANDSCAPE(REPEATMASKER.out.align)
-
-    //     REPEATLANDSCAPE.out.tsv.map { id, meta, tsv -> [id, meta, tsv, file("$projectDir/data/repeats_classification.csv")] }
-    //         .set { reformat_repeatlandscape_inputs }
-
-    //     REFORMAT_REPEATLANDSCAPE(reformat_repeatlandscape_inputs)
-
-    //     REFORMAT_REPEATLANDSCAPE.out
-    //         .map { id, meta, table -> ['all', table] }
-    //         .groupTuple(by: [0])
-    //         .map { id, tables -> [id, tables, "all_repeatlandscape.tsv"] }
-    //         .set { tables_for_merge_repeatlandscape }
-
-    //     MERGE_REPEATLANDSCAPE( tables_for_merge_repeatlandscape )
 
     // emit:
     //     masked_genomes = REPEATMASKER.out.masked

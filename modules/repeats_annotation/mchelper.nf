@@ -1,7 +1,6 @@
 process MCHELPER {
     tag "${id}"
     label 'mchelper'
-    scratch false
 
     input:
     tuple val(id), val(meta), path(genome), path(families), val(busco_dataset), path(busco_dataset_dir)

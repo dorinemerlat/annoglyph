@@ -112,16 +112,16 @@ def parse_hmmscan_tbl(path: Path, hit_type: str) -> pd.DataFrame:
     return df
 
 
-def parse_fasta_lengths(path: Path) -> pd.DataFrame:
-    """Read MCHelper FASTA and extract id, classification, length and comment."""
-    rows = []
+def parse_fasta_lengths(path: Path) -> tuple[list[SeqRecord], pd.DataFrame]:
+    """Read MCHelper FASTA and extract sequence metadata."""
     records = list(SeqIO.parse(path, "fasta"))
+    rows = []
+
     for record in records:
         base_id, classification = record.id.split("#", 1)
-
         parts = base_id.split("_")
+
         if len(parts) > 2:
-            # Extract comment after first two components of the ID
             comment = "_".join(parts[2:])
             new_base_id = "_".join(parts[:2])
         else:
@@ -131,18 +131,28 @@ def parse_fasta_lengths(path: Path) -> pd.DataFrame:
         rows.append(
             {
                 "id": new_base_id,
-                'mchelper_id': base_id,
+                "mchelper_id": base_id,
                 "MCHelper": classification,
                 "extended_length": len(record.seq),
                 "comment": comment,
                 "replace_sequence": True,
             }
         )
-    df = pd.DataFrame(rows)
-    df = df.astype(
+
+    df = pd.DataFrame(
+        rows,
+        columns=[
+            "id",
+            "mchelper_id",
+            "MCHelper",
+            "extended_length",
+            "comment",
+            "replace_sequence",
+        ],
+    ).astype(
         {
             "id": "string",
-            'mchelper_id': "string",
+            "mchelper_id": "string",
             "MCHelper": "string",
             "extended_length": "int64",
             "comment": "string",

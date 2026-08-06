@@ -1,41 +1,34 @@
-# nf-core/exogap: Citations
+# EXOGAP: Citations
 
-## [nf-core](https://pubmed.ncbi.nlm.nih.gov/32055031/)
+## Workflow framework
 
-> Ewels PA, Peltzer A, Fillinger S, Patel H, Alneberg J, Wilm A, Garcia MU, Di Tommaso P, Nahnsen S. The nf-core framework for community-curated bioinformatics pipelines. Nat Biotechnol. 2020 Mar;38(3):276-278. doi: 10.1038/s41587-020-0439-x. PubMed PMID: 32055031.
+### [Nextflow](https://pubmed.ncbi.nlm.nih.gov/28398311/)
 
-## [Nextflow](https://pubmed.ncbi.nlm.nih.gov/28398311/)
+> Di Tommaso P, Chatzou M, Floden EW, Barja PP, Palumbo E, Notredame C. Nextflow enables reproducible computational workflows. Nature Biotechnology. 2017;35:316–319. doi: 10.1038/nbt.3820.
 
-> Di Tommaso P, Chatzou M, Floden EW, Barja PP, Palumbo E, Notredame C. Nextflow enables reproducible computational workflows. Nat Biotechnol. 2017 Apr 11;35(4):316-319. doi: 10.1038/nbt.3820. PubMed PMID: 28398311.
+### [nf-core](https://pubmed.ncbi.nlm.nih.gov/32055031/)
 
-## Pipeline tools
+> Ewels PA, Peltzer A, Fillinger S, Patel H, Alneberg J, Wilm A, Garcia MU, Di Tommaso P, Nahnsen S. The nf-core framework for community-curated bioinformatics pipelines. Nature Biotechnology. 2020;38:276–278. doi: 10.1038/s41587-020-0439-x.
 
-- [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
 
-  > Andrews, S. (2010). FastQC: A Quality Control Tool for High Throughput Sequence Data [Online]. Available online https://www.bioinformatics.babraham.ac.uk/projects/fastqc/.
+## Preprocessing
 
-- [MultiQC](https://pubmed.ncbi.nlm.nih.gov/27312411/)
+### [SeqKit](https://bioinf.shenwei.me/seqkit/)
 
-  > Ewels P, Magnusson M, Lundin S, Käller M. MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics. 2016 Oct 1;32(19):3047-8. doi: 10.1093/bioinformatics/btw354. Epub 2016 Jun 16. PubMed PMID: 27312411; PubMed Central PMCID: PMC5039924.
+> Shen W, Le S, Li Y, Hu F. SeqKit: A Cross-Platform and Ultrafast Toolkit for FASTA/Q File Manipulation. PLOS ONE. 2016;11:e0163962. doi: 10.1371/journal.pone.0163962.
 
-## Software packaging/containerisation tools
+### [ETE 3](https://etetoolkit.org/)
 
-- [Anaconda](https://anaconda.com)
+> Huerta-Cepas J, Serra F, Bork P. ETE 3: Reconstruction, Analysis, and Visualization of Phylogenomic Data. Molecular Biology and Evolution. 2016;33:1635–1638. doi: 10.1093/molbev/msw046.
 
-  > Anaconda Software Distribution. Computer software. Vers. 2-2.4.0. Anaconda, Nov. 2016. Web.
+### [BUSCO](https://busco.ezlab.org/)
 
-- [Bioconda](https://pubmed.ncbi.nlm.nih.gov/29967506/)
+BUSCO should always be cited using the BUSCO software publication together with the publication describing the corresponding OrthoDB lineage dataset.
 
-  > Grüning B, Dale R, Sjödin A, Chapman BA, Rowe J, Tomkins-Tinch CH, Valieris R, Köster J; Bioconda Team. Bioconda: sustainable and comprehensive software distribution for the life sciences. Nat Methods. 2018 Jul;15(7):475-476. doi: 10.1038/s41592-018-0046-7. PubMed PMID: 29967506.
+> Manni M, Berkeley MR, Seppey M, Simão FA, Zdobnov EM. BUSCO update: novel and streamlined workflows along with broader and deeper phylogenetic coverage for scoring of eukaryotic, prokaryotic, and viral genomes. Molecular Biology and Evolution. 2021;38:4647–4654. doi: 10.1093/molbev/msab199.
 
-- [BioContainers](https://pubmed.ncbi.nlm.nih.gov/28379341/)
+> Tegenfeldt F, Kuznetsov D, Manni M, Berkeley M, Zdobnov EM, Kriventseva EV. OrthoDB and BUSCO update: annotation of orthologs with wider sampling of genomes. Nucleic Acids Research. 2025;53(D1):D516–D522. doi: 10.1093/nar/gkae987.
 
-  > da Veiga Leprevost F, Grüning B, Aflitos SA, Röst HL, Uszkoreit J, Barsnes H, Vaudel M, Moreno P, Gatto L, Weber J, Bai M, Jimenez RC, Sachsenberg T, Pfeuffer J, Alvarez RV, Griss J, Nesvizhskii AI, Perez-Riverol Y. BioContainers: an open-source and community-driven framework for software standardization. Bioinformatics. 2017 Aug 15;33(16):2580-2582. doi: 10.1093/bioinformatics/btx192. PubMed PMID: 28379341; PubMed Central PMCID: PMC5870671.
+### [bioawk](https://github.com/lh3/bioawk)
 
-- [Docker](https://dl.acm.org/doi/10.5555/2600239.2600241)
-
-  > Merkel, D. (2014). Docker: lightweight linux containers for consistent development and deployment. Linux Journal, 2014(239), 2. doi: 10.5555/2600239.2600241.
-
-- [Singularity](https://pubmed.ncbi.nlm.nih.gov/28494014/)
-
-  > Kurtzer GM, Sochat V, Bauer MW. Singularity: Scientific containers for mobility of compute. PLoS One. 2017 May 11;12(5):e0177459. doi: 10.1371/journal.pone.0177459. eCollection 2017. PubMed PMID: 28494014; PubMed Central PMCID: PMC5426675.
+> Li H. bioawk: AWK with biological data extensions. Software available from https://github.com/lh3/bioawk.
