@@ -29,10 +29,10 @@ workflow GENES_ANNOTATION {
             STRUCTURAL_ANNOTATION.out.proteins
         )
 
-        ANNOTATION_QC_AND_CONTAMINATION_FILTERING(
-            FUNCTIONAL_ANNOTATION.out.gff,
-            STRUCTURAL_ANNOTATION.out.proteins
-        )
+        // ANNOTATION_QC_AND_CONTAMINATION_FILTERING(
+        //     FUNCTIONAL_ANNOTATION.out.gff,
+        //     STRUCTURAL_ANNOTATION.out.proteins
+        // )
 
         // ANNOTATION_COMPARISON_AND_SELECTION(
         //     ANNOTATION_QC_AND_CONTAMINATION_FILTERING.out.qc_metrics_before_filtering,

@@ -1,0 +1,113 @@
+%%metro title: EXOGAP
+%%metro style: light
+
+%%metro line: main | Main | #e63946
+%%metro line: optional | Optional | #e63946 | dashed
+
+%%metro file: genome_fasta       | Standardized assemblies
+%%metro file: reference_library  | User repeat library
+%%metro file: repeat_library     | Curated repeat library
+%%metro file: masked_fasta       | Soft-masked assemblies
+%%metro file: repeat_gff         | Repeat annotations
+%%metro file: repeat_table       | Repeat summary tables
+%%metro file: repeat_landscape   | Repeat landscapes
+%%metro file: tsv                | TSV
+%%metro file: newick             | NWK
+%%metro file: busco_json         | JSON
+%%metro dir: busco_results       | BUSCO results
+
+
+subgraph preprocessing [Preprocessing]
+    %%metro direction: TB
+
+    input_genomes[Input genomes]
+
+    fetch_taxonomy[Retrieve taxonomy metadata]
+
+    seqkit_stats[Compute assembly statistics (SeqKit)]
+
+    reformat_genome[Standardize sequence identifiers]
+
+    select_busco[Select BUSCO lineage]
+
+    busco_assembly[Assess genome completeness (BUSCO)]
+
+    input_genomes -->|main| fetch_taxonomy
+    input_genomes -->|main| seqkit_stats
+
+    seqkit_stats -->|main| tsv
+
+    fetch_taxonomy -->|main| reformat_genome
+    reformat_genome -->|main| genome_fasta
+
+    fetch_taxonomy -->|optional| select_busco
+    select_busco -->|optional| busco_assembly
+
+    reformat_genome -->|main| busco_assembly
+    busco_assembly -->|main| busco_results
+
+    fetch_taxonomy -->|optional| newick
+end
+
+subgraph repeat_annotation [Repeat annotation]
+    %%metro direction: TB
+
+    unmask_genome[Remove pre-existing soft masking]
+
+    repeatmodeler[Discover de novo repeat families (RepeatModeler)]
+
+    standardize_families[Standardize family identifiers and classifications]
+
+    screen_busco[Screen conserved genes using lineage-specific BUSCO profiles]
+
+    screen_rrna[Screen ribosomal RNA profiles]
+
+    mchelper[Curate and classify repeat families (MCHelper)]
+
+    postprocess_mchelper[Integrate curation and profile-search results]
+
+    combine_libraries[Build species-specific or shared repeat libraries]
+
+    cd_hit_est[Reduce library redundancy (CD-HIT-EST)]
+
+    repeatmasker[Annotate repeats and soft-mask assemblies (RepeatMasker)]
+
+    format_repeat_annotations[Standardize repeat annotations]
+
+    calculate_landscape[Calculate sequence-divergence landscapes]
+
+    genome_fasta -->|main| unmask_genome
+    unmask_genome -->|main| repeatmodeler
+    repeatmodeler -->|main| standardize_families
+
+    standardize_families -->|main| screen_busco
+    select_busco -->|main| screen_busco
+
+    standardize_families -->|main| screen_rrna
+
+    standardize_families -->|main| mchelper
+    select_busco -->|main| mchelper
+    unmask_genome -->|main| mchelper
+
+    standardize_families -->|main| postprocess_mchelper
+    mchelper -->|main| postprocess_mchelper
+    screen_busco -->|main| postprocess_mchelper
+    screen_rrna -->|main| postprocess_mchelper
+
+    postprocess_mchelper -->|main| repeat_library
+    postprocess_mchelper -->|main| combine_libraries
+    reference_library -->|optional| combine_libraries
+
+    combine_libraries -->|main| cd_hit_est
+    cd_hit_est -->|main| repeatmasker
+
+    unmask_genome -->|main| repeatmasker
+
+    repeatmasker -->|main| masked_fasta
+    repeatmasker -->|main| format_repeat_annotations
+    format_repeat_annotations -->|main| repeat_gff
+    format_repeat_annotations -->|main| repeat_table
+
+    repeatmasker -->|main| calculate_landscape
+    calculate_landscape -->|main| repeat_landscape
+end
