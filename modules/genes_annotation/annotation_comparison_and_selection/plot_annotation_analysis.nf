@@ -1,10 +1,9 @@
 process PLOT_ANNOTATION_ANALYSIS {
     tag "${status}"
     label 'exogap_python'
-    scratch false
 
     input:
-    tuple val(status), path(summary), path(protein_lengths), path(intron_lengths), path(newick), path(seqkit_stats)
+    tuple val(status), path(summary), path(intron_lengths), path(newick), path(seqkit_stats)
 
     output:
     tuple val(status), path("summary_plots/gene_structure_summary.{png,pdf,svg}"), emit: structure
@@ -16,8 +15,8 @@ process PLOT_ANNOTATION_ANALYSIS {
     mkdir -p "\$MPLCONFIGDIR"
 
     plot_annotation_analysis.py \
-        --summary $summary \
-        --intron-lengths $intron_lengths \
+        --summary ${summary} \
+        --intron-lengths ${intron_lengths} \
         --genome-stats ${seqkit_stats} \
         --tree ${newick} \
         --out-dir .
@@ -25,8 +24,16 @@ process PLOT_ANNOTATION_ANALYSIS {
 
     stub:
     """
+    command -v plot_annotation_analysis.py >/dev/null
+
     mkdir -p summary_plots correlation_plots
-    touch summary_plots/gene_structure_summary.{png,pdf,svg}
-    touch correlation_plots/test.{png,pdf,svg}
+
+    touch \
+        summary_plots/gene_structure_summary.png \
+        summary_plots/gene_structure_summary.pdf \
+        summary_plots/gene_structure_summary.svg \
+        correlation_plots/test.png \
+        correlation_plots/test.pdf \
+        correlation_plots/test.svg
     """
 }

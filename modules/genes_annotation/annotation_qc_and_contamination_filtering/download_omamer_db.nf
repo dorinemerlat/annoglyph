@@ -1,12 +1,14 @@
 process DOWNLOAD_OMAMER_DB {
-    tag "luca"
-
     output:
     path("LUCA.h5")
 
     script:
     """
-    wget "https://omabrowser.org/All/LUCA.h5"
+    wget \
+        --tries=3 \
+        --timeout=60 \
+        -O LUCA.h5 \
+        https://omabrowser.org/All/LUCA.h5
     """
 
     stub:

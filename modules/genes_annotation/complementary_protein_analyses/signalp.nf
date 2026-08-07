@@ -1,14 +1,13 @@
 process SIGNALP {
-    tag "${id}"
+    tag "${annotation_method}/${id}"
     scratch false
-    memory { (10 * task.attempt).GB }
 
     input:
-    tuple val(id), val(meta), path(fasta)
+    tuple val(id), val(meta), val(annotation_method), path(fasta)
 
     output:
-    tuple val(id), val(meta), path("signalp_output"), emit: outdir
-    tuple val(id), val(meta), path("${id}_signalp_summary.tsv"), emit: summary
+    tuple val(id), val(meta), val(annotation_method), path("signalp_output"), emit: outdir
+    tuple val(id), val(meta), val(annotation_method), path("${id}_${annotation_method}_signalp_summary.tsv"), emit: summary
 
     script:
     """

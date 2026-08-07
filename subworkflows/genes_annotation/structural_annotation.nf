@@ -20,7 +20,6 @@ workflow STRUCTURAL_ANNOTATION {
             protein_evidence = Channel.value(file(params.protein_set, checkIfExists: true))
         } else {
             PREPARE_PROTEIN_EVIDENCE(taxonomy_table, busco_dataset)
-            PREPARE_PROTEIN_EVIDENCE(taxonomy_table, busco_dataset)
             protein_evidence = PREPARE_PROTEIN_EVIDENCE.out.proteins
         }
 

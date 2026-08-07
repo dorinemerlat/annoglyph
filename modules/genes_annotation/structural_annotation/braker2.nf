@@ -1,7 +1,7 @@
 process BRAKER2 {
     tag "${id}"
     label 'braker'
-
+    scratch false
     input:
     tuple val(id), val(meta), path(genome), path(proteins)
 
@@ -15,6 +15,7 @@ process BRAKER2 {
     def genus = tokens.first()
     def species = tokens.size() > 1 ? tokens[1..-1].join('_') : ''
     def brakerSpecies = species ? "${genus}_${species}" : genus
+    def fungusOption = meta.lineage?.values()?.any { taxon -> taxon?.name == 'Fungi' } ? '--fungus' : ''
 
     """
     cp -r /opt/Augustus/config .
@@ -28,6 +29,7 @@ process BRAKER2 {
         --gff3 \
         --species=${brakerSpecies} \
         --threads=${task.cpus} \
+        ${fungusOption} \
         --AUGUSTUS_CONFIG_PATH="\${AUGUSTUS_CONFIG_PATH}" \
         --AUGUSTUS_BIN_PATH=/opt/Augustus/bin \
         --AUGUSTUS_SCRIPTS_PATH=/opt/Augustus/scripts \

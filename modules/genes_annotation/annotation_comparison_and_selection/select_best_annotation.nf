@@ -1,7 +1,5 @@
 process SELECT_BEST_ANNOTATION {
-    tag ""
     label 'exogap_python'
-    scratch false
 
     input:
     tuple val(status), path(summary)
@@ -11,11 +9,15 @@ process SELECT_BEST_ANNOTATION {
 
     script:
     """
-    select_best_annotations.py -i ${summary} -o best_annotations.tsv
+    select_best_annotations.py \
+        -i ${summary} \
+        -o best_annotations.tsv
     """
 
     stub:
     """
+    command -v select_best_annotations.py >/dev/null
+
     touch best_annotations.tsv 
     """
 }

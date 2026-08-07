@@ -115,6 +115,6 @@ workflow PREPROCESSING {
     taxonomy_tree = GENERATE_TAXONOMY_METADATA.out.minimal_tree
     genome_stats = MERGE_SEQKIT.out
     busco_dataset = busco_dataset
-    busco_dataset_path = DOWNLOAD_BUSCO_DATASET.out
+    busco_dataset_dir = DOWNLOAD_BUSCO_DATASET.out
     busco_assembly_results = BUSCO.out.json
 }

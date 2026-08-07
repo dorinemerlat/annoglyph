@@ -1,8 +1,6 @@
 process FILTER_OMARK_CONTAMINATIONS_IN_GFF {
     tag "${annotation_method}/${id}"
-    stageInMode 'copy'
-    memory '20 GB'
-    scratch false
+    label 'agat'
 
     input:
     tuple val(id), val(meta), val(annotation_method), path(contaminations), path(gff)
@@ -11,30 +9,35 @@ process FILTER_OMARK_CONTAMINATIONS_IN_GFF {
     tuple val(id), val(meta), val(annotation_method), path("${id}_${annotation_method}_contaminations-filtered.gff")
 
     script:
-    def contaminations_filtered = "${id}_${annotation_method}_contaminations-filtered"
     """
-    # generation of filtered gff
+    # Extract contaminant gene identifiers from the OMArk report.
     awk '
     /^-- Contaminant genes --[[:space:]]*\$/ {
-        in_section=1
-        skip_header=1
+        in_section = 1
+        skip_header = 1
         next
     }
 
     /^-- .* --[[:space:]]*\$/ && in_section {
-        in_section=0
+        in_section = 0
         next
     }
 
     in_section {
-        if (skip_header) { skip_header=0; next }
-        if (\$1 != "") print \$1
+        if (skip_header) {
+            skip_header = 0
+            next
+        }
+
+        if (\$1 != "")
+            print \$1
     }
     ' ${contaminations} | sort -u > contaminant_genes.txt
 
-
-    module load agat
-    agat_sp_filter_feature_from_kill_list.pl --gff $gff --kill_list contaminant_genes.txt --output ${contaminations_filtered}.gff
+    agat_sp_filter_feature_from_kill_list.pl \
+        --gff ${gff} \
+        --kill_list contaminant_genes.txt \
+        --output ${id}_${annotation_method}_contaminations-filtered.gff
     """
 
     stub:

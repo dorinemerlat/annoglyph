@@ -1,13 +1,9 @@
 process GALBA {
     containerOptions "--home \$HOME"
     tag "${id}"
-    cpus 25
-    time '10d'
-    memory '140 GB'
     label 'galba'
-    errorStrategy 'retry'
-    maxRetries 4
-    
+    scratch false
+
     input:
     tuple val(id), val(meta), path(genome), path(proteins)
 

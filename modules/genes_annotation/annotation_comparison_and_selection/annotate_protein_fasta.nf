@@ -10,11 +10,18 @@ process ANNOTATE_PROTEIN_FASTA {
 
     script:
     """
-    annotate_protein_fasta.py -f ${proteins} -g ${gff} -o ${id}_with_functions.faa -s "${meta.lineage.species.name}" -t "${meta.taxid}"
+    annotate_protein_fasta.py \
+        --fasta ${proteins} \
+        --gff ${gff} \
+        --output ${id}_with_functions.faa \
+        --species "${meta.lineage.species.name}" \
+        --taxid "${meta.taxid}"
     """
 
     stub:
     """
+    command -v annotate_protein_fasta.py >/dev/null
+
     touch ${id}_with_functions.faa
     """
 }
