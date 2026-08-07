@@ -12,14 +12,15 @@ workflow STRUCTURAL_ANNOTATION {
         masked_genomes
         bams
         taxonomy_table
-        busco_datasets_tsv
+        busco_dataset
 
     main:
         // Use user-provided or automatically generated protein evidence.
         if (params.protein_set) {
             protein_evidence = Channel.value(file(params.protein_set, checkIfExists: true))
         } else {
-            PREPARE_PROTEIN_EVIDENCE(taxonomy_table, busco_datasets_tsv)
+            PREPARE_PROTEIN_EVIDENCE(taxonomy_table, busco_dataset)
+            PREPARE_PROTEIN_EVIDENCE(taxonomy_table, busco_dataset)
             protein_evidence = PREPARE_PROTEIN_EVIDENCE.out.proteins
         }
 

@@ -13,36 +13,36 @@ workflow EXOGAP {
 
         PREPROCESSING(genomes)
 
+    if (params.module_repeats == true) {
+
+        REPEATS_ANNOTATION(
+            PREPROCESSING.out.preprocessed_genomes,
+            PREPROCESSING.out.taxonomy_tree,
+            PREPROCESSING.out.genome_stats,
+            PREPROCESSING.out.busco_dataset_dir
+        )
+    }
+
+    if (params.module_genes == true) {
+
         if (params.module_repeats == true) {
-
-            REPEATS_ANNOTATION(
-                PREPROCESSING.out.genomes, 
-                PREPROCESSING.out.newick, 
-                PREPROCESSING.out.genome_stats, 
-                PREPROCESSING.out.busco_datasets
-            )
+            masked_genomes = REPEATS_ANNOTATION.out.masked_genomes
+            repeat_gff = REPEATS_ANNOTATION.out.repeat_gff
+        } else {
+            masked_genomes = PREPROCESSING.out.preprocessed_genomes
+            Channel.empty().set { repeat_gff }
         }
 
-        if (params.module_genes == true) {
-
-            if (params.module_repeats == true) {
-                masked_genomes = REPEATS_ANNOTATION.out.masked_genomes
-                repeat_gff = REPEATS_ANNOTATION.out.repeat_gff
-            } else {
-                masked_genomes = PREPROCESSING.out.genomes
-                Channel.empty().set { repeat_gff }
-            }
-            
-            GENES_ANNOTATION(
-                PREPROCESSING.out.genomes,
-                masked_genomes, 
-                repeat_gff, 
-                PREPROCESSING.out.newick,
-                PREPROCESSING.out.genome_stats, 
-                PREPROCESSING.out.taxonomy_table,
-                PREPROCESSING.out.busco_dataset_table
-            )
-        }
+        GENES_ANNOTATION(
+            PREPROCESSING.out.preprocessed_genomes,
+            masked_genomes,
+            repeat_gff,
+            PREPROCESSING.out.taxonomy_table,
+            PREPROCESSING.out.taxonomy_tree,
+            PREPROCESSING.out.genome_stats,
+            PREPROCESSING.out.busco_dataset
+        )
+    }
 
         // if (params.module_ncgenes == true) {
         //     print "Running module ncRNA annotation"

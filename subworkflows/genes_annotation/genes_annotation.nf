@@ -6,28 +6,28 @@ include { FUNCTIONAL_ANNOTATION                     } from "$projectDir/subworkf
 
 workflow GENES_ANNOTATION {
     take:
-        unmasked_genomes
-        masked_genomes
-        repeats_gff
-        newick
-        genome_stats
-        taxonomy_table
-        busco_dataset_table
+    preprocessed_genomes
+    masked_genomes
+    repeat_gff
+    taxonomy_table
+    taxonomy_tree
+    genome_stats
+    busco_dataset
 
     main:
-        RNASEQ_ASSEMBLY(unmasked_genomes)
+        RNASEQ_ASSEMBLY(preprocessed_genomes)
 
         STRUCTURAL_ANNOTATION(
             masked_genomes, 
             RNASEQ_ASSEMBLY.out.bams,
-            taxonomy_table,
-            busco_dataset_table
+            taxonomy_table
+            busco_dataset
         )
 
-        FUNCTIONAL_ANNOTATION(
-            STRUCTURAL_ANNOTATION.out.gff,
-            STRUCTURAL_ANNOTATION.out.proteins
-        )
+        // FUNCTIONAL_ANNOTATION(
+        //     STRUCTURAL_ANNOTATION.out.gff,
+        //     STRUCTURAL_ANNOTATION.out.proteins
+        // )
 
         // ANNOTATION_QC_AND_CONTAMINATION_FILTERING(
         //     FUNCTIONAL_ANNOTATION.out.gff,

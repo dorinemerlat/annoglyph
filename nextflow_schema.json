@@ -147,8 +147,24 @@
                     ],
                     "format": "file-path",
                     "exists": true,
-                    "description": "Protein evidence set used for gene prediction.",
+                    "description": "Protein evidence set used for gene prediction. When null, EXOGAP automatically retrieves OrthoDB and UniProtKB protein evidence.",
                     "default": null
+                },
+                "protein_evidence_min_sequences": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Minimum number of UniProtKB proteins required for automatic taxonomic clade selection. EXOGAP starts from the most specific taxon shared by all input species and moves toward broader ancestral taxa until this threshold is reached.",
+                    "default": 100000
+                },
+                "protein_evidence_max_sequences": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum total number of protein sequences retained in the automatically generated evidence set. Sequences are split approximately equally between OrthoDB and UniProtKB. When null, all downloaded sequences are retained.",
+                    "default": null,
+                    "hidden": true
                 },
                 "blast_db": {
                     "type": [
@@ -175,23 +191,23 @@
                     "description": "RNA-seq alignment strategy used for gene annotation.",
                     "default": "both"
                 },
-                "sra_run_limit": { 
-                    "type": [ 
-                        "integer", 
-                        "null" 
-                    ], 
-                    "minimum": 1, 
-                    "description": "Maximum number of SRA runs selected for download and STAR alignment. When null, all eligible runs are retained.", 
-                    "default": null 
-                }, 
+                "sra_run_limit": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum number of SRA runs selected for download and STAR alignment. When null, all eligible runs are retained.",
+                    "default": null
+                },
                 "sra_run_max_bases": {
-                     "type": [ 
-                        "integer", 
-                        "null" 
-                    ], 
-                    "minimum": 1, 
-                    "description": "Maximum number of bases allowed per SRA run selected for download and STAR alignment. When null, no per-run size limit is applied.", 
-                    "default": null 
+                    "type": [
+                        "integer",
+                        "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum number of bases allowed per SRA run selected for download and STAR alignment. When null, no per-run size limit is applied.",
+                    "default": null
                 },
                 "tool_only_protein_evidence": {
                     "type": "string",
@@ -202,16 +218,6 @@
                     ],
                     "description": "Gene prediction tool used when only protein evidence is available.",
                     "default": "both"
-                },
-                "protein_evidence_max_sequences": {
-                    "type": [
-                        "integer",
-                        "null"
-                    ],
-                    "minimum": 1,
-                    "description": "Maximum number of protein sequences retained from each evidence source. Intended mainly for testing. When null, all sequences are retained.",
-                    "default": null,
-                    "hidden": true
                 }
             }
         }
