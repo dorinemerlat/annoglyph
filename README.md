@@ -193,7 +193,7 @@ metadata, genetic codes and optional local NCBI validation.
 ## Credits
 
 Originally written by Dorine Merlat (dorine.merlat@etu.unistra.fr).
-Thanks to Arnaud Kress and Odile Lecompte for assistance.
+Thanks to Odile Lecompte, Arnaud Kress and Yannis Nevers for their assistance.
 
 ## Contributions and Support
 
