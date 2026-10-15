@@ -446,7 +446,7 @@ def parse_gff(files):
             "percent_genes_product_and_go": n_product_and_go / n_genes * 100,
         })
 
-    return pd.DataFrame(rows), pd.DataFrame(intron_lengths)
+    return pd.DataFrame(rows), pd.DataFrame(intron_lengths, columns=["genome_id", "method_annotation", "transcript_id", "intron_length"])
 
 
 # -------------------------
@@ -529,6 +529,8 @@ def main():
         help="Base name for output files",
     )
 
+    parser.add_argument("--genome-id")
+    parser.add_argument("--annotation-method")
     args = parser.parse_args()
 
     if not any([args.proteins, args.busco, args.omark, args.gff]):
@@ -559,6 +561,14 @@ def main():
     if gff_files:
         df_gff, df_intron_lengths = parse_gff(gff_files)
 
+    # Explicit metadata avoids relying on underscores in staged filenames.
+    for table in [df_gene_number, df_protein_lengths, df_busco, df_omark, df_gff, df_intron_lengths]:
+        if not table.empty:
+            if args.genome_id:
+                table["genome_id"] = args.genome_id
+            if args.annotation_method:
+                table["method_annotation"] = args.annotation_method
+
     summary = merge_summary_tables([
         df_gene_number,
         df_busco,
@@ -568,11 +578,9 @@ def main():
 
     save_tsv(summary, Path(str(args.out) + "_annotation_summary.tsv"))
 
-    if not df_protein_lengths.empty:
-        save_tsv(df_protein_lengths, Path(str(args.out) + "_protein_lengths.tsv"))
+    save_tsv(df_protein_lengths, Path(str(args.out) + "_protein_lengths.tsv"))
 
-    if not df_intron_lengths.empty:
-        save_tsv(df_intron_lengths, Path(str(args.out) + "_intron_lengths.tsv"))
+    save_tsv(df_intron_lengths, Path(str(args.out) + "_intron_lengths.tsv"))
 
 if __name__ == "__main__":
     main()

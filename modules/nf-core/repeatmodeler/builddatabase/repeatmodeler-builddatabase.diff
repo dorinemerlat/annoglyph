@@ -1,0 +1,49 @@
+--- a/modules/nf-core/repeatmodeler/builddatabase/main.nf
++++ b/modules/nf-core/repeatmodeler/builddatabase/main.nf
+@@ -12,17 +12,20 @@
+ 
+     output:
+     tuple val(meta), path("${prefix}.*")    , emit: db
++    tuple val(meta), path("${prefix}_BuildDatabase.log"), emit: log
+     path "versions.yml"                     , emit: versions
+ 
+     when:
+     task.ext.when == null || task.ext.when
+ 
+     script:
++    def args = task.ext.args ?: ''
+     prefix = task.ext.prefix ?: "${meta.id}"
+     """
+     BuildDatabase \\
+         -name $prefix \\
+-        $fasta
++        $args \\
++        $fasta 2>&1 | tee ${prefix}_BuildDatabase.log
+ 
+     cat <<-END_VERSIONS > versions.yml
+     "${task.process}":
+@@ -41,6 +44,7 @@
+     touch ${prefix}.nog
+     touch ${prefix}.nsq
+     touch ${prefix}.translation
++    touch ${prefix}_BuildDatabase.log
+ 
+     cat <<-END_VERSIONS > versions.yml
+     "${task.process}":
+--- a/modules/nf-core/repeatmodeler/builddatabase/meta.yml
++++ b/modules/nf-core/repeatmodeler/builddatabase/meta.yml
+@@ -27,6 +27,14 @@
+         pattern: "*.{fasta,fsa,fa}"
+         ontologies: []
+ output:
++  log:
++    - - meta:
++          type: map
++          description: Sample metadata containing id.
++      - "${prefix}_BuildDatabase.log":
++          type: file
++          description: Captured BuildDatabase command output.
++          pattern: "${prefix}_BuildDatabase.log"
+   db:
+     - - meta:
+           type: map

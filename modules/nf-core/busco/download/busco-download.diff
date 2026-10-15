@@ -1,0 +1,68 @@
+--- a/modules/nf-core/busco/download/main.nf
++++ b/modules/nf-core/busco/download/main.nf
+@@ -12,7 +12,7 @@
+ 
+     output:
+     path "busco_downloads", emit: download_dir
+-    tuple val("${task.process}"), val('busco'), eval("busco --version 2> /dev/null | sed 's/BUSCO //g'"), emit: versions_busco, topic: versions
++    path "versions.yml", emit: versions
+ 
+     when:
+     task.ext.when == null || task.ext.when
+@@ -23,10 +23,20 @@
+     busco \\
+         --download ${lineage} \\
+         ${args}
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        busco: \$(busco --version 2> /dev/null | sed 's/BUSCO //g')
++    END_VERSIONS
+     """
+ 
+     stub:
+     """
+     mkdir busco_downloads
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        busco: \$(busco --version 2> /dev/null | sed 's/BUSCO //g')
++    END_VERSIONS
+     """
+ }
+--- a/modules/nf-core/busco/download/meta.yml
++++ b/modules/nf-core/busco/download/meta.yml
+@@ -25,27 +25,13 @@
+         description: Directory with busco database
+         pattern: "busco_downloads"
+         ontologies: []
+-  versions_busco:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - busco:
+-          type: string
+-          description: The name of the tool
+-      - busco --version 2> /dev/null | sed 's/BUSCO //g':
+-          type: eval
+-          description: The expression to obtain the version of the tool
+-topics:
+   versions:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - busco:
+-          type: string
+-          description: The name of the tool
+-      - busco --version 2> /dev/null | sed 's/BUSCO //g':
+-          type: eval
+-          description: The expression to obtain the version of the tool
++    - versions.yml:
++        type: file
++        description: Software versions recorded for storeDir-compatible caching.
++        pattern: "versions.yml"
++        ontologies:
++          - edam: http://edamontology.org/format_3750 # YAML
+ authors:
+   - "@zachary-foster"
+ maintainers:

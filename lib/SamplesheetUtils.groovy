@@ -10,14 +10,14 @@ class SamplesheetUtils {
      * Build the genome input channel from validated samplesheet entries.
      *
      * Output:
-     *   [genome_id, meta, fasta]
+     *   [meta, fasta], with the genome identifier stored in meta.id.
      */
     static def buildGenomesChannel(samplesheet, log, fileFunc) {
         return Channel
             .fromList(samplesheet)
             .map { unformattedMeta, fastaPath ->
                 def meta = normalizeMetadata(unformattedMeta)
-                def genomeId = formatGenomeId(meta.name)
+                meta.id = formatGenomeId(meta.name)
                 def fasta = fileFunc(fastaPath, [checkIfExists: true])
 
                 meta.taxid = meta.taxid.toString()
@@ -25,7 +25,7 @@ class SamplesheetUtils {
                 parseRnaseqDirectory(meta, log, fileFunc)
                 parseSraAccessions(meta)
 
-                [genomeId, meta, fasta]
+                [meta, fasta]
             }
     }
 

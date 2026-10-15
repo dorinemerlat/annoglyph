@@ -1,10 +1,10 @@
-include { GENERATE_RUNLIST    } from "$projectDir/modules/genes_annotation/rnaseq_assembly/generate_runlist.nf"
-include { DOWNLOAD_SRA        } from "$projectDir/modules/genes_annotation/rnaseq_assembly/download_sra.nf"
-include { STAR_SINGLE         } from "$projectDir/modules/genes_annotation/rnaseq_assembly/star_single.nf"
-include { STAR_PAIRED         } from "$projectDir/modules/genes_annotation/rnaseq_assembly/star_paired.nf"
-include { MERGE_BAM           } from "$projectDir/modules/genes_annotation/rnaseq_assembly/merge_bam.nf"
-include { VARUS               } from "$projectDir/modules/genes_annotation/rnaseq_assembly/varus.nf"
-include { SAMTOOLS_READ_COUNT } from "$projectDir/modules/genes_annotation/rnaseq_assembly/samtools_read_count.nf"
+include { GENERATE_RUNLIST    } from "$projectDir/modules/local/genes_annotation/rnaseq_assembly/generate_runlist.nf"
+include { DOWNLOAD_SRA        } from "$projectDir/modules/local/genes_annotation/rnaseq_assembly/download_sra.nf"
+include { STAR_SINGLE         } from "$projectDir/modules/local/genes_annotation/rnaseq_assembly/star_single.nf"
+include { STAR_PAIRED         } from "$projectDir/modules/local/genes_annotation/rnaseq_assembly/star_paired.nf"
+include { SAMTOOLS_MERGE } from "$projectDir/modules/nf-core/samtools/merge/main.nf"
+include { VARUS               } from "$projectDir/modules/local/genes_annotation/rnaseq_assembly/varus.nf"
+include { SAMTOOLS_READ_COUNT } from "$projectDir/modules/local/genes_annotation/rnaseq_assembly/samtools_read_count.nf"
 
 
 workflow RNASEQ_ASSEMBLY {
@@ -14,33 +14,33 @@ workflow RNASEQ_ASSEMBLY {
     main:
         // Generate one SRA runlist per genome.
         genomes
-            .map { id, meta, genome -> [id, meta] }
+            .map { meta, genome -> meta }
             .set { genomes_without_fasta }
 
         GENERATE_RUNLIST(genomes_without_fasta)
 
         // Keep filtered runlists containing at least one SRA accession.
         GENERATE_RUNLIST.out.star
-            .filter { id, meta, runlist ->
+            .filter { meta, runlist ->
                 runlist.readLines().size() > 1
             }
             .set { star_runlists }
 
         // Keep complete runlists containing at least one SRA accession.
         GENERATE_RUNLIST.out.varus
-            .filter { id, meta, runlist ->
+            .filter { meta, runlist ->
                 runlist.readLines().size() > 1
             }
             .set { varus_runlists }
 
         // Extract SRA accessions selected for STAR.
         star_runlists
-            .flatMap { id, meta, runlist ->
+            .flatMap { meta, runlist ->
                 runlist.readLines()
                     .drop(1)
                     .findAll { it.trim() }
                     .collect { line ->
-                        [id, line.split(/\s+/)[0]]
+                        [meta, line.split(/\s+/)[0]]
                     }
             }
             .set { sra_ids }
@@ -52,29 +52,29 @@ workflow RNASEQ_ASSEMBLY {
 
             // Extract local single-end reads.
             genomes
-                .flatMap { id, meta, genome ->
+                .flatMap { meta, genome ->
                     def singleFiles = meta['RNASeq-file']?.single_end ?: []
 
                     singleFiles.collect { fastq ->
-                        [id, fastq]
+                        [meta, fastq]
                     }
                 }
                 .set { rnaseq_single_files }
 
             // Extract local paired-end reads.
             genomes
-                .flatMap { id, meta, genome ->
+                .flatMap { meta, genome ->
                     def pairedFiles = meta['RNASeq-file']?.paired_end ?: []
 
                     pairedFiles.collect { pair ->
-                        [id, pair]
+                        [meta, pair]
                     }
                 }
                 .set { rnaseq_paired_files }
 
             // Separate downloaded single-end and paired-end reads.
             DOWNLOAD_SRA.out
-                .branch { id, sraFiles ->
+                .branch { meta, sraFiles ->
                     def files = sraFiles instanceof List ? sraFiles : [sraFiles]
 
                     single: files.size() == 1
@@ -87,8 +87,8 @@ workflow RNASEQ_ASSEMBLY {
                 .concat(rnaseq_single_files)
                 .groupTuple(by: 0)
                 .join(genomes, by: 0)
-                .map { id, fastqs, meta, genome ->
-                    [id, meta, genome, fastqs.flatten()]
+                .map { meta, fastqs, genome ->
+                    [meta, genome, fastqs.flatten()]
                 }
                 .set { star_single_inputs }
 
@@ -97,8 +97,8 @@ workflow RNASEQ_ASSEMBLY {
                 .concat(rnaseq_paired_files)
                 .groupTuple(by: 0)
                 .join(genomes, by: 0)
-                .map { id, fastqs, meta, genome ->
-                    [id, meta, genome, fastqs.flatten()]
+                .map { meta, fastqs, genome ->
+                    [meta, genome, fastqs.flatten()]
                 }
                 .set { star_paired_inputs }
 
@@ -108,25 +108,25 @@ workflow RNASEQ_ASSEMBLY {
             // Merge STAR BAM files when several read sets are available.
             STAR_SINGLE.out.bam
                 .concat(STAR_PAIRED.out.bam)
-                .groupTuple(by: [0, 1])
-                .branch { id, meta, bams ->
+                .groupTuple(by: 0)
+                .branch { meta, bams ->
                     multiple: bams.size() > 1
                     single: bams.size() == 1
                 }
                 .set { star_bam_groups }
 
-            MERGE_BAM(star_bam_groups.multiple)
+            SAMTOOLS_MERGE(star_bam_groups.multiple.map { meta, bams -> [meta, bams, []] }, Channel.value([[:], [], [], []]), '')
 
             star_bam_groups.single
-                .map { id, meta, bams ->
-                    [id, meta, bams.first()]
+                .map { meta, bams ->
+                    [meta, bams.first()]
                 }
                 .set { single_star_bams }
 
-            MERGE_BAM.out
+            SAMTOOLS_MERGE.out.bam
                 .concat(single_star_bams)
-                .map { id, meta, bam ->
-                    [id, meta, 'star', bam]
+                .map { meta, bam ->
+                    [meta + [rnaseq_aligner: 'star'], bam]
                 }
                 .set { all_star_bams }
         } else {
@@ -138,14 +138,14 @@ workflow RNASEQ_ASSEMBLY {
 
             // Associate each genome with its SRA runlist.
             genomes
-                .join(varus_runlists, by: [0, 1])
+                .join(varus_runlists, by: 0)
                 .set { genomes_for_varus }
 
             VARUS(genomes_for_varus)
 
             VARUS.out.bam
-                .map { id, meta, bam ->
-                    [id, meta, 'varus', bam]
+                .map { meta, bam ->
+                    [meta + [rnaseq_aligner: 'varus'], bam]
                 }
                 .set { all_varus_bams }
         } else {
@@ -161,7 +161,7 @@ workflow RNASEQ_ASSEMBLY {
 
         // Keep BAM files with more than one million mapped reads.
         SAMTOOLS_READ_COUNT.out
-            .branch { id, meta, aligner, readCountFile ->
+            .branch { meta, readCountFile ->
                 def readCount = readCountFile.readLines().first().toInteger()
 
                 good_quality: readCount > 1000000
@@ -171,12 +171,13 @@ workflow RNASEQ_ASSEMBLY {
 
         // Recover BAM files passing the read-count threshold.
         read_count_results.good_quality
-            .join(all_bams, by: [0, 1, 2])
-            .map { id, meta, aligner, readCountFile, bam ->
-                [id, meta, aligner, bam]
+            .join(all_bams, by: 0)
+            .map { meta, readCountFile, bam ->
+                [meta, bam]
             }
             .set { bams_for_gene_annotation }
 
     emit:
+    versions = params.rna_seq_aligner in ['star', 'both'] ? SAMTOOLS_MERGE.out.versions : Channel.empty()
         bams = bams_for_gene_annotation
 }

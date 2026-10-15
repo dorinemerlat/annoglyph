@@ -1,0 +1,152 @@
+--- a/modules/nf-core/repeatmasker/repeatmasker/main.nf
++++ b/modules/nf-core/repeatmasker/repeatmasker/main.nf
+@@ -8,15 +8,17 @@
+         'quay.io/biocontainers/repeatmasker:4.1.5--pl5321hdfd78af_0' }"
+ 
+     input:
+-    tuple val(meta), path(fasta)
+-    path(lib)
++    tuple val(meta), path(fasta), path(lib)
+ 
+     output:
+     tuple val(meta), path("${prefix}.masked"), emit: masked
+     tuple val(meta), path("${prefix}.out")   , emit: out
+     tuple val(meta), path("${prefix}.tbl")   , emit: tbl
+     tuple val(meta), path("${prefix}.gff")   , emit: gff, optional: true
+-    tuple val("${task.process}"), val('repeatmasker'), eval("RepeatMasker -v | sed 's/RepeatMasker version //1'"), topic: versions, emit: versions_repeatmasker
++    tuple val(meta), path("${prefix}.align"), emit: align
++    tuple val(meta), path("${prefix}.cat*"), emit: cat, optional: true
++    tuple val(meta), path("${meta.id}_repeatmasker.log"), emit: log
++    path "versions.yml", emit: versions
+ 
+     when:
+     task.ext.when == null || task.ext.when
+@@ -26,7 +28,7 @@
+     prefix      = task.ext.prefix   ?: "${meta.id}"
+     def lib_arg = lib               ? "-lib $lib"   : ''
+ 
+-    def out_fasta    = fasta.getBaseName(fasta.name.endsWith('.gz') ? 1 : 0)
++    def out_fasta    = fasta.name.endsWith('.gz') ? fasta.name[0..-4] : fasta.name
+     def fasta_gz_cmd = fasta.name.endsWith('.gz') ? "gunzip -c ${fasta} > ${out_fasta}" : ""
+ 
+     """
+@@ -36,12 +38,23 @@
+         -pa ${task.cpus} \\
+         -dir ${prefix} \\
+         ${args} \\
+-        ${out_fasta}
++        ${out_fasta} 2>&1 | tee ${meta.id}_repeatmasker.log
+ 
++    mv $prefix/${out_fasta}.align ${prefix}.align
++    for cat_file in $prefix/${out_fasta}.cat*; do
++        [ -e "\${cat_file}" ] || continue
++        cat_suffix=\${cat_file##*.cat}
++        mv "\${cat_file}" "${prefix}.cat\${cat_suffix}"
++    done
+     mv $prefix/${out_fasta}.masked  ${prefix}.masked
+     mv $prefix/${out_fasta}.out     ${prefix}.out
+     mv $prefix/${out_fasta}.tbl     ${prefix}.tbl
+     mv $prefix/${out_fasta}.out.gff ${prefix}.gff       || echo "GFF is not produced"
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        repeatmasker: \$(RepeatMasker -v | sed 's/RepeatMasker version //1')
++    END_VERSIONS
+     """
+ 
+     stub:
+@@ -53,6 +66,14 @@
+     touch ${prefix}.masked
+     touch ${prefix}.out
+     touch ${prefix}.tbl
++    touch ${prefix}.align
++    touch ${prefix}.cat.gz
++    touch ${meta.id}_repeatmasker.log
+     $touch_gff
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        repeatmasker: \$(RepeatMasker -v | sed 's/RepeatMasker version //1')
++    END_VERSIONS
+     """
+ }
+--- a/modules/nf-core/repeatmasker/repeatmasker/meta.yml
++++ b/modules/nf-core/repeatmasker/repeatmasker/meta.yml
+@@ -30,13 +30,37 @@
+         pattern: "*.{fasta,fa,fas,fsa,faa,fna}"
+         ontologies:
+           - edam: http://edamontology.org/format_1929 # FASTA
+-  - lib:
+-      type: file
+-      description: Custom library (e.g. from another species)
+-      pattern: "*.{fasta,fa,fas,fsa,faa,fna}"
+-      ontologies:
+-        - edam: http://edamontology.org/format_1929 # FASTA
++    - lib:
++        type: file
++        description: Custom library (e.g. from another species)
++        pattern: "*.{fasta,fa,fas,fsa,faa,fna}"
++        ontologies:
++          - edam: http://edamontology.org/format_1929 # FASTA
+ output:
++  align:
++    - - meta:
++          type: map
++          description: Sample metadata containing id.
++      - "${prefix}.align":
++          type: file
++          description: Alignments for repeat landscapes.
++          pattern: "${prefix}.align"
++  cat:
++    - - meta:
++          type: map
++          description: Sample metadata containing id.
++      - "${prefix}.cat*":
++          type: file
++          description: Intermediate repeat annotations.
++          pattern: "${prefix}.cat*"
++  log:
++    - - meta:
++          type: map
++          description: Sample metadata containing id.
++      - "${meta.id}_repeatmasker.log":
++          type: file
++          description: Captured RepeatMasker command output.
++          pattern: "${meta.id}_repeatmasker.log"
+   masked:
+     - - meta:
+           type: file
+@@ -82,29 +106,11 @@
+           pattern: "*.{gff}"
+           ontologies:
+             - edam: http://edamontology.org/format_2305
+-  versions_repeatmasker:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - repeatmasker:
+-          type: string
+-          description: The name of the tool
+-      - RepeatMasker -v | sed 's/RepeatMasker version //1':
+-          type: eval
+-          description: The expression to obtain the version of the tool
+-
+-topics:
+   versions:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - repeatmasker:
+-          type: string
+-          description: The name of the tool
+-      - RepeatMasker -v | sed 's/RepeatMasker version //1':
+-          type: eval
+-          description: The expression to obtain the version of the tool
+-
++    - versions.yml:
++        type: file
++        description: Software versions for storeDir-compatible caching.
++        pattern: "versions.yml"
+ authors:
+   - "@kherronism"
+   - "@gallvp"

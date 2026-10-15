@@ -13,17 +13,22 @@
                 "description": "Unique genome name used throughout the pipeline.",
                 "errorMessage": "Genome name must contain only letters, numbers, spaces, dots (.), underscores (_) and hyphens (-).",
                 "unique": true,
-                "meta": ["name"]
+                "meta": [
+                    "name"
+                ]
             },
-
             "taxid": {
-                "type": ["string", "integer"],
+                "type": [
+                    "string",
+                    "integer"
+                ],
                 "pattern": "^[0-9]+$",
                 "description": "NCBI Taxonomy identifier of the species.",
                 "errorMessage": "TaxID must contain only digits.",
-                "meta": ["taxid"]
+                "meta": [
+                    "taxid"
+                ]
             },
-
             "fasta": {
                 "type": "string",
                 "format": "file-path",
@@ -32,44 +37,83 @@
                 "errorMessage": "FASTA must be the path to an existing genome assembly file.",
                 "unique": true
             },
-
             "RNASeq-dir": {
-                "type": ["string", "null"],
+                "type": [
+                    "string",
+                    "null"
+                ],
                 "pattern": "^$|^\\S+$",
                 "format": "directory-path",
                 "exists": true,
                 "description": "Optional directory containing RNA-seq FASTQ files.",
                 "errorMessage": "RNASeq-dir must be the path to an existing directory when provided.",
-                "meta": ["RNASeq-dir"]
+                "meta": [
+                    "RNASeq-dir"
+                ]
             },
-
             "SRA": {
                 "type": "string",
                 "pattern": "^$|^(SRR|ERR|DRR)[0-9]+$|^[^\\n]+$",
                 "description": "Optional SRA accession(s), separated by ';' if multiple.",
                 "errorMessage": "SRA must be empty or contain one or more valid SRA accessions (SRR, ERR or DRR), separated by ';'.",
-                "meta": ["SRA"]
+                "meta": [
+                    "SRA"
+                ]
             },
-
             "repeats_set": {
-                "type": ["string", "null"],
+                "type": [
+                    "string",
+                    "null"
+                ],
                 "format": "file-path",
                 "exists": true,
                 "pattern": "^$|^\\S+\\.f(ast|n)?a$",
                 "description": "Optional repeat library in FASTA format.",
                 "errorMessage": "repeats_set must be the path to an existing FASTA file (.fa, .fna or .fasta).",
                 "unique": true,
-                "meta": ["repeat_set"]
+                "meta": [
+                    "repeat_set"
+                ]
             },
-
             "mnemonic": {
-                "type": ["string", "null"],
+                "type": [
+                    "string",
+                    "null"
+                ],
                 "pattern": "^$|^[A-Za-z0-9]+$",
                 "description": "Optional short species identifier used in comparative analyses.",
                 "errorMessage": "Mnemonic must contain only letters and numbers, with no spaces or special characters.",
-                "meta": ["mnemonic"]
+                "meta": [
+                    "mnemonic"
+                ]
+            },
+            "translation_table": {
+                "type": [
+                    "integer",
+                    "null"
+                ],
+                "minimum": 1,
+                "description": "Nuclear genetic code for this genome, overriding the global default.",
+                "meta": [
+                    "translation_table"
+                ]
+            },
+            "locus_tag_prefix": {
+                "type": [
+                    "string",
+                    "null"
+                ],
+                "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+                "description": "Registered locus-tag prefix for this genome.",
+                "meta": [
+                    "locus_tag_prefix"
+                ]
             }
         },
-        "required": ["name", "taxid", "fasta"]
+        "required": [
+            "name",
+            "taxid",
+            "fasta"
+        ]
     }
 }

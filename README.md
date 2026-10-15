@@ -10,8 +10,8 @@ EXOGAP (EXotic Organism Genome Annotation Pipeline) is a Nextflow DSL2 workflow 
 
 Main modules:
 - Repetitive element annotation: RepeatModeler, RepeatMasker (uses FamDB).
-- Protein-coding gene annotation: MAKER2, AUGUSTUS, SNAP, BLAST, InterProScan.
-- Non-coding gene annotation: tRNAscan-SE, RNAmmer, Barrnap, Infernal, SnoScan.
+- Protein-coding gene annotation: BRAKER2, BRAKER3, GALBA, STAR, BLASTP, InterProScan, eggNOG-mapper; BUSCO and OMArk quality control with automatic prediction selection.
+- Non-coding gene annotation: tRNAscan-SE, Barrnap and Infernal; overlapping tRNA/rRNA predictions are reconciled before export.
 
 ## Installation
 
@@ -86,8 +86,110 @@ Run the pipeline (example):
 nextflow run main.nf -profile <singularity|docker|...> --config nextflow.config
 ```
 
+## Integration tests
+
+Three biological groups are provided: **Hanseniaspora** (5 yeast species),
+**Pieris** (3 butterfly species) and **Utricularia** (3 plant species).
+See the [assembly statistics table](test/assembly_stats.md) for species,
+assembly accessions, sizes, sequence counts, N50 and GC content
+([TSV](test/assembly_stats.tsv)). These are three groups, covering 11 assemblies.
+
+| Group | Assemblies | Minimal proteins | Full proteins |
+| --- | ---: | ---: | ---: |
+| Hanseniaspora | 5 | 2,000 | 21,786 |
+| Pieris | 3 | 2,000 | 56,761 |
+| Utricularia | 3 | 2,000 | 74,162 |
+
+Counts refer to the currently installed packages and can change after downloading
+new annotations.
+
+Each group has two modes. Both annotate the **complete assemblies** and enable
+repeats, protein-coding genes, non-coding genes and comparative reports.
+
+| Evidence | `minimal` | `full` |
+| --- | --- | --- |
+| Proteins | 2,000 distinct proteins, 90–5,000 amino acids | All distinct usable proteins from the downloaded annotations, without a length limit |
+| RNA-seq | STAR: at most 3 eligible SRA runs per species, each at most 1 billion bases | STAR: all eligible runs discovered for each species, without these two limits |
+| Results/cache | Separate `minimal/` directories | Separate `full/` directories |
+
+The RNA-seq size limit **excludes larger runs**; it does not truncate or
+subsample reads. No run satisfying the filters means no SRA RNA-seq evidence
+for that species. The provided samplesheets have no local RNA-seq files;
+limits do not subsample local FASTQs if you add them. Both modes use STAR so
+that the minimal RNA-seq limits apply throughout the test (VARUS uses a
+separate adaptive sampling strategy).
+
+Prepare evidence and regenerate statistics from already installed assemblies:
+
+```bash
+python3 test/prepare_test_sets.py
+```
+
+For a fresh download, see the [installation instructions](test/README.md).
+The download script recreates dataset directories; use the preparation command
+above to retain existing results and caches.
+
+From the project root, load your Nextflow/Singularity environment. On IFB:
+
+```bash
+source /etc/profile.d/modules.sh
+module load nextflow/25.10.2 singularity
+export NXF_SINGULARITY_CACHEDIR="${NXF_SINGULARITY_CACHEDIR:-$PWD/.singularity}"
+export APPTAINER_TMPDIR="${APPTAINER_TMPDIR:-$PWD/.apptainer_tmp}"
+export SINGULARITY_TMPDIR="$APPTAINER_TMPDIR"
+export TMPDIR="$APPTAINER_TMPDIR"
+mkdir -p "$APPTAINER_TMPDIR"
+```
+
+Run one command for the desired group and mode:
+
+```bash
+# Hanseniaspora
+nextflow run main.nf -profile singularity,test_hanseniaspora_minimal -c conf/ifb.config -c test/validation/slurm_runtime.config
+nextflow run main.nf -profile singularity,test_hanseniaspora_full -c conf/ifb.config -c test/validation/slurm_runtime.config
+
+# Pieris
+nextflow run main.nf -profile singularity,test_pieris_minimal -c conf/ifb.config -c test/validation/slurm_runtime.config
+nextflow run main.nf -profile singularity,test_pieris_full -c conf/ifb.config -c test/validation/slurm_runtime.config
+
+# Utricularia
+nextflow run main.nf -profile singularity,test_utricularia_minimal -c conf/ifb.config -c test/validation/slurm_runtime.config
+nextflow run main.nf -profile singularity,test_utricularia_full -c conf/ifb.config -c test/validation/slurm_runtime.config
+```
+
+Alternatively, submit the launcher with any of these profiles:
+
+```bash
+sbatch nextflow.sbatch test_hanseniaspora_minimal
+sbatch nextflow.sbatch test_pieris_full
+sbatch nextflow.sbatch test_utricularia_minimal -resume
+```
+
+Add `-resume` to resume the same mode. Outputs are written to
+`test/test_<group>/<minimal|full>/results`, with persistent caches alongside
+in `cache`. Existing outputs at the older locations are retained, but these
+new profiles use separate directories. The legacy `test_hanseniaspora`,
+`test_pieris` and `test_utricularia` names now select the minimal mode.
+Use your site's execution config instead of the two IFB configs elsewhere.
+Bank paths and program options are configured in `nextflow.config`.
+
+Full mode uses all **available evidence within these fixtures**, not every
+protein database or every possible public RNA-seq dataset. SRA availability
+can change; the workflow records run metadata. Protein evidence comes from
+the tested assemblies themselves: these are integration tests, not independent
+accuracy benchmarks. U. reniformis uses protein homologs from the other
+Utricularia assemblies because its downloaded package has no protein annotation.
+The full plant/insect runs can be substantial; minimal mode reduces evidence,
+not genome size. These commands describe the configured tests, not a guarantee
+that a complete run has already passed.
+
 ## Pipeline output
-Generated outputs include per-genome annotation files (GFF), fasta sequences and summary reports.
+Results are organized as `species/<genome_id>/` with `genome`, `repeats`,
+`protein_coding`, `noncoding` and `submission` directories. Multi-species
+statistics and figures are in `comparative/`; execution and provenance reports
+are in `pipeline_info/`. A single results README describes these files.
+See [annotation/export documentation](docs/ncrna_and_export.md) for submission
+metadata, genetic codes and optional local NCBI validation.
 
 ## Credits
 

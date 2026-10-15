@@ -1,0 +1,22 @@
+{
+  "genomes": {
+    "replace-with-genome-id": {
+      "bioproject": "PRJNA123456",
+      "biosample": "SAMN12345678",
+      "locus_tag_prefix": "MYLOCUS",
+      "source": {
+        "isolate": "replace-with-isolate",
+        "country": "France",
+        "collection-date": "2026-01-01"
+      },
+      "sequences": {
+        "replace-with-original-mitochondrial-contig-id": {
+          "organelle": "mitochondrion",
+          "translation_table": 3,
+          "topology": "circular",
+          "chromosome": "MT"
+        }
+      }
+    }
+  }
+}

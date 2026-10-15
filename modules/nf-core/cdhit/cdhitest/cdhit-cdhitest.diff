@@ -1,0 +1,76 @@
+--- a/modules/nf-core/cdhit/cdhitest/main.nf
++++ b/modules/nf-core/cdhit/cdhitest/main.nf
+@@ -13,7 +13,7 @@
+     output:
+     tuple val(meta), path("*.{fa,fq}")    ,emit: fasta
+     tuple val(meta), path("*.clstr")      ,emit: clusters
+-    tuple val("${task.process}"), val('cdhit'), eval("cd-hit-est -h | sed -n '1s/.*version \\([0-9.]*\\).*/\\1/p'"), topic: versions, emit: versions_cdhitest
++    path "versions.yml", emit: versions
+ 
+     when:
+     task.ext.when == null || task.ext.when
+@@ -29,6 +29,7 @@
+     } else {
+         avail_mem = (task.memory.mega*0.8).intValue()
+     }
++    avail_mem = task.ext.memory_limit != null ? task.ext.memory_limit : avail_mem
+     """
+     cd-hit-est \\
+         $args \\
+@@ -36,6 +37,11 @@
+         -o ${prefix}.${suffix} \\
+         -M $avail_mem \\
+         -T $task.cpus
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        cdhit: \$(cd-hit-est -h | sed -n '1s/.*version \\([0-9.]*\\).*/\\1/p')
++    END_VERSIONS
+     """
+ 
+     stub:
+@@ -46,5 +52,10 @@
+     echo "${args}"
+     touch ${prefix}.${suffix}
+     touch ${prefix}.${suffix}.clstr
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        cdhit: \$(cd-hit-est -h | sed -n '1s/.*version \\([0-9.]*\\).*/\\1/p')
++    END_VERSIONS
+     """
+ }
+--- a/modules/nf-core/cdhit/cdhitest/meta.yml
++++ b/modules/nf-core/cdhit/cdhitest/meta.yml
+@@ -52,27 +52,11 @@
+           description: List of clusters
+           pattern: "*.{clstr}"
+           ontologies: []
+-  versions_cdhitest:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - cdhit:
+-          type: string
+-          description: The name of the tool
+-      - cd-hit-est -h | sed -n '1s/.*version \([0-9.]*\).*/\1/p':
+-          type: eval
+-          description: The expression to obtain the version of the tool
+-topics:
+   versions:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - cdhit:
+-          type: string
+-          description: The name of the tool
+-      - cd-hit-est -h | sed -n '1s/.*version \([0-9.]*\).*/\1/p':
+-          type: eval
+-          description: The expression to obtain the version of the tool
++    - versions.yml:
++        type: file
++        description: Software versions for storeDir-compatible caching.
++        pattern: "versions.yml"
+ authors:
+   - "@Joon-Klaps"
+ maintainers:

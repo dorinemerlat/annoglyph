@@ -1,0 +1,100 @@
+--- a/modules/nf-core/agat/spextractsequences/main.nf
++++ b/modules/nf-core/agat/spextractsequences/main.nf
+@@ -1,5 +1,5 @@
+ process AGAT_SPEXTRACTSEQUENCES {
+-    tag "$meta.id"
++    tag "${meta.annotation_method}/${meta.id}"
+     label 'process_single'
+ 
+     conda "${moduleDir}/environment.yml"
+@@ -8,13 +8,12 @@
+         'quay.io/biocontainers/agat:1.6.1--pl5321hdfd78af_1' }"
+ 
+     input:
+-    tuple val(meta), path(gxf)
+-    path fasta
++    tuple val(meta), path(gxf), path(fasta)
+     path config
+ 
+     output:
+     tuple val(meta), path("*.fasta"), emit: fasta
+-    tuple val("${task.process}"), val('agat'), eval("agat --version | sed 's/v//'"), topic: versions, emit: versions_agat
++    path "versions.yml", emit: versions
+ 
+     when:
+     task.ext.when == null || task.ext.when
+@@ -31,6 +30,11 @@
+         -f ${fasta} \\
+         ${config_arg} \\
+         -o ${prefix}.fasta
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        agat: \$(agat --version | sed 's/v//')
++    END_VERSIONS
+     """
+ 
+     stub:
+@@ -38,5 +42,10 @@
+     if( "${fasta}" == "${prefix}.fasta" ) error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
+     """
+     touch ${prefix}.fasta
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        agat: \$(agat --version | sed 's/v//')
++    END_VERSIONS
+     """
+ }
+--- a/modules/nf-core/agat/spextractsequences/meta.yml
++++ b/modules/nf-core/agat/spextractsequences/meta.yml
+@@ -31,11 +31,11 @@
+         description: Input GFF3/GTF file
+         pattern: "*.{gff,gff3,gtf}"
+         ontologies: []
+-  - fasta:
+-      type: file
+-      description: Input FASTA file
+-      pattern: "*.{fa,fsa,faa,fasta}"
+-      ontologies: []
++    - fasta:
++        type: file
++        description: Input FASTA associated with this annotation.
++        pattern: "*.{fa,fsa,faa,fasta}"
++        ontologies: []
+   - config:
+       type: file
+       description: |
+@@ -55,27 +55,12 @@
+           description: Output FASTA file.
+           pattern: "*.fasta"
+           ontologies: []
+-  versions_agat:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - agat:
+-          type: string
+-          description: The name of the tool
+-      - agat --version | sed 's/v//':
+-          type: eval
+-          description: The expression to obtain the version of the tool
+-topics:
+   versions:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - agat:
+-          type: string
+-          description: The name of the tool
+-      - agat --version | sed 's/v//':
+-          type: eval
+-          description: The expression to obtain the version of the tool
++    - versions.yml:
++        type: file
++        description: Software versions recorded for storeDir reuse.
++        pattern: versions.yml
++        ontologies: []
+ authors:
+   - "@GallVp"
+ maintainers:

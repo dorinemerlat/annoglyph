@@ -1,0 +1,4 @@
+name,taxid,fasta,mnemonic,RNASeq-dir,SRA
+Pieris brassicae,7116,test/test_pieris/GCF_905147105.1/GCF_905147105.1_ilPieBrab1.1_genomic.fna,,,
+Pieris napi,78633,test/test_pieris/GCF_905475465.1/GCF_905475465.1_ilPieNapi1.2_genomic.fna,,,
+Pieris rapae,64459,test/test_pieris/GCF_905147795.1/GCF_905147795.1_ilPieRapa1.1_genomic.fna,,,

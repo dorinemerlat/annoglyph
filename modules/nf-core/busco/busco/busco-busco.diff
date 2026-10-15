@@ -1,0 +1,88 @@
+--- a/modules/nf-core/busco/busco/main.nf
++++ b/modules/nf-core/busco/busco/main.nf
+@@ -16,7 +16,7 @@
+     // Required:    lineage for checking against, or "auto/auto_prok/auto_euk" for enabling auto-lineage
+     val lineage
+     // Recommended: BUSCO lineages file - downloads if not set
+-    path busco_lineages_path
++    path(busco_lineages_path, stageAs: 'input_lineages')
+     // Optional:    BUSCO configuration file
+     path config_file
+     val clean_intermediates
+@@ -36,7 +36,7 @@
+     tuple val(meta), path("busco_downloads/lineages/*"), emit: downloaded_lineages, optional: true
+     tuple val(meta), path("*-busco/*/run_*/busco_sequences/single_copy_busco_sequences/*.faa"), emit: single_copy_faa, optional: true
+     tuple val(meta), path("*-busco/*/run_*/busco_sequences/single_copy_busco_sequences/*.fna"), emit: single_copy_fna, optional: true
+-    tuple val("${task.process}"), val('busco'), eval("busco --version 2> /dev/null | sed 's/BUSCO //g'"), emit: versions_busco, topic: versions
++    path "versions.yml", emit: versions
+ 
+     when:
+     task.ext.when == null || task.ext.when
+@@ -75,7 +75,7 @@
+     set -u
+ 
+     # If the augustus config directory is not writable, then copy to writeable area
+-    if [ ! -w "\${AUGUSTUS_CONFIG_PATH}" ]; then
++    if [ -n "\${AUGUSTUS_CONFIG_PATH:-}" ] && [ ! -w "\${AUGUSTUS_CONFIG_PATH}" ]; then
+         # Create writable tmp directory for augustus
+         AUG_CONF_DIR=\$( mktemp -d -p \$PWD )
+         cp -r \$AUGUSTUS_CONFIG_PATH/* \$AUG_CONF_DIR
+@@ -120,6 +120,11 @@
+     if grep -q 'Run failed; check logs' ${prefix}-busco/batch_summary.txt; then
+         grep 'Run failed; check logs' ${prefix}-busco/batch_summary.txt > ${prefix}-busco.batch_summary.failed.txt
+     fi
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        busco: \$(busco --version 2> /dev/null | sed 's/BUSCO //g')
++    END_VERSIONS
+     """
+ 
+     stub:
+@@ -128,5 +133,10 @@
+     """
+     touch ${prefix}-busco.batch_summary.txt
+     mkdir -p ${prefix}-busco/${fasta_name}/run_${lineage}/busco_sequences
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        busco: \$(busco --version 2> /dev/null | sed 's/BUSCO //g')
++    END_VERSIONS
+     """
+ }
+--- a/modules/nf-core/busco/busco/meta.yml
++++ b/modules/nf-core/busco/busco/meta.yml
+@@ -197,27 +197,13 @@
+           description: Single copy .fna sequence files
+           pattern: "*-busco/*/run_*/busco_sequences/single_copy_busco_sequences/*.fna"
+           ontologies: []
+-  versions_busco:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - busco:
+-          type: string
+-          description: The name of the tool
+-      - busco --version 2> /dev/null | sed 's/BUSCO //g':
+-          type: eval
+-          description: The expression to obtain the version of the tool
+-topics:
+   versions:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - busco:
+-          type: string
+-          description: The name of the tool
+-      - busco --version 2> /dev/null | sed 's/BUSCO //g':
+-          type: eval
+-          description: The expression to obtain the version of the tool
++    - versions.yml:
++        type: file
++        description: Software versions recorded for storeDir-compatible caching.
++        pattern: "versions.yml"
++        ontologies:
++          - edam: http://edamontology.org/format_3750 # YAML
+ authors:
+   - "@priyanka-surana"
+   - "@charles-plessy"

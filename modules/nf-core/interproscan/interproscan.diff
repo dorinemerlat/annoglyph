@@ -1,0 +1,109 @@
+--- a/modules/nf-core/interproscan/main.nf
++++ b/modules/nf-core/interproscan/main.nf
+@@ -1,5 +1,5 @@
+ process INTERPROSCAN {
+-    tag "$meta.id"
++    tag "${meta.annotation_method}/${meta.id}"
+     // will throw NullPointer exceptions and crush with more than 1 cpu
+     label 'process_single'
+ 
+@@ -17,7 +17,7 @@
+     tuple val(meta), path('*.xml') , optional: true, emit: xml
+     tuple val(meta), path('*.gff3'), optional: true, emit: gff3
+     tuple val(meta), path('*.json'), optional: true, emit: json
+-    tuple val("${task.process}"), val("interproscan"), eval('interproscan.sh --version | sed "1!d; s/.*version //"'), topic: versions, emit: versions_interproscan
++    path "versions.yml", emit: versions
+ 
+ 
+     when:
+@@ -43,13 +43,32 @@
+             interproscan.properties
+         # must be absolute: interproscan.sh cd's into its install dir before reading it
+         export INTERPROSCAN_CONF=\$PWD/interproscan.properties
+-    fi # else use sample DB included with conda ( testing only! )
++    elif [ '${task.ext.use_container_data ?: false}' != 'true' ]; then
++        echo 'Provide --interproscan_db with the complete InterProScan 5.59-91.0 data directory; the image only contains test data.' >&2
++        exit 1
++    fi
++
++    # The retained image uses BusyBox ps, lacking the procps syntax used by IPS.
++    if ! ps -o pid,vsize,rss,command -p \$\$ >/dev/null 2>&1; then
++        mkdir -p interproscan_compat
++        cp ${moduleDir}/resources/ps interproscan_compat/ps
++        chmod +x interproscan_compat/ps
++        export PATH="\$PWD/interproscan_compat:\$PATH"
++    fi
++
++    # AGAT protein FASTAs can contain stop symbols, which InterProScan rejects.
++    sed '/^>/!s/\\*//g' ${fasta_name} > ${prefix}.input.fasta
+ 
+     interproscan.sh \\
+         --cpu ${task.cpus} \\
+-        --input ${fasta_name} \\
++        --input ${prefix}.input.fasta \\
+         ${args} \\
+         --output-file-base ${prefix}
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        interproscan: \$(interproscan.sh --version | sed '1!d; s/.*version //')
++    END_VERSIONS
+     """
+ 
+     stub:
+@@ -59,5 +78,10 @@
+     echo ${args}
+ 
+     touch ${prefix}.{tsv,xml,json,gff3}
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        interproscan: \$(interproscan.sh --version | sed '1!d; s/.*version //')
++    END_VERSIONS
+     """
+ }
+--- a/modules/nf-core/interproscan/meta.yml
++++ b/modules/nf-core/interproscan/meta.yml
+@@ -78,27 +78,12 @@
+           pattern: "*.{json}"
+           ontologies:
+             - edam: http://edamontology.org/format_3464 # JSON
+-  versions_interproscan:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - interproscan:
+-          type: string
+-          description: The name of the tool
+-      - interproscan.sh --version | sed "1!d; s/.*version //":
+-          type: eval
+-          description: The expression to obtain the version of the tool
+-topics:
+   versions:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - interproscan:
+-          type: string
+-          description: The name of the tool
+-      - interproscan.sh --version | sed "1!d; s/.*version //":
+-          type: eval
+-          description: The expression to obtain the version of the tool
++    - versions.yml:
++        type: file
++        description: Software versions recorded for storeDir reuse.
++        pattern: versions.yml
++        ontologies: []
+ authors:
+   - "@toniher"
+   - "@mahesh-panchal"
+--- /dev/null
++++ b/modules/nf-core/interproscan/resources/ps
+@@ -0,0 +1,7 @@
++#!/bin/bash
++# InterProScan 5.59's process monitor requires procps syntax. Its image uses BusyBox.
++if [[ $# -eq 4 && $1 == '-o' && $2 == 'pid,vsize,rss,command' && $3 == '-p' ]]; then
++    /bin/ps -o pid,vsz,rss,args | awk -v target="$4" 'NR == 1 || $1 == target'
++else
++    exec /bin/ps "$@"
++fi

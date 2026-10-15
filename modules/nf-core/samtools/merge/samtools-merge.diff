@@ -1,0 +1,91 @@
+--- a/modules/nf-core/samtools/merge/main.nf
++++ b/modules/nf-core/samtools/merge/main.nf
+@@ -16,7 +16,7 @@
+     tuple val(meta), path("${prefix}.bam"), optional: true, emit: bam
+     tuple val(meta), path("${prefix}.cram"), optional: true, emit: cram
+     tuple val(meta), path("${prefix}.${file_type}.{bai,crai,csi}"), optional: true, emit: index
+-    tuple val("${task.process}"), val('samtools'), eval("samtools version | sed '1!d;s/.* //'"), topic: versions, emit: versions_samtools
++    path "versions.yml", emit: versions
+ 
+     when:
+     task.ext.when == null || task.ext.when
+@@ -39,15 +39,19 @@
+         output_file = "${prefix}.${file_type}##idx##${prefix}.${file_type}.${index_format}"
+     }
+     """
+-    # Note: --threads value represents *additional* CPUs to allocate (total CPUs = 1 + --threads).
+     samtools \\
+         merge \\
+-        --threads ${task.cpus - 1} \\
++        --threads ${task.cpus} \\
+         ${write_index} \\
+         ${args} \\
+         ${reference} \\
+         ${output_file} \\
+         ${input_files}
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        samtools: \$(samtools --version | head -1 | cut -d' ' -f2)
++    END_VERSIONS
+     """
+ 
+     stub:
+@@ -65,5 +69,10 @@
+     """
+     touch ${prefix}.${file_type}
+     ${index}
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        samtools: \$(samtools --version | head -1 | cut -d' ' -f2)
++    END_VERSIONS
+     """
+ }
+--- a/modules/nf-core/samtools/merge/meta.yml
++++ b/modules/nf-core/samtools/merge/meta.yml
+@@ -91,28 +91,12 @@
+           description: BAM/CRAM index file, generated when index_format is specified. Can only be generated if the input files are coordinate sorted.
+           pattern: "*.{bai,crai,csi}"
+           ontologies: []
+-  versions_samtools:
+-    - - ${task.process}:
+-          type: string
+-          description: The process the versions were collected from
+-      - samtools:
+-          type: string
+-          description: The tool name
+-      - "samtools version | sed '1!d;s/.* //'":
+-          type: string
+-          description: The command used to generate the version of the tool
+-
+-topics:
+   versions:
+-    - - ${task.process}:
+-          type: string
+-          description: The process the versions were collected from
+-      - samtools:
+-          type: string
+-          description: The tool name
+-      - "samtools version | sed '1!d;s/.* //'":
+-          type: string
+-          description: The command used to generate the version of the tool
++    - versions.yml:
++        type: file
++        description: Software versions recorded for storeDir reuse.
++        pattern: versions.yml
++        ontologies: []
+ authors:
+   - "@yuukiiwa"
+   - "@maxulysse"
+--- a/modules/nf-core/samtools/merge/environment.yml
++++ b/modules/nf-core/samtools/merge/environment.yml
+@@ -5,6 +5,6 @@
+   - bioconda
+ dependencies:
+   # renovate: datasource=conda depName=bioconda/htslib
+-  - bioconda::htslib=1.24
++  - bioconda::htslib=1.13
+   # renovate: datasource=conda depName=bioconda/samtools
+-  - bioconda::samtools=1.24
++  - bioconda::samtools=1.13

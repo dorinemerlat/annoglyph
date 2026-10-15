@@ -1,10 +1,11 @@
-include { GENERATE_TAXONOMY_METADATA   } from "$projectDir/modules/preprocessing/generate_taxonomy_metadata.nf"
-include { SEQKIT_STATS                 } from "$projectDir/modules/preprocessing/seqkit_stats.nf"
-include { MERGE_TABLES as MERGE_SEQKIT } from "$projectDir/modules/shared_modules/merge_tables.nf"
-include { REFORMAT_GENOME              } from "$projectDir/modules/preprocessing/reformat_genome.nf"
-include { SELECT_BUSCO_DATASET         } from "$projectDir/modules/preprocessing/select_busco_dataset.nf"
-include { DOWNLOAD_BUSCO_DATASET       } from "$projectDir/modules/preprocessing/download_busco_dataset.nf"
-include { BUSCO                        } from "$projectDir/modules/shared_modules/busco.nf"
+include { GENERATE_TAXONOMY_METADATA   } from "$projectDir/modules/local/preprocessing/generate_taxonomy_metadata.nf"
+include { SEQKIT_STATS                 } from "$projectDir/modules/nf-core/seqkit/stats/main"
+include { NORMALIZE_SEQKIT_STATS       } from "$projectDir/modules/local/preprocessing/normalize_seqkit_stats.nf"
+include { MERGE_TABLES as MERGE_SEQKIT } from "$projectDir/modules/local/shared_modules/merge_tables.nf"
+include { REFORMAT_GENOME              } from "$projectDir/modules/local/preprocessing/reformat_genome.nf"
+include { SELECT_BUSCO_DATASET         } from "$projectDir/modules/local/preprocessing/select_busco_dataset.nf"
+include { BUSCO_DOWNLOAD               } from "$projectDir/modules/nf-core/busco/download/main"
+include { BUSCO_BUSCO                  } from "$projectDir/modules/nf-core/busco/busco/main"
 
 
 workflow PREPROCESSING {
@@ -16,8 +17,8 @@ workflow PREPROCESSING {
 
     // Create a single taxonomy input table for all genomes.
     genomes
-        .map { id, meta, genome ->
-            [id, meta.name, meta.taxid, meta.mnemonic ?: ''].join('\t')
+        .map { meta, genome ->
+            [meta.id, meta.name, meta.taxid, meta.mnemonic ?: ''].join('\t')
         }
         .collectFile(
             name: 'taxonomy_input.tsv',
@@ -32,7 +33,7 @@ workflow PREPROCESSING {
 
     GENERATE_TAXONOMY_METADATA.out.json
         .flatMap { taxonomyFile ->
-            def taxonomyById = new groovy.json.JsonSlurper().parseText(taxonomyFile.text)
+            def taxonomyById = new groovy.json.JsonSlurperClassic().parseText(taxonomyFile.text)
 
             taxonomyById.collect { id, taxonomy ->
                 [id, [lineage: taxonomy.lineage, mnemonic: taxonomy.mnemonic]]
@@ -41,28 +42,30 @@ workflow PREPROCESSING {
         .set { taxonomy_metadata }
 
     // Compute assembly statistics.
-    SEQKIT_STATS(genomes, 'dna')
+    SEQKIT_STATS(genomes)
+    NORMALIZE_SEQKIT_STATS(SEQKIT_STATS.out.stats)
 
-    SEQKIT_STATS.out
-        .map { id, meta, seqkitFile ->
-            [id, PreprocessingUtils.parseAssemblySize(seqkitFile)]
+    NORMALIZE_SEQKIT_STATS.out.stats
+        .map { meta, seqkitFile ->
+            [meta.id, PreprocessingUtils.parseAssemblySize(seqkitFile)]
         }
         .set { assembly_sizes }
 
-    SEQKIT_STATS.out
-        .map { id, meta, seqkitFile -> ['size', seqkitFile] }
+    NORMALIZE_SEQKIT_STATS.out.stats
+        .map { meta, seqkitFile -> ['size', seqkitFile] }
         .groupTuple(by: 0)
-        .map { id, files -> [id, files, 'all_seqkit.stats'] }
+        .map { id, files -> [[id: id], files, 'all_seqkit.stats'] }
         .set { seqkit_tables }
 
     MERGE_SEQKIT(seqkit_tables)
 
     // Add taxonomy metadata and assembly size.
     genomes
-        .join(taxonomy_metadata)
-        .join(assembly_sizes)
+        .map { meta, genome -> [meta.id, meta, genome] }
+        .join(taxonomy_metadata, failOnDuplicate: true, failOnMismatch: true)
+        .join(assembly_sizes, failOnDuplicate: true, failOnMismatch: true)
         .map { id, meta, genome, taxonomyMeta, assemblySize ->
-            [id, meta + taxonomyMeta + [assembly_size: assemblySize], genome]
+            [meta + taxonomyMeta + [assembly_size: assemblySize], genome]
         }
         .set { genomes_with_metadata }
 
@@ -88,33 +91,31 @@ workflow PREPROCESSING {
     // Add the shared BUSCO dataset to genome metadata.
     REFORMAT_GENOME.out.fasta
         .combine(busco_dataset)
-        .map { id, meta, genome, buscoDataset ->
-            [id, meta + [busco_dataset: buscoDataset], genome]
+        .map { meta, genome, buscoDataset ->
+            [meta + [busco_dataset: buscoDataset], genome]
         }
         .set { preprocessed_genomes }
 
-    // Download the shared BUSCO dataset once.
-    DOWNLOAD_BUSCO_DATASET(busco_dataset)
+    // Download once and broadcast the root directory to all BUSCO tasks.
+    BUSCO_DOWNLOAD(busco_dataset)
+    busco_download_dir = BUSCO_DOWNLOAD.out.download_dir.first()
 
-    // Associate every genome with the downloaded BUSCO dataset.
-    preprocessed_genomes
-        .map { id, meta, genome ->
-            [meta.busco_dataset, id, meta, genome]
-        }
-        .combine(DOWNLOAD_BUSCO_DATASET.out, by: 0)
-        .map { buscoDataset, id, meta, genome, buscoDatasetPath ->
-            [id, meta, genome, 'genome', "${id}_on_assembly", buscoDataset, buscoDatasetPath]
-        }
-        .set { genomes_for_busco }
+    // Preserve the dataset directory needed by later annotation stages.
+    busco_dataset_dir = busco_download_dir.combine(busco_dataset)
+        .map { root, dataset -> [[id: dataset], root.resolve("lineages/${dataset}")] }
 
-    BUSCO(genomes_for_busco)
- 
+    BUSCO_BUSCO(preprocessed_genomes, 'genome', busco_dataset.first(), busco_download_dir, [], false)
+
     emit:
+    versions = SEQKIT_STATS.out.versions.mix(BUSCO_DOWNLOAD.out.versions).mix(BUSCO_BUSCO.out.versions)
+    assembly_stats = NORMALIZE_SEQKIT_STATS.out.stats
+    genome_mapping = REFORMAT_GENOME.out.mapping
+    busco_summaries = BUSCO_BUSCO.out.short_summaries_json.mix(BUSCO_BUSCO.out.short_summaries_txt)
     preprocessed_genomes = preprocessed_genomes
     taxonomy_table = GENERATE_TAXONOMY_METADATA.out.table
     taxonomy_tree = GENERATE_TAXONOMY_METADATA.out.minimal_tree
     genome_stats = MERGE_SEQKIT.out
     busco_dataset = busco_dataset
-    busco_dataset_dir = DOWNLOAD_BUSCO_DATASET.out
-    busco_assembly_results = BUSCO.out.json
+    busco_dataset_dir = busco_dataset_dir
+    busco_assembly_results = BUSCO_BUSCO.out.short_summaries_json
 }

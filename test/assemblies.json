@@ -1,0 +1,63 @@
+{
+  "hanseniaspora": [
+    {
+      "accession": "GCA_050947605.1",
+      "name": "Hanseniaspora guilliermondii",
+      "taxid": 56406
+    },
+    {
+      "accession": "GCA_040256855.1",
+      "name": "Hanseniaspora menglaensis",
+      "taxid": 3081051
+    },
+    {
+      "accession": "GCA_050947625.1",
+      "name": "Hanseniaspora opuntiae",
+      "taxid": 211096
+    },
+    {
+      "accession": "GCA_050947655.1",
+      "name": "Hanseniaspora osmophila",
+      "taxid": 56408
+    },
+    {
+      "accession": "GCA_050947685.1",
+      "name": "Hanseniaspora vineae",
+      "taxid": 56409
+    }
+  ],
+  "pieris": [
+    {
+      "accession": "GCF_905147105.1",
+      "name": "Pieris brassicae",
+      "taxid": 7116
+    },
+    {
+      "accession": "GCF_905475465.1",
+      "name": "Pieris napi",
+      "taxid": 78633
+    },
+    {
+      "accession": "GCF_905147795.1",
+      "name": "Pieris rapae",
+      "taxid": 64459
+    }
+  ],
+  "utricularia": [
+    {
+      "accession": "GCA_056322005.1",
+      "name": "Utricularia aurea",
+      "taxid": 192275
+    },
+    {
+      "accession": "GCA_982292365.1",
+      "name": "Utricularia gibba",
+      "taxid": 13748
+    },
+    {
+      "accession": "GCA_009725065.1",
+      "name": "Utricularia reniformis",
+      "taxid": 192314
+    }
+  ]
+}

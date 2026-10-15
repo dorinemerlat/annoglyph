@@ -1,0 +1,86 @@
+--- a/modules/nf-core/agat/spkeeplongestisoform/main.nf
++++ b/modules/nf-core/agat/spkeeplongestisoform/main.nf
+@@ -1,5 +1,5 @@
+ process AGAT_SPKEEPLONGESTISOFORM {
+-    tag "$meta.id"
++    tag "${meta.annotation_method}/${meta.id}"
+     label 'process_medium'
+ 
+     conda "${moduleDir}/environment.yml"
+@@ -13,7 +13,7 @@
+ 
+     output:
+     tuple val(meta), path("${output}"), emit: gff
+-    tuple val("${task.process}"), val('agat'), eval("agat --version | sed 's/v//'"), topic: versions, emit: versions_agat
++    path "versions.yml", emit: versions
+ 
+     when:
+     task.ext.when == null || task.ext.when
+@@ -22,20 +22,29 @@
+     def args         = task.ext.args   ?: ''
+     def prefix       = task.ext.prefix ?: "${meta.id}"
+     def config_param = config ? "--config ${config}" : ""
+-    output           = "${prefix}.longest.gff"
++    output           = "${prefix}.gff"
+     """
+     agat_sp_keep_longest_isoform.pl \\
+         --gff ${gxf} \\
+-        --cpu ${task.cpus} \\
+         ${config_param} \\
+         --out ${output} \\
+         ${args}
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        agat: \$(agat --version | sed 's/v//')
++    END_VERSIONS
+     """
+ 
+     stub:
+     def prefix = task.ext.prefix ?: "${meta.id}"
+-    output     = "${prefix}.longest.gff"
++    output     = "${prefix}.gff"
+     """
+     touch ${output}
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        agat: \$(agat --version | sed 's/v//')
++    END_VERSIONS
+     """
+ }
+--- a/modules/nf-core/agat/spkeeplongestisoform/meta.yml
++++ b/modules/nf-core/agat/spkeeplongestisoform/meta.yml
+@@ -53,27 +53,12 @@
+           description: Output GFF3 file
+           pattern: "*.longest.gff"
+           ontologies: []
+-  versions_agat:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - agat:
+-          type: string
+-          description: The name of the tool
+-      - agat --version | sed 's/v//':
+-          type: eval
+-          description: The expression to obtain the version of the tool
+-topics:
+   versions:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - agat:
+-          type: string
+-          description: The name of the tool
+-      - agat --version | sed 's/v//':
+-          type: eval
+-          description: The expression to obtain the version of the tool
++    - versions.yml:
++        type: file
++        description: Software versions recorded for storeDir reuse.
++        pattern: versions.yml
++        ontologies: []
+ authors:
+   - "@Juke34"
+ maintainers:

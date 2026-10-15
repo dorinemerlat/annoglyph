@@ -1,0 +1,148 @@
+--- a/modules/nf-core/eggnogmapper/main.nf
++++ b/modules/nf-core/eggnogmapper/main.nf
+@@ -1,5 +1,5 @@
+ process EGGNOGMAPPER {
+-    tag "$meta.id"
++    tag "${meta.annotation_method}/${meta.id}"
+     label 'process_high'
+ 
+     conda "${moduleDir}/environment.yml"
+@@ -13,29 +13,31 @@
+     path(eggnog_data_dir)
+ 
+     output:
+-    tuple val(meta), path("*.emapper.annotations")   , emit: annotations
+-    tuple val(meta), path("*.emapper.seed_orthologs"), emit: orthologs, optional: true
+-    tuple val(meta), path("*.emapper.hits")          , emit: hits     , optional: true
++    tuple val(meta), path("${prefix}/*.emapper.annotations")   , emit: annotations
++    tuple val(meta), path("${prefix}/*.emapper.seed_orthologs"), emit: seed_orthologs, optional: true
++    tuple val(meta), path("${prefix}/*.emapper.hits")          , emit: hits     , optional: true
++    tuple val(meta), path("${prefix}/*.emapper.orthologs"), emit: orthologs
+     // emapper.py --version reports the enclosing repository's git tag when the package sits inside one, as it does under conda.
+-    tuple val("${task.process}"), val('eggnog-mapper'), eval('python -c "from importlib.metadata import version; import sys; print(version(sys.argv[1]))" eggnog-mapper'), topic: versions, emit: versions_eggnogmapper
++    path "versions.yml", emit: versions
+ 
+     when:
+     task.ext.when == null || task.ext.when
+ 
+     script:
+     def args          = task.ext.args   ?: ''
+-    def prefix        = task.ext.prefix ?: "${meta.id}"
++    prefix            = task.ext.prefix ?: "${meta.id}"
+     def is_compressed = fasta.extension == '.gz'
+     def fasta_name    = is_compressed ? fasta.baseName : "$fasta"
+     def db_flags = ['diamond': '--dmnd_db', 'novel_fams': '--dmnd_db', 'mmseqs': '--mmseqs_db', 'hmmer': '--database', 'no_search': '--annotate_hits_table', 'cache': '--cache']
+     def db_path  = (db instanceof Path && db.isDirectory()) ? "${db}/${db.name}"                    : "$db"
+     def db_arg   = db && db_flags[search_mode]              ? "${db_flags[search_mode]} ${db_path}" : ''
+-    def dbmem    = task.memory.toMega() > 40000             ? '--dbmem'                             : ''
++    def dbmem    = task.ext.dbmem ? '--dbmem' : ''
+     """
+     if [ "$is_compressed" == "true" ]; then
+         gzip -c -d $fasta > $fasta_name
+     fi
+ 
++    mkdir -p ${prefix}
+     emapper.py \\
+         $args \\
+         --cpu ${task.cpus} \\
+@@ -44,16 +46,28 @@
+         -m ${search_mode} \\
+         $db_arg \\
+         ${dbmem} \\
++        --output_dir ${prefix} \\
+         --output ${prefix}
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        eggnog-mapper: \$(python -c "from importlib.metadata import version; print(version('eggnog-mapper'))")
++    END_VERSIONS
+     """
+ 
+     stub:
+-    def prefix = task.ext.prefix ?: "${meta.id}"
++    prefix = task.ext.prefix ?: "${meta.id}"
+     """
+-    echo $args
++    mkdir -p ${prefix}
+ 
+-    touch ${prefix}.emapper.annotations
+-    touch ${prefix}.emapper.seed_orthologs
+-    touch ${prefix}.emapper.hits
++    touch ${prefix}/${prefix}.emapper.annotations
++    touch ${prefix}/${prefix}.emapper.seed_orthologs
++    touch ${prefix}/${prefix}.emapper.hits
++    touch ${prefix}/${prefix}.emapper.orthologs
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        eggnog-mapper: \$(python -c "from importlib.metadata import version; print(version('eggnog-mapper'))")
++    END_VERSIONS
+     """
+ }
+--- a/modules/nf-core/eggnogmapper/meta.yml
++++ b/modules/nf-core/eggnogmapper/meta.yml
+@@ -82,7 +82,7 @@
+           pattern: "*.emapper.annotations"
+           ontologies:
+             - edam: http://edamontology.org/format_3475 # TSV
+-  orthologs:
++  seed_orthologs:
+     - - meta:
+           type: map
+           description: |
+@@ -95,6 +95,14 @@
+           pattern: "*.emapper.seed_orthologs"
+           ontologies:
+             - edam: http://edamontology.org/format_3475 # TSV
++  orthologs:
++    - - meta:
++          type: map
++          description: Sample and annotation method metadata.
++      - "*.emapper.orthologs":
++          type: file
++          description: Reported orthologs (--report_orthologs).
++          ontologies: []
+   hits:
+     - - meta:
+           type: map
+@@ -108,27 +116,12 @@
+           pattern: "*.emapper.hits"
+           ontologies:
+             - edam: http://edamontology.org/format_3475 # TSV
+-  versions_eggnogmapper:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - eggnog-mapper:
+-          type: string
+-          description: The name of the tool
+-      - python -c "from importlib.metadata import version; import sys; print(version(sys.argv[1]))" eggnog-mapper:
+-          type: eval
+-          description: The expression to obtain the version of the tool
+-topics:
+   versions:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - eggnog-mapper:
+-          type: string
+-          description: The name of the tool
+-      - python -c "from importlib.metadata import version; import sys; print(version(sys.argv[1]))" eggnog-mapper:
+-          type: eval
+-          description: The expression to obtain the version of the tool
++    - versions.yml:
++        type: file
++        description: Software versions recorded for storeDir reuse.
++        pattern: versions.yml
++        ontologies: []
+ authors:
+   - "@vagkaratzas"
+ maintainers:
+--- a/modules/nf-core/eggnogmapper/environment.yml
++++ b/modules/nf-core/eggnogmapper/environment.yml
+@@ -4,4 +4,4 @@
+   - conda-forge
+   - bioconda
+ dependencies:
+-  - bioconda::eggnog-mapper=2.1.13
++  - bioconda::eggnog-mapper=2.1.12

@@ -62,3 +62,6 @@ echo "Test datasets downloaded:"
 echo "  ${HANSENIASPORA_DIR}"
 echo "  ${PIERIS_DIR}"
 echo "  ${UTRICULARIA_DIR}"
+
+# Generate samplesheets and small clade-specific protein evidence for Nextflow.
+python3 "${SCRIPT_DIR}/prepare_test_sets.py"

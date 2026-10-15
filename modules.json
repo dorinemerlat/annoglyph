@@ -1,0 +1,107 @@
+{
+    "name": "EXOGAP",
+    "homePage": "https://github.com/dorinemerlat/exogap",
+    "repos": {
+        "https://github.com/nf-core/modules.git": {
+            "modules": {
+                "nf-core": {
+                    "seqkit/stats": {
+                        "branch": "master",
+                        "git_sha": "b2bcd8312599aacd849e69721e20ac8138018f83",
+                        "installed_by": [
+                            "modules"
+                        ],
+                        "patch": "modules/nf-core/seqkit/stats/seqkit-stats.diff"
+                    },
+                    "busco/download": {
+                        "branch": "master",
+                        "git_sha": "b2bcd8312599aacd849e69721e20ac8138018f83",
+                        "installed_by": [
+                            "modules"
+                        ],
+                        "patch": "modules/nf-core/busco/download/busco-download.diff"
+                    },
+                    "busco/busco": {
+                        "branch": "master",
+                        "git_sha": "b2bcd8312599aacd849e69721e20ac8138018f83",
+                        "installed_by": [
+                            "modules"
+                        ],
+                        "patch": "modules/nf-core/busco/busco/busco-busco.diff"
+                    },
+                    "repeatmodeler/builddatabase": {
+                        "branch": "master",
+                        "git_sha": "b2bcd8312599aacd849e69721e20ac8138018f83",
+                        "installed_by": [
+                            "modules"
+                        ],
+                        "patch": "modules/nf-core/repeatmodeler/builddatabase/repeatmodeler-builddatabase.diff"
+                    },
+                    "repeatmodeler/repeatmodeler": {
+                        "branch": "master",
+                        "git_sha": "b2bcd8312599aacd849e69721e20ac8138018f83",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "repeatmasker/repeatmasker": {
+                        "branch": "master",
+                        "git_sha": "b2bcd8312599aacd849e69721e20ac8138018f83",
+                        "installed_by": [
+                            "modules"
+                        ],
+                        "patch": "modules/nf-core/repeatmasker/repeatmasker/repeatmasker-repeatmasker.diff"
+                    },
+                    "cdhit/cdhitest": {
+                        "branch": "master",
+                        "git_sha": "b2bcd8312599aacd849e69721e20ac8138018f83",
+                        "installed_by": [
+                            "modules"
+                        ],
+                        "patch": "modules/nf-core/cdhit/cdhitest/cdhit-cdhitest.diff"
+                    },
+                    "agat/spkeeplongestisoform": {
+                        "branch": "master",
+                        "git_sha": "b2bcd8312599aacd849e69721e20ac8138018f83",
+                        "installed_by": [
+                            "modules"
+                        ],
+                        "patch": "modules/nf-core/agat/spkeeplongestisoform/agat-spkeeplongestisoform.diff"
+                    },
+                    "agat/spextractsequences": {
+                        "branch": "master",
+                        "git_sha": "b2bcd8312599aacd849e69721e20ac8138018f83",
+                        "installed_by": [
+                            "modules"
+                        ],
+                        "patch": "modules/nf-core/agat/spextractsequences/agat-spextractsequences.diff"
+                    },
+                    "samtools/merge": {
+                        "branch": "master",
+                        "git_sha": "b2bcd8312599aacd849e69721e20ac8138018f83",
+                        "installed_by": [
+                            "modules"
+                        ],
+                        "patch": "modules/nf-core/samtools/merge/samtools-merge.diff"
+                    },
+                    "interproscan": {
+                        "branch": "master",
+                        "git_sha": "b2bcd8312599aacd849e69721e20ac8138018f83",
+                        "installed_by": [
+                            "modules"
+                        ],
+                        "patch": "modules/nf-core/interproscan/interproscan.diff"
+                    },
+                    "eggnogmapper": {
+                        "branch": "master",
+                        "git_sha": "b2bcd8312599aacd849e69721e20ac8138018f83",
+                        "installed_by": [
+                            "modules"
+                        ],
+                        "patch": "modules/nf-core/eggnogmapper/eggnogmapper.diff"
+                    }
+                }
+            }
+        }
+    }
+}

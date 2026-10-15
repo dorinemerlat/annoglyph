@@ -1,0 +1,72 @@
+--- a/modules/nf-core/seqkit/stats/main.nf
++++ b/modules/nf-core/seqkit/stats/main.nf
+@@ -12,7 +12,7 @@
+ 
+     output:
+     tuple val(meta), path("*.tsv"), emit: stats
+-    tuple val("${task.process}"), val('seqkit'), eval("seqkit version | sed 's/^.*v//'"), emit: versions_seqkit, topic: versions
++    path "versions.yml", emit: versions
+ 
+     when:
+     task.ext.when == null || task.ext.when
+@@ -26,6 +26,11 @@
+         --threads ${task.cpus} \\
+         ${args} \\
+         ${reads} > '${prefix}.tsv'
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        seqkit: \$(seqkit version | sed 's/^.*v//')
++    END_VERSIONS
+     """
+ 
+     stub:
+@@ -35,5 +40,10 @@
+     echo ${args}
+ 
+     touch ${prefix}.tsv
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        seqkit: \$(seqkit version | sed 's/^.*v//')
++    END_VERSIONS
+     """
+ }
+--- a/modules/nf-core/seqkit/stats/meta.yml
++++ b/modules/nf-core/seqkit/stats/meta.yml
+@@ -41,29 +41,13 @@
+           pattern: "*.tsv"
+           ontologies:
+             - edam: http://edamontology.org/format_3475 # TSV
+-  versions_seqkit:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - seqkit:
+-          type: string
+-          description: The name of the tool
+-      - seqkit version | sed 's/^.*v//':
+-          type: eval
+-          description: The expression to obtain the version of seqkit
+-
+-topics:
+   versions:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - seqkit:
+-          type: string
+-          description: The name of the tool
+-      - seqkit version | sed 's/^.*v//':
+-          type: eval
+-          description: The expression to obtain the version of seqkit
+-
++    - versions.yml:
++        type: file
++        description: Software versions recorded for storeDir-compatible caching.
++        pattern: "versions.yml"
++        ontologies:
++          - edam: http://edamontology.org/format_3750 # YAML
+ authors:
+   - "@Midnighter"
+   - "@heuermh"

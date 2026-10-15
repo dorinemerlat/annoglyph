@@ -2,6 +2,7 @@
 """Prepare OrthoDB and UniProt protein evidence for gene annotation."""
 
 import argparse
+import json
 import csv
 import gzip
 import shutil
@@ -54,6 +55,7 @@ def parse_args():
     parser.add_argument("--max-sequences", type=int, default=0, help="Maximum total number of sequences retained in the combined protein set; 0 keeps all sequences.")
     parser.add_argument("--output", default=Path("protein_evidence.fa"), type=Path, help="Combined protein FASTA.")
     parser.add_argument("--metadata-output", default=Path("protein_evidence.tsv"), type=Path, help="Evidence metadata TSV.")
+    parser.add_argument('--uniprot-release', default=None, help='Reject REST responses from a different UniProt release.')
     return parser.parse_args()
 
 
@@ -222,7 +224,7 @@ def get_next_link(link_header):
     return None
 
 
-def download_uniprot(taxid, output):
+def download_uniprot(taxid, output, expected_release=None):
     """Download UniProtKB proteins assigned to a taxonomic clade."""
     params = {
         "query": f"taxonomy_id:{taxid}",
@@ -231,6 +233,7 @@ def download_uniprot(taxid, output):
     }
     url = f"{UNIPROT_SEARCH_URL}?{urllib.parse.urlencode(params)}"
     sequence_count = 0
+    observed_release = None
 
     print(f"Downloading UniProtKB proteins for taxid {taxid}", file=sys.stderr)
 
@@ -245,6 +248,13 @@ def download_uniprot(taxid, output):
             )
 
             with urllib.request.urlopen(request, timeout=300) as response:
+                release = response.headers.get('X-UniProt-Release')
+                if expected_release and release != expected_release:
+                    raise ValueError(f'Expected UniProt release {expected_release}, received {release}')
+                if observed_release and release != observed_release:
+                    raise ValueError('UniProt release changed while downloading evidence')
+                observed_release = release
+                output.with_suffix('.release.json').write_text(json.dumps({'source': 'UniProtKB REST', 'release': release, 'release_date': response.headers.get('X-UniProt-Release-Date')}, indent=2) + '\n')
                 content = response.read()
                 handle.write(content)
                 sequence_count += content.count(b">")
@@ -347,7 +357,7 @@ def main():
     )
 
     download_orthodb(orthodb_partition, orthodb_output)
-    download_uniprot(uniprot_clade["taxid"], uniprot_output)
+    download_uniprot(uniprot_clade["taxid"], uniprot_output, args.uniprot_release)
 
     if args.max_sequences:
         orthodb_limit = args.max_sequences // 2

@@ -1,0 +1,10 @@
+cache_*/
+*.log
+*.exit
+
+# Generated execution logs and configuration previews
+*.log.*
+*.out
+config_hanseniaspora.txt
+config_pieris.txt
+config_utricularia.txt

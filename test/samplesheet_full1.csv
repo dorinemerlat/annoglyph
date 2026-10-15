@@ -1,0 +1,4 @@
+name,taxid,fasta,mnemonic,RNASeq-dir,SRA
+Hanseniaspora uvarum ASM174705v1,29833,test/test_full/genomes/GCA_001747055.1/genome.fa,,,
+Hanseniaspora uvarum ASM3710261v1,29833,test/test_full/genomes/GCA_037102615.1/genome.fa,,,
+Hanseniaspora uvarum ASM5094771v1,29833,test/test_full/genomes/GCA_050947715.1/genome.fa,,,

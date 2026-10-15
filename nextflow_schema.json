@@ -41,6 +41,12 @@
                     "description": "Method used to publish pipeline results.",
                     "default": "copy",
                     "hidden": true
+                },
+                "cacheDir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "Directory where persistent process outputs are cached.",
+                    "default": "cache"
                 }
             }
         },
@@ -172,7 +178,7 @@
                         "null"
                     ],
                     "description": "BLAST protein database prefix used for functional annotation.",
-                    "default": null
+                    "default": "/shared/bank/uniprot_swissprot/uniprot_swissprot_2025_01/blast/uniprot_sprot"
                 },
                 "omark_contamination_threshold": {
                     "type": "number",
@@ -218,6 +224,716 @@
                     ],
                     "description": "Gene prediction tool used when only protein evidence is available.",
                     "default": "both"
+                },
+                "interproscan_db": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "format": "directory-path",
+                    "exists": true,
+                    "description": "Complete InterProScan 5.59-91.0 data directory. Not needed when using the complete IFB image.",
+                    "default": null
+                },
+                "signalp": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run the optional SignalP analysis."
+                },
+                "toxprot_blast": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run the optional ToxProt BLAST analysis."
+                },
+                "selection_thresholds": {
+                    "type": "object",
+                    "default": {},
+                    "additionalProperties": false,
+                    "properties": {
+                        "expected_gene_number": {
+                            "type": [
+                                "number",
+                                "null"
+                            ],
+                            "minimum": 0,
+                            "default": 15000,
+                            "description": "Expected genes per genome; null disables gene-count scoring and its tie-break."
+                        },
+                        "gene_number_good_deviation": {
+                            "type": "number",
+                            "minimum": 0,
+                            "default": 5000
+                        },
+                        "gene_number_neutral_deviation": {
+                            "type": "number",
+                            "minimum": 0,
+                            "default": 10000
+                        },
+                        "protein_length_q1_min": {
+                            "type": "number",
+                            "minimum": 0,
+                            "default": 120
+                        },
+                        "busco_complete_min": {
+                            "type": "number",
+                            "minimum": 0,
+                            "default": 70,
+                            "maximum": 100
+                        },
+                        "busco_duplicated_max": {
+                            "type": "number",
+                            "minimum": 0,
+                            "default": 3,
+                            "maximum": 100
+                        },
+                        "omark_consistent_min": {
+                            "type": "number",
+                            "minimum": 0,
+                            "default": 60,
+                            "maximum": 100
+                        },
+                        "omark_contamination_max": {
+                            "type": "number",
+                            "minimum": 0,
+                            "default": 0,
+                            "maximum": 100
+                        },
+                        "omark_unknown_max": {
+                            "type": "number",
+                            "minimum": 0,
+                            "default": 30,
+                            "maximum": 100
+                        },
+                        "start_codon_min": {
+                            "type": "number",
+                            "minimum": 0,
+                            "default": 80,
+                            "maximum": 100
+                        },
+                        "orthoinspector_protein_length_q1_min": {
+                            "type": "number",
+                            "minimum": 0,
+                            "default": 115
+                        },
+                        "orthoinspector_busco_complete_min": {
+                            "type": "number",
+                            "minimum": 0,
+                            "default": 70,
+                            "maximum": 100
+                        },
+                        "orthofinder_protein_length_q1_min": {
+                            "type": "number",
+                            "minimum": 0,
+                            "default": 150
+                        },
+                        "orthofinder_busco_complete_min": {
+                            "type": "number",
+                            "minimum": 0,
+                            "default": 80,
+                            "maximum": 100
+                        },
+                        "orthofinder_gene_number_min": {
+                            "type": "number",
+                            "minimum": 0,
+                            "default": 10000
+                        },
+                        "orthofinder_contamination_max": {
+                            "type": "number",
+                            "minimum": 0,
+                            "default": 0,
+                            "maximum": 100
+                        },
+                        "orthofinder_start_codon_min": {
+                            "type": "number",
+                            "minimum": 0,
+                            "default": 40,
+                            "maximum": 100
+                        }
+                    },
+                    "description": "Overrides for automatic annotation selection and downstream quality flags."
+                }
+            }
+        },
+        "export_options": {
+            "title": "Non-coding RNA and final export",
+            "type": "object",
+            "properties": {
+                "rfam_db": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "format": "directory-path",
+                    "exists": true,
+                    "default": null,
+                    "description": "Indexed Rfam folder containing Rfam.cm, four cmpress indexes, Rfam.clanin and family.txt."
+                },
+                "rfam_release": {
+                    "type": "string",
+                    "pattern": "^(CURRENT|[0-9]+\\.[0-9]+)$",
+                    "default": "15.0",
+                    "description": "Rfam release to download when rfam_db is unset."
+                },
+                "omamer_db": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "format": "file-path",
+                    "exists": true,
+                    "default": null,
+                    "description": "OMA LUCA HDF5 database compatible with the configured OMAmer version."
+                },
+                "locus_tag_prefix": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+                    "default": null,
+                    "description": "Registered locus tag prefix for export; defaults to the sample mnemonic for local use."
+                },
+                "translation_table": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "default": 1,
+                    "description": "Default genetic code for final CDS translation; feature transl_table overrides this value."
+                },
+                "ncrna_stats_group_rank": {
+                    "type": "string",
+                    "default": "family",
+                    "description": "Taxonomy TSV column used to group genomes in ncRNA correlation plots."
+                },
+                "ncrna_stats_min_group_size": {
+                    "type": "integer",
+                    "minimum": 3,
+                    "default": 3,
+                    "description": "Minimum genomes for descriptive ncRNA correlations and additional tree clades."
+                },
+                "submission_metadata": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "default": null,
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "JSON metadata indexed by genome ID."
+                },
+                "submission_template": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "default": null,
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "NCBI submission template in SBT format."
+                },
+                "table2asn_binary": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "default": null,
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Linux table2asn executable."
+                },
+                "database_lock_file": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "default": null,
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Previously exported database lock manifest to check."
+                },
+                "validate_submission": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run local NCBI table2asn validation; never uploads data."
+                },
+                "table2asn_sha256": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "default": null,
+                    "pattern": "^[A-Fa-f0-9]{64}$",
+                    "description": "Expected SHA-256 of the supplied validator executable."
+                },
+                "submission_fail_on_errors": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Fail the export if official local validation does not pass."
+                },
+                "eggnog_db": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "format": "directory-path",
+                    "default": "/shared/bank/emapperdb/5.0.2/",
+                    "description": "Versioned eggNOG database directory."
+                },
+                "omamer_download_url": {
+                    "type": "string",
+                    "default": "https://zenodo.org/records/10403053/files/LUCA-v2.0.0.h5?download=1",
+                    "description": "Archived OMA database URL."
+                },
+                "omamer_download_md5": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{32}$",
+                    "default": "c7b5969ed5577750c83973cb46bb0f2d",
+                    "description": "Expected checksum of the archived OMA database."
+                },
+                "provenance_hash_databases": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Hash all database files; otherwise inventory large files and hash small release metadata. Protein evidence is always fully hashed."
+                },
+                "uniprot_evidence_release": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "default": null,
+                    "pattern": "^[0-9]{4}_[0-9]{2}$",
+                    "description": "Expected release of automatic UniProt REST evidence; mismatch stops the download."
+                },
+                "gene_min_length": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "default": 90,
+                    "description": "Existing AGAT gene-length filter threshold in nucleotides."
+                },
+                "program_args": {
+                    "type": "object",
+                    "default": {},
+                    "additionalProperties": false,
+                    "properties": {
+                        "busco": {
+                            "type": "string",
+                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                        },
+                        "repeatmodeler": {
+                            "type": "string",
+                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                        },
+                        "repeatmasker": {
+                            "type": "string",
+                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                        },
+                        "cdhit": {
+                            "type": "string",
+                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                        },
+                        "braker2": {
+                            "type": "string",
+                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                        },
+                        "braker3": {
+                            "type": "string",
+                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                        },
+                        "galba": {
+                            "type": "string",
+                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                        },
+                        "star": {
+                            "type": "string",
+                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                        },
+                        "star_index": {
+                            "type": "string",
+                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                        },
+                        "varus": {
+                            "type": "string",
+                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                        },
+                        "blastp": {
+                            "type": "string",
+                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                        },
+                        "interproscan": {
+                            "type": "string",
+                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                        },
+                        "eggnog": {
+                            "type": "string",
+                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                        },
+                        "trnascan": {
+                            "type": "string",
+                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                        },
+                        "barrnap": {
+                            "type": "string",
+                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                        },
+                        "infernal": {
+                            "type": "string",
+                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                        },
+                        "omark": {
+                            "type": "string",
+                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                        },
+                        "seqkit": {
+                            "type": "string",
+                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                        },
+                        "agat_longest": {
+                            "type": "string",
+                            "description": "Extra AGAT arguments; required file/output options stay controlled by the workflow."
+                        },
+                        "agat_extract": {
+                            "type": "string",
+                            "description": "Extra AGAT arguments; required file/output options stay controlled by the workflow."
+                        }
+                    }
+                },
+                "program_resources": {
+                    "type": "object",
+                    "default": {},
+                    "additionalProperties": false,
+                    "properties": {
+                        "busco": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "cpus": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "memory": {
+                                    "type": "string",
+                                    "description": "Nextflow memory, for example 64 GB."
+                                },
+                                "time": {
+                                    "type": "string",
+                                    "description": "Nextflow duration, for example 2d."
+                                }
+                            }
+                        },
+                        "repeatmodeler": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "cpus": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "memory": {
+                                    "type": "string",
+                                    "description": "Nextflow memory, for example 64 GB."
+                                },
+                                "time": {
+                                    "type": "string",
+                                    "description": "Nextflow duration, for example 2d."
+                                }
+                            }
+                        },
+                        "repeatmasker": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "cpus": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "memory": {
+                                    "type": "string",
+                                    "description": "Nextflow memory, for example 64 GB."
+                                },
+                                "time": {
+                                    "type": "string",
+                                    "description": "Nextflow duration, for example 2d."
+                                }
+                            }
+                        },
+                        "cdhit": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "cpus": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "memory": {
+                                    "type": "string",
+                                    "description": "Nextflow memory, for example 64 GB."
+                                },
+                                "time": {
+                                    "type": "string",
+                                    "description": "Nextflow duration, for example 2d."
+                                }
+                            }
+                        },
+                        "braker2": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "cpus": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "memory": {
+                                    "type": "string",
+                                    "description": "Nextflow memory, for example 64 GB."
+                                },
+                                "time": {
+                                    "type": "string",
+                                    "description": "Nextflow duration, for example 2d."
+                                }
+                            }
+                        },
+                        "braker3": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "cpus": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "memory": {
+                                    "type": "string",
+                                    "description": "Nextflow memory, for example 64 GB."
+                                },
+                                "time": {
+                                    "type": "string",
+                                    "description": "Nextflow duration, for example 2d."
+                                }
+                            }
+                        },
+                        "galba": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "cpus": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "memory": {
+                                    "type": "string",
+                                    "description": "Nextflow memory, for example 64 GB."
+                                },
+                                "time": {
+                                    "type": "string",
+                                    "description": "Nextflow duration, for example 2d."
+                                }
+                            }
+                        },
+                        "star": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "cpus": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "memory": {
+                                    "type": "string",
+                                    "description": "Nextflow memory, for example 64 GB."
+                                },
+                                "time": {
+                                    "type": "string",
+                                    "description": "Nextflow duration, for example 2d."
+                                }
+                            }
+                        },
+                        "varus": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "cpus": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "memory": {
+                                    "type": "string",
+                                    "description": "Nextflow memory, for example 64 GB."
+                                },
+                                "time": {
+                                    "type": "string",
+                                    "description": "Nextflow duration, for example 2d."
+                                }
+                            }
+                        },
+                        "blastp": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "cpus": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "memory": {
+                                    "type": "string",
+                                    "description": "Nextflow memory, for example 64 GB."
+                                },
+                                "time": {
+                                    "type": "string",
+                                    "description": "Nextflow duration, for example 2d."
+                                }
+                            }
+                        },
+                        "interproscan": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "cpus": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "memory": {
+                                    "type": "string",
+                                    "description": "Nextflow memory, for example 64 GB."
+                                },
+                                "time": {
+                                    "type": "string",
+                                    "description": "Nextflow duration, for example 2d."
+                                }
+                            }
+                        },
+                        "eggnog": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "cpus": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "memory": {
+                                    "type": "string",
+                                    "description": "Nextflow memory, for example 64 GB."
+                                },
+                                "time": {
+                                    "type": "string",
+                                    "description": "Nextflow duration, for example 2d."
+                                }
+                            }
+                        },
+                        "trnascan": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "cpus": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "memory": {
+                                    "type": "string",
+                                    "description": "Nextflow memory, for example 64 GB."
+                                },
+                                "time": {
+                                    "type": "string",
+                                    "description": "Nextflow duration, for example 2d."
+                                }
+                            }
+                        },
+                        "barrnap": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "cpus": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "memory": {
+                                    "type": "string",
+                                    "description": "Nextflow memory, for example 64 GB."
+                                },
+                                "time": {
+                                    "type": "string",
+                                    "description": "Nextflow duration, for example 2d."
+                                }
+                            }
+                        },
+                        "infernal": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "cpus": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "memory": {
+                                    "type": "string",
+                                    "description": "Nextflow memory, for example 64 GB."
+                                },
+                                "time": {
+                                    "type": "string",
+                                    "description": "Nextflow duration, for example 2d."
+                                }
+                            }
+                        },
+                        "omark": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "cpus": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "memory": {
+                                    "type": "string",
+                                    "description": "Nextflow memory, for example 64 GB."
+                                },
+                                "time": {
+                                    "type": "string",
+                                    "description": "Nextflow duration, for example 2d."
+                                }
+                            }
+                        },
+                        "seqkit": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "cpus": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "memory": {
+                                    "type": "string",
+                                    "description": "Nextflow memory, for example 64 GB."
+                                },
+                                "time": {
+                                    "type": "string",
+                                    "description": "Nextflow duration, for example 2d."
+                                }
+                            }
+                        },
+                        "agat": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "cpus": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "memory": {
+                                    "type": "string",
+                                    "description": "Nextflow memory, for example 64 GB."
+                                },
+                                "time": {
+                                    "type": "string",
+                                    "description": "Nextflow duration, for example 2d."
+                                }
+                            }
+                        }
+                    }
+                },
+                "interproscan_container": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "default": "/shared/software/singularity/images/interproscan-5.59-91.0.sif",
+                    "description": "Optional site-specific InterProScan container reference or local image path."
                 }
             }
         }
@@ -261,6 +977,9 @@
             "then": {
                 "$ref": "#/definitions/gene_annotation_options"
             }
+        },
+        {
+            "$ref": "#/definitions/export_options"
         }
     ]
 }

@@ -8,12 +8,12 @@ class RepeatAnnotationUtils {
      */
     static def gatherSummaryTables(channel, String prefix) {
         return channel
-            .map { id, meta, table ->
+            .map { meta, table ->
                 [prefix, table]
             }
             .groupTuple(by: 0)
             .map { group, tables ->
-                [group, tables, "${prefix}.tsv"]
+                [[id: group], tables, "${prefix}.tsv"]
             }
     }
 }

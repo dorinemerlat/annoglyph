@@ -1,0 +1,6 @@
+name,taxid,fasta,mnemonic,RNASeq-dir,SRA
+Hanseniaspora guilliermondii,56406,test/test_hanseniaspora/GCA_050947605.1/GCA_050947605.1_ASM5094760v1_genomic.fna,,,
+Hanseniaspora menglaensis,3081051,test/test_hanseniaspora/GCA_040256855.1/GCA_040256855.1_ASM4025685v1_genomic.fna,,,
+Hanseniaspora opuntiae,211096,test/test_hanseniaspora/GCA_050947625.1/GCA_050947625.1_ASM5094762v1_genomic.fna,,,
+Hanseniaspora osmophila,56408,test/test_hanseniaspora/GCA_050947655.1/GCA_050947655.1_ASM5094765v1_genomic.fna,,,
+Hanseniaspora vineae,56409,test/test_hanseniaspora/GCA_050947685.1/GCA_050947685.1_ASM5094768v1_genomic.fna,,,

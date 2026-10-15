@@ -1,0 +1,4 @@
+name,taxid,fasta,mnemonic,RNASeq-dir,SRA
+Utricularia aurea,192275,test/test_utricularia/GCA_056322005.1/GCA_056322005.1_ASM5632200v1_genomic.fna,,,
+Utricularia gibba,13748,test/test_utricularia/GCA_982292365.1/GCA_982292365.1_daUtrGibb.v01_genomic.fna,,,
+Utricularia reniformis,192314,test/test_utricularia/GCA_009725065.1/GCA_009725065.1_Urenif-v1_genomic.fna,,,
