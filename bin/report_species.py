@@ -11,7 +11,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
 from Bio import SeqIO
-from exogap_gff import read_gff
+from annoglyph_gff import read_gff
 from ncrna_stats import isotype, anticodon, rrna_type, rna_kind, save_figure
 
 

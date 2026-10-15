@@ -1,7 +1,7 @@
 process BARRNAP {
 
     tag "${kingdom}/${meta.id}"
-    label 'exogap_tools'
+    label 'annoglyph_tools'
     cpus 30
 
     label 'program_barrnap'

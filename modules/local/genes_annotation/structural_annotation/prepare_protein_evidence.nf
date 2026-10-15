@@ -1,5 +1,5 @@
 process PREPARE_PROTEIN_EVIDENCE {
-    label 'exogap_python'
+    label 'annoglyph_python'
 
     input:
     path taxonomy

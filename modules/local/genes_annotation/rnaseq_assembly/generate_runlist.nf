@@ -1,6 +1,6 @@
 process GENERATE_RUNLIST {
     tag "${meta.id}"
-    label 'exogap_python'
+    label 'annoglyph_python'
 
     input:
     val(meta)

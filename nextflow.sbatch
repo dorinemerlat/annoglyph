@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=exogap
-#SBATCH --output=exogap-%j.out
-#SBATCH --error=exogap-%j.err
+#SBATCH --job-name=annoglyph
+#SBATCH --output=annoglyph-%j.out
+#SBATCH --error=annoglyph-%j.err
 #SBATCH --mail-type ALL
 #SBATCH --mail-user dorine.merlat@etu.unistra.fr
 #SBATCH --partition fast
@@ -15,13 +15,13 @@
 set -euo pipefail
 source /etc/profile.d/modules.sh
 module load nextflow/25.10.2 singularity
-EXOGAP_PROJECT_DIR="${EXOGAP_PROJECT_DIR:-${SLURM_SUBMIT_DIR:-$PWD}}"
-export NXF_SINGULARITY_CACHEDIR="${NXF_SINGULARITY_CACHEDIR:-$EXOGAP_PROJECT_DIR/.singularity}"
-export APPTAINER_TMPDIR="${APPTAINER_TMPDIR:-$EXOGAP_PROJECT_DIR/.apptainer_tmp}"
+ANNOGLYPH_PROJECT_DIR="${ANNOGLYPH_PROJECT_DIR:-${SLURM_SUBMIT_DIR:-$PWD}}"
+export NXF_SINGULARITY_CACHEDIR="${NXF_SINGULARITY_CACHEDIR:-$ANNOGLYPH_PROJECT_DIR/.singularity}"
+export APPTAINER_TMPDIR="${APPTAINER_TMPDIR:-$ANNOGLYPH_PROJECT_DIR/.apptainer_tmp}"
 export SINGULARITY_TMPDIR="$APPTAINER_TMPDIR"
 export TMPDIR="$APPTAINER_TMPDIR"
 
-cd "$EXOGAP_PROJECT_DIR"
+cd "$ANNOGLYPH_PROJECT_DIR"
 mkdir -p "$APPTAINER_TMPDIR"
 
 # Usage: sbatch nextflow.sbatch test_hanseniaspora_minimal [additional Nextflow options]

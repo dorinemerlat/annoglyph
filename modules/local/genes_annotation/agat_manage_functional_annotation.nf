@@ -1,6 +1,6 @@
 process AGAT_MANAGE_FUNCTIONAL_ANNOTATION {
     tag "${annotation_method}/${id}"
-    // label 'exogap_python'
+    // label 'annoglyph_python'
     cpus 1
     time '6h'
     stageInMode 'copy'

@@ -23,7 +23,7 @@ def main():
 
     with args.output.open("w") as fasta_handle, args.mapping.open("w", newline="") as mapping_handle:
         writer = csv.writer(mapping_handle, delimiter="\t")
-        writer.writerow(["previous_IDs", "EXOGAP_IDs"])
+        writer.writerow(["previous_IDs", "AnnoGlyph_IDs"])
 
         for record_count, record in enumerate(SeqIO.parse(args.fasta, "fasta"), start=1):
             previous_id = record.id

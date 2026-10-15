@@ -1,6 +1,6 @@
 process REFORMAT_REPEATLANDSCAPE {
     tag "${meta.id}"
-    label "exogap_python"
+    label "annoglyph_python"
 
     input:
     tuple val(meta), path(tsv), path(classification)

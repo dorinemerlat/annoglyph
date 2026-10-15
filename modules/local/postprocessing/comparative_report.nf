@@ -1,6 +1,6 @@
 process COMPARATIVE_REPORT {
     tag 'results_layout_v2'
-    label 'exogap_python'
+    label 'annoglyph_python'
     memory 8.GB
     publishDir "${params.outdir}", mode: params.publish_dir_mode
     input:

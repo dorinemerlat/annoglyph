@@ -1,6 +1,6 @@
 process BUILD_BLASTP_TAXONOMY {
     tag "all"
-    label 'exogap_python'
+    label 'annoglyph_python'
     cpus 1
     time '6h'
 

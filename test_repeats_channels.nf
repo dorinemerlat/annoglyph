@@ -2,8 +2,8 @@ nextflow.enable.dsl = 2
 include { REPEATS_ANNOTATION } from './subworkflows/repeats_annotation'
 workflow {
     genomes = Channel.of(
-        [[id: 'test-cerevisiae', mnemonic: [exogap: 'SACCE'], assembly_size: '12157105', busco_dataset: 'saccharomycetaceae_odb12'], file("${projectDir}/test/test_full2/genomes/GCF_000146045.2/genome.fa")],
-        [[id: 'test-paradoxus', mnemonic: [exogap: 'SACPA'], assembly_size: '11500000', busco_dataset: 'saccharomycetaceae_odb12'], file("${projectDir}/test/test_full2/genomes/GCF_002079055.1/genome.fa")]
+        [[id: 'test-cerevisiae', mnemonic: [annoglyph: 'SACCE'], assembly_size: '12157105', busco_dataset: 'saccharomycetaceae_odb12'], file("${projectDir}/test/test_full2/genomes/GCF_000146045.2/genome.fa")],
+        [[id: 'test-paradoxus', mnemonic: [annoglyph: 'SACPA'], assembly_size: '11500000', busco_dataset: 'saccharomycetaceae_odb12'], file("${projectDir}/test/test_full2/genomes/GCF_002079055.1/genome.fa")]
     )
     datasets = Channel.of([[id: 'saccharomycetaceae_odb12'], file("${projectDir}/test/test_full2/cache/preprocessing/busco_download/saccharomycetaceae_odb12/busco_downloads/lineages/saccharomycetaceae_odb12")])
     REPEATS_ANNOTATION(genomes, Channel.empty(), Channel.empty(), datasets)

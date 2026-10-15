@@ -1,5 +1,5 @@
 /*
- * Utility methods for EXOGAP logging.
+ * Utility methods for AnnoGlyph logging.
  */
 class LogUtils {
 
@@ -21,7 +21,7 @@ class LogUtils {
 
         log.info """
         ============================================================
-                             EXOGAP
+                             AnnoGlyph
         ============================================================
 
         Core Nextflow options
@@ -70,9 +70,9 @@ class LogUtils {
      */
     static void printCompletionSummary(workflow, log) {
         if (workflow.success) {
-            log.info "[EXOGAP] Pipeline completed successfully."
+            log.info "[AnnoGlyph] Pipeline completed successfully."
         } else {
-            log.error "[EXOGAP] Pipeline completed with errors."
+            log.error "[AnnoGlyph] Pipeline completed with errors."
         }
     }
 

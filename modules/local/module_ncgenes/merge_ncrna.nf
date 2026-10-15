@@ -1,6 +1,6 @@
 process MERGE_NCRNA {
     tag "${meta.id}"
-    label 'exogap_python'
+    label 'annoglyph_python'
     input:
     tuple val(meta), path(trnascan), path(barrnap_euk), path(barrnap_mito), path(infernal)
     path rfam

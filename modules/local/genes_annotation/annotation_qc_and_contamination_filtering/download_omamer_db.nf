@@ -1,5 +1,5 @@
 process DOWNLOAD_OMAMER_DB {
-    label 'exogap_python'
+    label 'annoglyph_python'
     output:
     path("LUCA.h5")
 

@@ -44,7 +44,7 @@ def main():
             unique[checksum] = candidate
     candidates = list(unique.values())
     close = sorted((x for x in candidates if x[1] == '27291'), key=lambda x: x[0])
-    remainder = sorted((x for x in candidates if x[1] != '27291'), key=lambda x: hashlib.sha256(('exogap-test:' + x[0]).encode()).hexdigest())
+    remainder = sorted((x for x in candidates if x[1] != '27291'), key=lambda x: hashlib.sha256(('annoglyph-test:' + x[0]).encode()).hexdigest())
     chosen = (close + remainder)[:args.count]
     if len(chosen) != args.count:
         raise ValueError(f'Only {len(chosen)} eligible reviewed, nonredundant proteins')

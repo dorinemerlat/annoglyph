@@ -16,7 +16,7 @@ import seaborn as sns
 from Bio import Phylo
 from scipy.stats import pearsonr, spearmanr
 
-from exogap_gff import read_gff
+from annoglyph_gff import read_gff
 
 ISOTYPES = ['Ala', 'Arg', 'Asn', 'Asp', 'Cys', 'Gln', 'Glu', 'Gly', 'His', 'Ile',
             'Leu', 'Lys', 'Met', 'Phe', 'Pro', 'Ser', 'Thr', 'Trp', 'Tyr', 'Val',

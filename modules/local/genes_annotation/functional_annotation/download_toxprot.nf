@@ -1,7 +1,7 @@
 process DOWNLOAD_TOXPROT {
 
     tag "toxprot"
-    label 'exogap_download'
+    label 'annoglyph_download'
     scratch false
 
     output:

@@ -1,6 +1,6 @@
 process REFORMAT_GENOME {
     tag "${meta.id}"
-    label 'exogap_python'
+    label 'annoglyph_python'
 
     input:
     tuple val(meta), path(genome)
@@ -11,7 +11,7 @@ process REFORMAT_GENOME {
 
     script:
     def unmodified_genome = "${meta.id}_unreformated.fa"
-    def genome_code = meta.mnemonic.exogap
+    def genome_code = meta.mnemonic.annoglyph
 
     """
     mv ${genome} ${unmodified_genome}
@@ -24,7 +24,7 @@ process REFORMAT_GENOME {
     """
 
     stub:
-    def genome_code = meta.mnemonic.exogap
+    def genome_code = meta.mnemonic.annoglyph
     """
     # Check that the script is available
     command -v reformat_genome.py >/dev/null
@@ -35,7 +35,7 @@ ATGC
 EOF
 
     cat > genome_${meta.id}.fa.tsv << EOF
-previous_IDs	EXOGAP_IDs
+previous_IDs	AnnoGlyph_IDs
 stub_sequence	${genome_code}_1
 EOF
     """

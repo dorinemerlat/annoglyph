@@ -1,7 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/exogap/master/nextflow_schema.json",
-    "title": "EXOGAP pipeline parameters",
+    "$id": "https://raw.githubusercontent.com/dorinemerlat/annoglyph/main/nextflow_schema.json",
+    "title": "AnnoGlyph pipeline parameters",
     "description": "Genome annotation pipeline for non-model eukaryotic species.",
     "type": "object",
     "definitions": {
@@ -109,7 +109,7 @@
                         "string",
                         "null"
                     ],
-                    "description": "BUSCO lineage used for assessment and gene annotation. When null, EXOGAP selects a lineage from the input taxonomy.",
+                    "description": "BUSCO lineage used for assessment and gene annotation. When null, AnnoGlyph selects a lineage from the input taxonomy.",
                     "default": null
                 }
             }
@@ -153,13 +153,13 @@
                     ],
                     "format": "file-path",
                     "exists": true,
-                    "description": "Protein evidence set used for gene prediction. When null, EXOGAP automatically retrieves OrthoDB and UniProtKB protein evidence.",
+                    "description": "Protein evidence set used for gene prediction. When null, AnnoGlyph automatically retrieves OrthoDB and UniProtKB protein evidence.",
                     "default": null
                 },
                 "protein_evidence_min_sequences": {
                     "type": "integer",
                     "minimum": 1,
-                    "description": "Minimum number of UniProtKB proteins required for automatic taxonomic clade selection. EXOGAP starts from the most specific taxon shared by all input species and moves toward broader ancestral taxa until this threshold is reached.",
+                    "description": "Minimum number of UniProtKB proteins required for automatic taxonomic clade selection. AnnoGlyph starts from the most specific taxon shared by all input species and moves toward broader ancestral taxa until this threshold is reached.",
                     "default": 100000
                 },
                 "protein_evidence_max_sequences": {
@@ -516,75 +516,75 @@
                     "properties": {
                         "busco": {
                             "type": "string",
-                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                            "description": "Additional CLI options; required input/output flags remain controlled by AnnoGlyph."
                         },
                         "repeatmodeler": {
                             "type": "string",
-                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                            "description": "Additional CLI options; required input/output flags remain controlled by AnnoGlyph."
                         },
                         "repeatmasker": {
                             "type": "string",
-                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                            "description": "Additional CLI options; required input/output flags remain controlled by AnnoGlyph."
                         },
                         "cdhit": {
                             "type": "string",
-                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                            "description": "Additional CLI options; required input/output flags remain controlled by AnnoGlyph."
                         },
                         "braker2": {
                             "type": "string",
-                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                            "description": "Additional CLI options; required input/output flags remain controlled by AnnoGlyph."
                         },
                         "braker3": {
                             "type": "string",
-                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                            "description": "Additional CLI options; required input/output flags remain controlled by AnnoGlyph."
                         },
                         "galba": {
                             "type": "string",
-                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                            "description": "Additional CLI options; required input/output flags remain controlled by AnnoGlyph."
                         },
                         "star": {
                             "type": "string",
-                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                            "description": "Additional CLI options; required input/output flags remain controlled by AnnoGlyph."
                         },
                         "star_index": {
                             "type": "string",
-                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                            "description": "Additional CLI options; required input/output flags remain controlled by AnnoGlyph."
                         },
                         "varus": {
                             "type": "string",
-                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                            "description": "Additional CLI options; required input/output flags remain controlled by AnnoGlyph."
                         },
                         "blastp": {
                             "type": "string",
-                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                            "description": "Additional CLI options; required input/output flags remain controlled by AnnoGlyph."
                         },
                         "interproscan": {
                             "type": "string",
-                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                            "description": "Additional CLI options; required input/output flags remain controlled by AnnoGlyph."
                         },
                         "eggnog": {
                             "type": "string",
-                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                            "description": "Additional CLI options; required input/output flags remain controlled by AnnoGlyph."
                         },
                         "trnascan": {
                             "type": "string",
-                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                            "description": "Additional CLI options; required input/output flags remain controlled by AnnoGlyph."
                         },
                         "barrnap": {
                             "type": "string",
-                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                            "description": "Additional CLI options; required input/output flags remain controlled by AnnoGlyph."
                         },
                         "infernal": {
                             "type": "string",
-                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                            "description": "Additional CLI options; required input/output flags remain controlled by AnnoGlyph."
                         },
                         "omark": {
                             "type": "string",
-                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                            "description": "Additional CLI options; required input/output flags remain controlled by AnnoGlyph."
                         },
                         "seqkit": {
                             "type": "string",
-                            "description": "Additional CLI options; required input/output flags remain controlled by EXOGAP."
+                            "description": "Additional CLI options; required input/output flags remain controlled by AnnoGlyph."
                         },
                         "agat_longest": {
                             "type": "string",

@@ -6,7 +6,7 @@ include { POSTPROCESSING } from "$projectDir/subworkflows/postprocessing.nf"
 
 include { COLLECT_PROVENANCE } from "$projectDir/modules/local/postprocessing/provenance.nf"
 
-workflow EXOGAP {
+workflow AnnoGlyph {
     take:
     genomes
     main:

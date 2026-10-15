@@ -1,4 +1,4 @@
-# EXOGAP: Citations
+# AnnoGlyph: Citations
 
 ## Workflow framework
 

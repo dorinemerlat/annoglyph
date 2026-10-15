@@ -1,6 +1,6 @@
 process ADD_TAXONOMY_TO_BLASTP {
     tag "${annotation_method}/${id}"
-    label 'exogap_python'
+    label 'annoglyph_python'
     cpus 1
     time '6h'
 

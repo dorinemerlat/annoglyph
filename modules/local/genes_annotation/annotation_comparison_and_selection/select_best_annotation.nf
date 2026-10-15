@@ -1,5 +1,5 @@
 process SELECT_BEST_ANNOTATION {
-    label 'exogap_python'
+    label 'annoglyph_python'
     tag { 'thresholds_v1_' + java.security.MessageDigest.getInstance('SHA-256').digest(groovy.json.JsonOutput.toJson(new TreeMap(params.selection_thresholds)).getBytes('UTF-8')).encodeHex().toString().take(16) }
     input:
     tuple val(status), path(summary)

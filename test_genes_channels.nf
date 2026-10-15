@@ -6,8 +6,8 @@ workflow {
     def genome = file("${projectDir}/test/test_full2/cache/preprocessing/reformat_genome/saccharomyces-cerevisiae-s288c/genome_saccharomyces-cerevisiae-s288c.fa", checkIfExists: true)
     def reads = file("${projectDir}/test/validation/genes_reads.fastq", checkIfExists: true)
     genomes = Channel.of(
-        [[id:'sample_a', name:'Saccharomyces cerevisiae', mnemonic:[exogap:'AAAA'], lineage:[species:[name:'Saccharomyces cerevisiae']], 'RNASeq-file':[single_end:[reads], paired_end:[[reads, reads]]]], genome],
-        [[id:'sample_b', name:'Saccharomyces cerevisiae', mnemonic:[exogap:'BBBB'], lineage:[species:[name:'Saccharomyces cerevisiae']], 'RNASeq-file':[single_end:[reads], paired_end:[[reads, reads]]]], genome]
+        [[id:'sample_a', name:'Saccharomyces cerevisiae', mnemonic:[annoglyph:'AAAA'], lineage:[species:[name:'Saccharomyces cerevisiae']], 'RNASeq-file':[single_end:[reads], paired_end:[[reads, reads]]]], genome],
+        [[id:'sample_b', name:'Saccharomyces cerevisiae', mnemonic:[annoglyph:'BBBB'], lineage:[species:[name:'Saccharomyces cerevisiae']], 'RNASeq-file':[single_end:[reads], paired_end:[[reads, reads]]]], genome]
     )
     RNASEQ_ASSEMBLY(genomes)
     STRUCTURAL_ANNOTATION(genomes, RNASEQ_ASSEMBLY.out.bams, Channel.value(reads), Channel.value('fungi_odb12'))

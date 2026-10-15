@@ -16,7 +16,7 @@ METADATA_COLUMNS = {
     "taxonomy",
     "taxid",
     "official_mnemonic",
-    "exogap_mnemonic",
+    "annoglyph_mnemonic",
 }
 
 

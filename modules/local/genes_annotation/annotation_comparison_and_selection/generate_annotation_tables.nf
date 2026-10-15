@@ -1,6 +1,6 @@
 process GENERATE_ANNOTATION_TABLES {
     tag "${meta.filtering_status}/${meta.annotation_method}/${meta.id}"
-    label 'exogap_python'
+    label 'annoglyph_python'
 
     input:
     tuple val(meta), path(proteins), path(gff), path(busco), path(omark)

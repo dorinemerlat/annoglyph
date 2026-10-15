@@ -13,7 +13,7 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.Data import CodonTable
 from submission_support import load_metadata, modifiers
-from exogap_gff import Feature, namespace, read_gff, sort_key
+from annoglyph_gff import Feature, namespace, read_gff, sort_key
 
 
 class Genome:
@@ -186,7 +186,7 @@ def main():
                 product = re.sub(r'\s+', ' ', product)
                 locus = locus_for(transcript)
                 protein_id = identifier + '.protein'
-                transcript.attrs['transcript_id'] = [f'gnl|EXOGAP|{identifier}']
+                transcript.attrs['transcript_id'] = [f'gnl|AnnoGlyph|{identifier}']
                 partial_start = phase > 0 or usable[:3] not in CodonTable.unambiguous_dna_by_id[table].start_codons
                 if not partial_start and protein:
                     protein = 'M' + protein[1:]
@@ -197,7 +197,7 @@ def main():
                     if part.phase not in ('0', '1', '2') or int(part.phase) != expected:
                         warnings.append([identifier, f'inconsistent_CDS_phase:{part.start}-{part.end}'])
                     cumulative += part.end - part.start + 1 - (phase if i == 0 else 0)
-                    part.attrs['protein_id'] = [f'gnl|EXOGAP|{protein_id}']
+                    part.attrs['protein_id'] = [f'gnl|AnnoGlyph|{protein_id}']
                     part.attrs['product'] = [product]
                     part.attrs['transl_table'] = [str(table)]
                     if locus:
@@ -264,12 +264,12 @@ def main():
                 if exons:
                     ordered_exons = sorted(exons, key=lambda f: f.start, reverse=transcript.strand == '-')
                     tbl_feature(handle, ordered_exons, 'mRNA', partial_start=partial_start, partial_end=partial_end)
-                    qualifiers(handle, [('product', product), ('transcript_id', f'gnl|EXOGAP|{identifier}')])
+                    qualifiers(handle, [('product', product), ('transcript_id', f'gnl|AnnoGlyph|{identifier}')])
                 else:
                     warnings.append([identifier, 'missing_exons_mRNA_omitted_from_feature_table'])
                 tbl_feature(handle, parts, 'CDS', phase, partial_start, partial_end)
-                qualifiers(handle, [('product', product), ('protein_id', f'gnl|EXOGAP|{identifier}.protein'),
-                                    ('transcript_id', f'gnl|EXOGAP|{identifier}'), ('transl_table', str(table))])
+                qualifiers(handle, [('product', product), ('protein_id', f'gnl|AnnoGlyph|{identifier}.protein'),
+                                    ('transcript_id', f'gnl|AnnoGlyph|{identifier}'), ('transl_table', str(table))])
             for transcript, parts in rna_by_seq[seqid]:
                 kind = transcript.kind if transcript.kind in ('tRNA', 'rRNA') else 'ncRNA'
                 tbl_feature(handle, parts, kind)

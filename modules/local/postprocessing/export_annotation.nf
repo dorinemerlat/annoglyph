@@ -1,6 +1,6 @@
 process EXPORT_ANNOTATION {
     tag "layout_v2/${meta.id}"
-    label 'exogap_python'
+    label 'annoglyph_python'
     memory 8.GB
     publishDir "${params.outdir}/species", mode: params.publish_dir_mode
 
@@ -22,7 +22,7 @@ process EXPORT_ANNOTATION {
     def codingArg = coding ? "--coding ${coding}" : ''
     def repeatsArg = repeats ? "--repeats ${repeats}" : ''
     def ncrnaArg = ncrna ? "--ncrna ${ncrna}" : ''
-    def locusPrefix = meta.locus_tag_prefix ?: params.locus_tag_prefix ?: meta.mnemonic.exogap
+    def locusPrefix = meta.locus_tag_prefix ?: params.locus_tag_prefix ?: meta.mnemonic.annoglyph
     def organism = meta.lineage?.species?.name ?: meta.name
     def code = meta.translation_table ?: params.translation_table
     def metadataArg = submission_metadata ? "--submission-metadata ${submission_metadata}" : ''

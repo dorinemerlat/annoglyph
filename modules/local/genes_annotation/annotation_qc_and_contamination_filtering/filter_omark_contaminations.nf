@@ -1,6 +1,6 @@
 process FILTER_OMARK_CONTAMINATIONS {
     tag "${meta.annotation_method}/${meta.id}"
-    label 'exogap_python'
+    label 'annoglyph_python'
     label 'omark_filter'
 
     input:

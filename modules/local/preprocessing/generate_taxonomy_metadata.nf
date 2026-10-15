@@ -1,5 +1,5 @@
 process GENERATE_TAXONOMY_METADATA {
-    label 'exogap_python'
+    label 'annoglyph_python'
 
     input:
     path taxonomy_input
@@ -20,7 +20,7 @@ process GENERATE_TAXONOMY_METADATA {
     command -v generate_taxonomy_metadata.py >/dev/null
 
     cat > taxonomy.tsv <<'EOF'
-id	name	scientific_name	taxid	official_mnemonic	exogap_mnemonic	superkingdom	kingdom	species
+id	name	scientific_name	taxid	official_mnemonic	annoglyph_mnemonic	superkingdom	kingdom	species
 test-species	Test species	Test species	12345	TEST	TEST	Eukaryota	Metazoa	Test species
 EOF
 
@@ -31,7 +31,7 @@ EOF
     "taxid": "12345",
     "mnemonic": {
       "official": "TEST",
-      "exogap": "TEST"
+      "annoglyph": "TEST"
     },
     "lineage": {
       "superkingdom": {

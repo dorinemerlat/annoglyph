@@ -1,6 +1,6 @@
 process PLOT_ANNOTATION_ANALYSIS {
     tag "${status}"
-    label 'exogap_python'
+    label 'annoglyph_python'
 
     input:
     tuple val(status), path(summary), path(intron_lengths), path(newick), path(seqkit_stats)

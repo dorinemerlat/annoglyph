@@ -1,6 +1,6 @@
 process PLOT_REPEAT_LANDSCAPE {
     tag "${meta.id}"
-    label 'exogap_python'
+    label 'annoglyph_python'
     input:
     tuple val(meta), path(table)
     output:

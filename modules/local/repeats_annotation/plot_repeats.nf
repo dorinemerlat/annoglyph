@@ -1,7 +1,7 @@
 nextflow.enable.dsl=2
 
 process PLOT_REPEATS {
-	// label 'exogap_tools'
+	// label 'annoglyph_tools'
 	input:
 	tuple val(meta), path(gff_files), path(stats_files), path(newick)
 

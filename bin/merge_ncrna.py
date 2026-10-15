@@ -5,7 +5,7 @@ import csv
 import re
 from bisect import bisect_right
 from collections import defaultdict
-from exogap_gff import Feature, namespace, read_gff, sort_key
+from annoglyph_gff import Feature, namespace, read_gff, sort_key
 
 
 def interval_index(features, kind):

@@ -20,8 +20,8 @@ def load_metadata(path, sample, assets_path=None):
                 continue
             with source.open() as handle:
                 reader = csv.DictReader(handle, delimiter='\t')
-                if reader.fieldnames == ['previous_IDs', 'EXOGAP_IDs']:
-                    aliases.update({row['previous_IDs']: row['EXOGAP_IDs'] for row in reader})
+                if reader.fieldnames == ['previous_IDs', 'AnnoGlyph_IDs']:
+                    aliases.update({row['previous_IDs']: row['AnnoGlyph_IDs'] for row in reader})
     sequences = {}
     for identifier, values in config.get('sequences', {}).items():
         target = aliases.get(identifier, identifier)

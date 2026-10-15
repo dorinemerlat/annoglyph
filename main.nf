@@ -3,7 +3,7 @@
 nextflow.enable.dsl = 2
 
 include { validateParameters; samplesheetToList } from 'plugin/nf-schema'
-include { EXOGAP                                } from './workflows/exogap'
+include { AnnoGlyph                                } from './workflows/annoglyph'
 
 validateParameters()
 
@@ -28,7 +28,7 @@ LogUtils.printExecutionSummary(
 )
 
 workflow {
-    log.info 'Starting EXOGAP'
+    log.info 'Starting AnnoGlyph'
 
-    EXOGAP(genomes)
+    AnnoGlyph(genomes)
 }

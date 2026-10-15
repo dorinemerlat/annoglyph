@@ -1,6 +1,6 @@
 process CLASSIFY_GENES_VS_REPEATS {
     tag "${annotation_method}/${id}"
-    label 'exogap_python'
+    label 'annoglyph_python'
     scratch false
     stageInMode 'copy'
 

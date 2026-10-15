@@ -1,6 +1,6 @@
 process POSTPROCESS_MCHELPER {
     tag "${meta.id}"
-    label "exogap_python"
+    label "annoglyph_python"
 
     input:
     tuple val(meta), path(repeats_table), path(repeats_families), path(mchelper_classif), path(classified_module), path(unclassified_module), path(gene_tbl), path(rrna_tbl), path(classification)

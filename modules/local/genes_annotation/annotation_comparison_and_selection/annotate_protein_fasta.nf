@@ -1,6 +1,6 @@
 process ANNOTATE_PROTEIN_FASTA {
     tag "${id}"
-    label 'exogap_python'
+    label 'annoglyph_python'
 
     input:
     tuple val(id), val(meta), val(gff), path(proteins)

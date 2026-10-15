@@ -1,6 +1,6 @@
 process SUMMARIZE_REPEATS_BY_LEVEL {
     tag "${meta.id}"
-    label "exogap_python"
+    label "annoglyph_python"
 
     input:
     tuple val(meta), path(gff)

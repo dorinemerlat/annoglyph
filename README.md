@@ -1,12 +1,11 @@
-![nf-core/exogap](./docs/images/exogap_logo_light.png#gh-light-mode-only)
-![nf-core/exogap](./docs/images/exogap_logo_dark.png#gh-dark-mode-only)
+# AnnoGlyph
 
 [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A523.04.0-23aa62.svg)](https://www.nextflow.io/)
 [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
 
 ## Introduction
 
-EXOGAP (EXotic Organism Genome Annotation Pipeline) is a Nextflow DSL2 workflow for comprehensive annotation of genomes from non-model species. It integrates tools for repetitive element identification, protein-coding gene prediction and non-coding gene prediction. The pipeline can annotate multiple related genomes in a single run and formats outputs for deposition in public databases.
+AnnoGlyph is a Nextflow DSL2 workflow for comprehensive annotation of genomes from non-model species. It integrates tools for repetitive element identification, protein-coding gene prediction and non-coding gene prediction. The pipeline can annotate multiple related genomes in a single run and formats outputs for deposition in public databases.
 
 Main modules:
 - Repetitive element annotation: RepeatModeler, RepeatMasker (uses FamDB).
@@ -21,8 +20,8 @@ Prerequisites:
 
 Clone the repository:
 ```bash
-git clone https://github.com/dorinemerlat/exogap.git
-cd exogap
+git clone https://github.com/dorinemerlat/annoglyph.git
+cd annoglyph
 ```
 
 ## Usage

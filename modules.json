@@ -1,6 +1,6 @@
 {
-    "name": "EXOGAP",
-    "homePage": "https://github.com/dorinemerlat/exogap",
+    "name": "AnnoGlyph",
+    "homePage": "https://github.com/dorinemerlat/annoglyph",
     "repos": {
         "https://github.com/nf-core/modules.git": {
             "modules": {

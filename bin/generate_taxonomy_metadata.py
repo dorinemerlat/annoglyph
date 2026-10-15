@@ -31,7 +31,7 @@ def fetch(url, accept):
         url,
         headers={
             "Accept": accept,
-            "User-Agent": "EXOGAP",
+            "User-Agent": "AnnoGlyph",
         },
     )
 
@@ -91,7 +91,7 @@ def fallback_mnemonic(genome_id):
 
 
 def assign_mnemonics(records):
-    """Assign official and unique EXOGAP mnemonics."""
+    """Assign official and unique AnnoGlyph mnemonics."""
     bases = []
 
     for record in records:
@@ -117,10 +117,10 @@ def assign_mnemonics(records):
         base = record.pop("_base")
 
         if counts[base] == 1:
-            record["exogap_mnemonic"] = base
+            record["annoglyph_mnemonic"] = base
         else:
             indices[base] += 1
-            record["exogap_mnemonic"] = f"{base}{indices[base]}"
+            record["annoglyph_mnemonic"] = f"{base}{indices[base]}"
 
 
 def build_tree(records):
@@ -228,7 +228,7 @@ def main():
             "taxonomy": taxonomy["scientific_name"],
             "taxid": taxonomy["taxid"],
             "official_mnemonic": record["official_mnemonic"],
-            "exogap_mnemonic": record["exogap_mnemonic"],
+            "annoglyph_mnemonic": record["annoglyph_mnemonic"],
         }
 
         lineage = {}
@@ -249,7 +249,7 @@ def main():
             "taxid": taxonomy["taxid"],
             "mnemonic": {
                 "official": record["official_mnemonic"],
-                "exogap": record["exogap_mnemonic"],
+                "annoglyph": record["annoglyph_mnemonic"],
             },
             "lineage": lineage,
         }
@@ -260,7 +260,7 @@ def main():
         "taxonomy",
         "taxid",
         "official_mnemonic",
-        "exogap_mnemonic",
+        "annoglyph_mnemonic",
         *used_ranks,
     ]
 

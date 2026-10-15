@@ -1,6 +1,6 @@
 process REPEATMASKER_OUT_TO_GFF {
     tag "${meta.id}"
-    label 'exogap_python'
+    label 'annoglyph_python'
     
     input:
     tuple val(meta), path(out), path(table), path(classification_csv)

@@ -1,6 +1,6 @@
 process PLOT_ANNOTATION_COMPARISON {
     tag "${status}"
-    label 'exogap_python'
+    label 'annoglyph_python'
 
     input:
     tuple val(status), path(summary), path(protein_lengths), path(intron_lengths), path(newick)

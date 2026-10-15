@@ -19,10 +19,10 @@ The following official modules are vendored under `modules/nf-core/`:
 
 `modules.json` records the upstream revision. Local patches replace `eval()` version outputs with `versions.yml` files to support
 `storeDir`; patch paths are recorded in `modules.json`.
-Process configuration overrides their containers to retain EXOGAP's existing SeqKit
+Process configuration overrides their containers to retain AnnoGlyph's existing SeqKit
 2.8.2 and BUSCO 6.0.0 versions.
 
-`NORMALIZE_SEQKIT_STATS` restores EXOGAP's `genome_id` column before assembly-size
+`NORMALIZE_SEQKIT_STATS` restores AnnoGlyph's `genome_id` column before assembly-size
 parsing and table merging. The merged table remains `all_seqkit.stats`.
 
 BUSCO uses the upstream module's batch layout and file names. Assembly summaries
@@ -31,13 +31,13 @@ directory channel emits `[[id: lineage], dataset_directory]`. Summary files may 
 absent when BUSCO finds no genes; batch failure reports are available from the
 upstream module. Their names and log contents differ from the old custom module.
 
-The three patched modules use EXOGAP's global `storeDir` cache, including their
+The three patched modules use AnnoGlyph's global `storeDir` cache, including their
 `versions.yml` files. A run without `-resume` can reuse these stored outputs.
 BUSCO uses `stageOutMode = 'copy'` because its directory and nested file outputs
 overlap; moving the directory first would remove files still awaiting staging.
 The supplied lineage root is staged as `input_lineages` so it cannot be mistaken
 for a newly downloaded lineage output and copied into every per-genome cache.
-The BUSCO patch also handles an unset Augustus configuration variable in EXOGAP's
+The BUSCO patch also handles an unset Augustus configuration variable in AnnoGlyph's
 existing container, which uses the default Miniprot predictor for genome mode.
 
 The main workflow runs preprocessing and repeat annotation. Gene annotation calls

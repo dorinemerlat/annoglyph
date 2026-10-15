@@ -1,6 +1,6 @@
 process TRANSFER_FUNCTIONAL_ANNOTATIONS {
     tag "${meta.annotation_method}/${meta.id}"
-    label 'exogap_python'
+    label 'annoglyph_python'
 
     input:
     tuple val(meta), path(gff), path(blastp), path(interproscan), path(eggnog)

@@ -1,6 +1,6 @@
 process NCRNA_STATS {
     tag 'all_genomes'
-    label 'exogap_python'
+    label 'annoglyph_python'
     memory 8.GB
 
     input:

@@ -1,5 +1,5 @@
 /*
- * Utility methods used by the EXOGAP preprocessing workflow.
+ * Utility methods used by the AnnoGlyph preprocessing workflow.
  */
 class PreprocessingUtils {
 
@@ -94,17 +94,17 @@ class PreprocessingUtils {
     /*
      * Select user-provided or automatically generated mnemonics.
      */
-    static Map selectMnemonics(Map meta, String officialMnemonic, String exogapMnemonic) {
+    static Map selectMnemonics(Map meta, String officialMnemonic, String annoglyphMnemonic) {
         if (hasProvidedMnemonic(meta)) {
             return [
                 official: meta.mnemonic,
-                exogap: meta.mnemonic
+                annoglyph: meta.mnemonic
             ]
         }
 
         return [
             official: officialMnemonic,
-            exogap: exogapMnemonic
+            annoglyph: annoglyphMnemonic
         ]
     }
 

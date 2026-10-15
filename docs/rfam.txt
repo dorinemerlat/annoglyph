@@ -5,9 +5,9 @@ cmpress Rfam.cm
 
 ID=$1
 # seqkit
-seqkit=/tempor/merlat/exogap/cache/preprocessing/seqkit_stats/${ID}/${ID}.stats
+seqkit=/tempor/merlat/annoglyph/cache/preprocessing/seqkit_stats/${ID}/${ID}.stats
 sum_len=$(tail -n +2 $seqkit |cut -f 5)
 # Z = sum_len *2 / 1,000,000 (with number after .)
 Z=$(echo "scale=6; $sum_len * 2 / 1000000" | bc)
 
-cmscan -Z $Z --cut_ga --rfam --nohmmonly --tblout ${ID}.tblout --fmt 2 --clanin /tempor/merlat/exogap/data/rfam/Rfam.clanin /tempor/merlat/exogap/data/rfam/Rfam.cm $genome > ${ID}.cmscan
+cmscan -Z $Z --cut_ga --rfam --nohmmonly --tblout ${ID}.tblout --fmt 2 --clanin /tempor/merlat/annoglyph/data/rfam/Rfam.clanin /tempor/merlat/annoglyph/data/rfam/Rfam.cm $genome > ${ID}.cmscan

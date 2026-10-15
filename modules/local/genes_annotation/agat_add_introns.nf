@@ -1,6 +1,6 @@
 process AGAT_ADD_INTRONS {
     tag "${annotation_method}/${id}"
-    // label 'exogap_python'
+    // label 'annoglyph_python'
 
     input:
     tuple val(id), val(meta), val(annotation_method), path(gff)

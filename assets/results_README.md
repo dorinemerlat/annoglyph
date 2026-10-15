@@ -1,4 +1,4 @@
-# EXOGAP results
+# AnnoGlyph results
 
 ## Organisation
 

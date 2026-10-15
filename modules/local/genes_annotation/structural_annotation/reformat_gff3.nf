@@ -1,6 +1,6 @@
 process REFORMAT_GFF3 {
     tag "${meta.annotation_method}/${meta.id}"
-    label 'exogap_tools'
+    label 'annoglyph_tools'
 
     input:
     tuple val(meta), path(gff)
@@ -9,7 +9,7 @@ process REFORMAT_GFF3 {
     tuple val(meta), path("${meta.id}_${meta.annotation_method}_reformatted.gff3")
 
     script:
-    def genomeCode = meta.mnemonic.exogap
+    def genomeCode = meta.mnemonic.annoglyph
     def outputFile = "${meta.id}_${meta.annotation_method}_reformatted.gff3"
 
     """

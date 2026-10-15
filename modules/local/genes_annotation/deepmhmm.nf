@@ -1,6 +1,6 @@
 process DEEPMHMM {
     tag "${id}"
-    label 'exogap_deepmhmm'
+    label 'annoglyph_deepmhmm'
 
     input:
     tuple val(id), val(meta), path(fasta)

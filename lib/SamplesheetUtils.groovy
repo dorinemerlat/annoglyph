@@ -2,7 +2,7 @@ import nextflow.Channel
 
 
 /*
- * Utility methods for formatting the EXOGAP input samplesheet.
+ * Utility methods for formatting the AnnoGlyph input samplesheet.
  */
 class SamplesheetUtils {
 

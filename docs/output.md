@@ -1,4 +1,4 @@
-# nf-core/exogap: Output
+# nf-core/annoglyph: Output
 
 ## Introduction
 

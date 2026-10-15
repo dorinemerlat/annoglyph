@@ -27,7 +27,7 @@ The local patches recorded in `modules.json` provide:
 
 RepeatModeler uses its native log rather than the old captured stdout log; its families
 FASTA keeps the original `<id>-families.fa` name. RepeatMasker names its GFF
-`genome_<id>.fa.gff`; EXOGAP's classification-aware GFF conversion still emits
+`genome_<id>.fa.gff`; AnnoGlyph's classification-aware GFF conversion still emits
 `<id>_repeats.gff`. `.cat*` is optional because availability depends on the tool run.
 
 Both pooled and per-genome library modes have a stub integration test. These tests

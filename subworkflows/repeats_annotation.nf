@@ -140,7 +140,7 @@ workflow REPEATS_ANNOTATION {
         REPEATLANDSCAPE.out.tsv.map { meta, tsv -> [meta, tsv, file("$projectDir/data/repeats_classification.csv")] }
             .set { reformat_repeatlandscape_inputs }
 
-        // Replace RepeatMasker classifications with the standardized EXOGAP classification.
+        // Replace RepeatMasker classifications with the standardized AnnoGlyph classification.
         REFORMAT_REPEATLANDSCAPE(reformat_repeatlandscape_inputs)
 
         PLOT_REPEAT_LANDSCAPE(REFORMAT_REPEATLANDSCAPE.out)

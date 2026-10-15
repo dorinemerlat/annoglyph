@@ -1,6 +1,6 @@
 process DOWNLOAD_RFAM {
     tag "${release}"
-    label 'exogap_python'
+    label 'annoglyph_python'
     input:
     val release
     output:
