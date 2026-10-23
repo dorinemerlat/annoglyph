@@ -154,33 +154,30 @@ Run one command for the desired group and mode:
 
 ```bash
 # Hanseniaspora
-nextflow run main.nf -profile singularity,test_hanseniaspora_minimal -c conf/ifb.config -c test/validation/slurm_runtime.config
-nextflow run main.nf -profile singularity,test_hanseniaspora_full -c conf/ifb.config -c test/validation/slurm_runtime.config
+nextflow run main.nf -profile singularity,test_hanseniaspora_minimal
+nextflow run main.nf -profile singularity,test_hanseniaspora_full
 
 # Pieris
-nextflow run main.nf -profile singularity,test_pieris_minimal -c conf/ifb.config -c test/validation/slurm_runtime.config
-nextflow run main.nf -profile singularity,test_pieris_full -c conf/ifb.config -c test/validation/slurm_runtime.config
+nextflow run main.nf -profile singularity,test_pieris_minimal
+nextflow run main.nf -profile singularity,test_pieris_full
 
 # Utricularia
-nextflow run main.nf -profile singularity,test_utricularia_minimal -c conf/ifb.config -c test/validation/slurm_runtime.config
-nextflow run main.nf -profile singularity,test_utricularia_full -c conf/ifb.config -c test/validation/slurm_runtime.config
+nextflow run main.nf -profile singularity,test_utricularia_minimal
+nextflow run main.nf -profile singularity,test_utricularia_full
 ```
 
-Alternatively, submit the launcher with any of these profiles:
-
-```bash
-sbatch nextflow.sbatch test_hanseniaspora_minimal
-sbatch nextflow.sbatch test_pieris_full
-sbatch nextflow.sbatch test_utricularia_minimal -resume
-```
+Add your site configuration with `-c conf/local.config` when needed.
+Machine-specific configurations and batch launchers are kept locally and are not
+versioned.
 
 Add `-resume` to resume the same mode. Outputs are written to
 `test/test_<group>/<minimal|full>/results`, with persistent caches alongside
 in `cache`. Existing outputs at the older locations are retained, but these
 new profiles use separate directories. The legacy `test_hanseniaspora`,
 `test_pieris` and `test_utricularia` names now select the minimal mode.
-Use your site's execution config instead of the two IFB configs elsewhere.
-Bank paths and program options are configured in `nextflow.config`.
+General program options are configured in `nextflow.config`. Local bank paths
+and execution settings belong in the ignored `conf/local.config`, loaded
+automatically when present.
 
 Full profiles enable genus-exclusion evaluation: protein evidence is downloaded
 from OrthoDB and UniProtKB using a shared clade above genus, then filtered for

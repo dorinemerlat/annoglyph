@@ -1,6 +1,64 @@
-# Keep the small, reproducible protein evidence fixture in version control.
-!test/data/
-
-# Generated pipeline outputs and AGAT logs.
-/outputs/
+# Runtime outputs, at any directory depth.
+cache/
+cache_*/
+cache_save/
+cache_archve/
+results/
+logs/
+log/
+pipeline_info/
+work/
+work2/
+outputs/
+out/
+.nextflow*
+.apptainer_tmp/
+.singularity/
+.apptainer/
+*.log
+*.log.*
+*.err
+*.out
+*.exit
+*.pyc
+__pycache__/
+.DS_Store
+.vscode/
 /agat_log_corrected/
+
+# Local machine and experiment settings (kept on disk).
+/conf/local.config
+/conf/*.local.config
+/conf/ifb.config
+/conf/finalize_cache_save.config
+/nextflow_*.config
+/nextflow.sbatch
+/nextflow_myriapoda.sbatch
+/finalize_cache_save.sbatch
+/validate_finalize_cache_save.sbatch
+/samplesheet*.csv
+/manuscript/
+
+# Downloaded test datasets, archives and local validation artifacts.
+/test/test_full*/
+/test/test_minimal/
+/test/test_hanseniaspora/
+/test/test_pieris/
+/test/test_utricularia/
+/test/*.zip
+/test/validation/minimal_execution_stats/
+/test/validation/minimal_validation*.txt
+/test/validation/nfcore_migration_*.md
+/test/validation/new_datasets_metadata.json
+/test/validation/slurm_runtime.config
+/test/validation/repeats_only_runtime.config
+/test/validation/genes_functional.config
+/test/validation/continue_genes_full2.sh
+
+# Portable, intentional reference inputs are part of the source distribution.
+!/data/
+/data/*
+!/data/repeats_classification.csv
+!/test/data/
+!/test/data/**
+!/test/samplesheet_*.csv

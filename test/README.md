@@ -81,29 +81,24 @@ RNA-seq dataset. The legacy group profile names select minimal mode.
 ## Launch
 
 See the [main README](../README.md#integration-tests) for environment setup and
-all six Nextflow commands. For example, from the project root on IFB:
+all six Nextflow commands. For example, from the project root:
 
 ```bash
-nextflow run main.nf -profile singularity,test_hanseniaspora_minimal -c conf/ifb.config -c test/validation/slurm_runtime.config
-nextflow run main.nf -profile singularity,test_hanseniaspora_full -c conf/ifb.config -c test/validation/slurm_runtime.config
+nextflow run main.nf -profile singularity,test_hanseniaspora_minimal
+nextflow run main.nf -profile singularity,test_hanseniaspora_full
 ```
 
-Or submit the launcher, which loads the modules/environment:
+Add your site configuration with `-c conf/local.config` when needed.
+Machine-specific configurations and batch launchers are kept locally and are not
+versioned.
 
-```bash
-sbatch nextflow.sbatch test_hanseniaspora_minimal
-sbatch nextflow.sbatch test_pieris_full
-sbatch nextflow.sbatch test_utricularia_minimal -resume
-```
-
-The launcher defaults to `test_hanseniaspora_minimal`. It uses the IFB account
-configured in `nextflow.sbatch`; `slurm_runtime.config` excludes four nodes
-previously found without Singularity. Adapt execution settings to your site.
 Results and persistent caches are separated by mode under
 `test/test_<group>/<minimal|full>/{results,cache}`. Existing older output
 directories are retained. Add `-resume` to resume the same mode.
 
-Bank paths and main program options are defined in `nextflow.config`.
+General program options are defined in `nextflow.config`. Put local database
+paths and execution settings in the ignored `conf/local.config`, which is loaded
+automatically when present.
 No complete pipeline run is implied by these instructions; execution is left
 to the user.
 
