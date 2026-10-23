@@ -3,7 +3,7 @@ process PLOT_ANNOTATION_COMPARISON {
     label 'annoglyph_python'
 
     input:
-    tuple val(status), path(summary), path(protein_lengths), path(intron_lengths), path(newick)
+    tuple val(status), path(summary), path(protein_lengths), path(intron_lengths), path(newick), path(taxonomy)
 
     output:
     tuple val(status), path("${status}_annotation_comparison_summary.{png,pdf,svg}"), emit: comparison
@@ -16,7 +16,7 @@ process PLOT_ANNOTATION_COMPARISON {
     plot_annotation_comparison.py \
         --summary ${summary} \
         --protein-lengths ${protein_lengths} \
-        --tree ${newick} \
+        --taxonomy ${taxonomy} --tree ${newick} \
         --out ${status}_annotation_comparison_summary
     """
 

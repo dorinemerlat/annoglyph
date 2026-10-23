@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from __future__ import annotations
+from annotation_phylogeny import load_phylogeny
 
 import argparse
 import re
@@ -55,36 +56,26 @@ def clean_group_name(group_name: str) -> str:
     return str(group_name).split("|")[0]
 
 
-def get_genome_order(all_genomes: list[str], tree_file: Path | None) -> list[str]:
+def get_genome_order(all_genomes, tree_file, taxonomy_file=None):
     if tree_file is None:
         return sorted(all_genomes)
-
-    tree = Phylo.read(tree_file, "newick")
-
-    phylo_order = []
-    for leaf in tree.get_terminals():
-        genome_id = str(leaf.name).split("|")[0]
-        if genome_id in all_genomes:
-            phylo_order.append(genome_id)
-
-    missing = sorted([g for g in all_genomes if g not in phylo_order])
-    return phylo_order + missing
+    _, _, order, missing = load_phylogeny(tree_file, all_genomes, taxonomy_file)
+    print(f"Found {len(all_genomes) - len(missing)} genomes in tree")
+    print(f"Missing from tree: {missing}")
+    return order
 
 
-def get_tree_groups(tree_file: Path, available_genomes: set[str], min_size: int = 4) -> dict[str, list[str]]:
+def get_tree_groups(tree_file: Path, available_genomes: set[str], min_size: int = 4, taxonomy_file=None) -> dict[str, list[str]]:
     if tree_file is None:
         return {}
 
-    tree = Phylo.read(tree_file, "newick")
+    tree, leaf_genomes, _, _ = load_phylogeny(tree_file, available_genomes, taxonomy_file)
     groups = {}
     seen = set()
 
     for i, clade in enumerate(tree.find_clades(order="level")):
-        leaves = [
-            str(leaf.name).split("|")[0]
-            for leaf in clade.get_terminals()
-            if str(leaf.name).split("|")[0] in available_genomes
-        ]
+        leaves = [genome for leaf in clade.get_terminals()
+                  for genome in leaf_genomes[id(leaf)]]
 
         leaves = sorted(set(leaves))
 
@@ -533,6 +524,7 @@ def main() -> None:
         help="Minimum number of genomes per tree group for correlation plots.",
     )
 
+    parser.add_argument("--taxonomy", type=Path, help="Taxonomy TSV mapping scientific names to genome IDs.")
     args = parser.parse_args()
 
     summary_dir = args.out_dir / "summary_plots"
@@ -553,7 +545,7 @@ def main() -> None:
     df["mean_introns_per_gene"] = df["intron_number"] / df["gene_number"]
 
     all_genomes = sorted(set(df["genome_id"].dropna().astype(str)))
-    genome_order = get_genome_order(all_genomes, args.tree)
+    genome_order = get_genome_order(all_genomes, args.tree, args.taxonomy)
 
     plot_summary_figure(
         df=df,
@@ -567,6 +559,7 @@ def main() -> None:
         args.tree,
         available_genomes=set(all_genomes),
         min_size=args.min_group_size,
+        taxonomy_file=args.taxonomy,
     ))
 
     for group_name, genomes in groups.items():
@@ -580,6 +573,17 @@ def main() -> None:
             group_name=group_name,
             out_prefix=correlation_dir / f"{safe_name(group_name)}_gene_structure_assembly_correlations",
         )
+
+    if not any(correlation_dir.glob('*.png')):
+        # Small test datasets cannot support correlations, but still need a report.
+        fig, ax = plt.subplots(figsize=(8, 3))
+        ax.axis('off')
+        ax.text(0.5, 0.5,
+                f'Correlation plots require at least {args.min_group_size} genomes per group.',
+                ha='center', va='center', wrap=True)
+        for extension in ('png', 'pdf', 'svg'):
+            fig.savefig(correlation_dir / f'insufficient_genomes.{extension}', bbox_inches='tight')
+        plt.close(fig)
 
 
 if __name__ == "__main__":

@@ -112,7 +112,7 @@ class PreprocessingUtils {
     /*
      * Extract the total assembly length from SeqKit stats.
      */
-    static String parseAssemblySize(seqkitFile) {
+    static long parseAssemblySize(seqkitFile) {
         def lines = seqkitFile.text.readLines()
 
         if (lines.size() < 2) {
@@ -129,6 +129,6 @@ class PreprocessingUtils {
             )
         }
 
-        return columns[4]
+        return columns[4].replace(',', '').trim().toLong()
     }
 }

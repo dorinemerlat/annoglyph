@@ -15,7 +15,7 @@ process BUSCO_PROTEINS {
     def prefix = "${meta.id}_${meta.annotation_method}"
     """
     busco --in ${proteins} --out busco_${prefix} --mode proteins \
-        --lineage_dataset ${lineage} --cpu ${task.cpus} --offline --force ${params.program_args.busco ?: ''}
+        --lineage_dataset "./${lineage}" --cpu ${task.cpus} --offline --force ${params.program_args.busco ?: ''}
     cp busco_${prefix}/short_summary*.json ${prefix}_busco.json
     cp busco_${prefix}/short_summary*.txt ${prefix}_busco.txt
     """

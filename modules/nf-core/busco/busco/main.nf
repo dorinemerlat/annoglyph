@@ -119,6 +119,10 @@ process BUSCO_BUSCO {
 
     if grep -q 'Run failed; check logs' ${prefix}-busco/batch_summary.txt; then
         grep 'Run failed; check logs' ${prefix}-busco/batch_summary.txt > ${prefix}-busco.batch_summary.failed.txt
+        if [ '${mode}' = 'proteins' ]; then
+            echo 'BUSCO protein assessment failed; see the BUSCO log.' >&2
+            exit 1
+        fi
     fi
 
     cat > versions.yml <<-END_VERSIONS

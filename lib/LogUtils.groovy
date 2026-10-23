@@ -26,6 +26,7 @@ class LogUtils {
 
         Core Nextflow options
           Run name           : ${workflow.runName}
+          Run group          : ${params.run_group ?: "none"}
           Profile            : ${workflow.profile}
           Container engine   : ${workflow.containerEngine}
           Launch directory   : ${workflow.launchDir}

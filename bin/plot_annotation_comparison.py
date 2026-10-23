@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from __future__ import annotations
+from annotation_phylogeny import load_phylogeny
 
 import argparse
 import re
@@ -84,29 +85,13 @@ def read_table(path: Path) -> pd.DataFrame:
     return pd.read_csv(path, sep="\t")
 
 
-def get_genome_order(all_genomes: list[str], tree_file: Path | None) -> list[str]:
+def get_genome_order(all_genomes, tree_file, taxonomy_file=None):
     if tree_file is None:
         return sorted(all_genomes)
-
-    if Phylo is None:
-        raise ImportError(
-            "Biopython is required to read Newick files. Install with: pip install biopython"
-        )
-
-    tree = Phylo.read(tree_file, "newick")
-
-    phylo_order = []
-    for leaf in tree.get_terminals():
-        genome_id = str(leaf.name).split("|")[0]
-        if genome_id in all_genomes:
-            phylo_order.append(genome_id)
-
-    missing = sorted([g for g in all_genomes if g not in phylo_order])
-
-    print(f"Found {len(phylo_order)} genomes in tree")
+    _, _, order, missing = load_phylogeny(tree_file, all_genomes, taxonomy_file)
+    print(f"Found {len(all_genomes) - len(missing)} genomes in tree")
     print(f"Missing from tree: {missing}")
-
-    return phylo_order + missing
+    return order
 
 
 def get_methods(*dfs: pd.DataFrame) -> list[str]:
@@ -772,6 +757,7 @@ def main() -> None:
         help="Optional list of methods to plot.",
     )
 
+    parser.add_argument("--taxonomy", type=Path, help="Taxonomy TSV mapping scientific names to genome IDs.")
     args = parser.parse_args()
     args.out.parent.mkdir(parents=True, exist_ok=True)
 
@@ -783,7 +769,7 @@ def main() -> None:
         set(df_protein_lengths.get("genome_id", [])),
     ))
 
-    genome_order = get_genome_order(all_genomes, args.tree)
+    genome_order = get_genome_order(all_genomes, args.tree, args.taxonomy)
 
     if args.methods:
         methods = args.methods

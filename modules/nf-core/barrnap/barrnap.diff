@@ -1,0 +1,77 @@
+--- a/modules/nf-core/barrnap/main.nf
++++ b/modules/nf-core/barrnap/main.nf
+@@ -11,8 +11,8 @@
+     tuple val(meta), path(fasta), val(dbname)
+
+     output:
++    path "versions.yml", emit: versions
+     tuple val(meta), path("*.gff"), emit: gff
+-    tuple val("${task.process}"), val('barrnap'), eval('barrnap --version 2>&1 | sed "s/barrnap //g"'), emit: versions_barrnap, topic: versions
+
+     when:
+     task.ext.when == null || task.ext.when
+@@ -34,6 +34,11 @@
+         $input \\
+         > ${prefix}_${db}.gff
+
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        barrnap: \$( barrnap --version 2>&1 | sed "s/barrnap //g" )
++    END_VERSIONS
+     """
+
+     stub:
+@@ -41,5 +46,10 @@
+     db = dbname ? "${dbname}" : 'bac'
+     """
+     touch ${prefix}_${db}.gff
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        barrnap: \$( barrnap --version 2>&1 | sed "s/barrnap //g" )
++    END_VERSIONS
+     """
+ }
+--- a/modules/nf-core/barrnap/meta.yml
++++ b/modules/nf-core/barrnap/meta.yml
+@@ -28,6 +28,11 @@
+         type: string
+         description: database to use(bacteria, archaea, eukaryota, metazoan mitochondria)
+ output:
++  versions:
++    - versions.yml:
++        type: file
++        description: Software versions for AnnoGlyph provenance.
++        pattern: "versions.yml"
+   gff:
+     - - meta:
+           type: map
+@@ -39,27 +44,6 @@
+           description: gff file containing coordinates of genes
+           pattern: "*.gff"
+           ontologies: []
+-  versions_barrnap:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - barrnap:
+-          type: string
+-          description: The name of the tool
+-      - 'barrnap --version 2>&1 | sed "s/barrnap //g"':
+-          type: eval
+-          description: The expression to obtain the version of the tool
+-topics:
+-  versions:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - barrnap:
+-          type: string
+-          description: The name of the tool
+-      - 'barrnap --version 2>&1 | sed "s/barrnap //g"':
+-          type: eval
+-          description: The expression to obtain the version of the tool
+ authors:
+   - "@danilodileo"
+   - "@srisarya"

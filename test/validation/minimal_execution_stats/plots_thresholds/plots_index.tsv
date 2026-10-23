@@ -1,0 +1,5 @@
+metric	selection	threshold	scale	modules	measured_modules	status	figure
+runtime	thresholds	30.0	log	8	8	plotted	execution_metrics
+cpu	thresholds	10.0	log	8	8	plotted	execution_metrics
+memory	thresholds	8.0	log	8	8	plotted	execution_metrics
+cores	thresholds	4.0	log	8	8	plotted	execution_metrics

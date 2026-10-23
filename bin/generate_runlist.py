@@ -167,9 +167,15 @@ def parse_docsum(docsum):
     }
 
     if exp_xml is not None:
-        experiment = exp_xml.find(".//Experiment") or exp_xml.find(".//EXPERIMENT")
-        study = exp_xml.find(".//Study") or exp_xml.find(".//STUDY")
-        sample = exp_xml.find(".//Sample") or exp_xml.find(".//SAMPLE")
+        experiment = exp_xml.find(".//Experiment")
+        if experiment is None:
+            experiment = exp_xml.find(".//EXPERIMENT")
+        study = exp_xml.find(".//Study")
+        if study is None:
+            study = exp_xml.find(".//STUDY")
+        sample = exp_xml.find(".//Sample")
+        if sample is None:
+            sample = exp_xml.find(".//SAMPLE")
 
         if experiment is not None:
             metadata["experiment_accession"] = experiment.attrib.get("acc", "")
@@ -195,6 +201,10 @@ def parse_docsum(docsum):
         metadata["library_source"] = first_text(exp_xml, [".//LIBRARY_SOURCE", ".//Library_source"])
         metadata["library_selection"] = first_text(exp_xml, [".//LIBRARY_SELECTION", ".//Library_selection"])
         metadata["instrument_model"] = first_text(exp_xml, [".//INSTRUMENT_MODEL", ".//Instrument_model"])
+        summary_platform = exp_xml.find(".//Platform")
+        if summary_platform is not None:
+            metadata["instrument_model"] = metadata["instrument_model"] or summary_platform.get("instrument_model", "")
+            metadata["platform"] = (summary_platform.text or "").strip()
 
         layout = exp_xml.find(".//LIBRARY_LAYOUT")
         if layout is not None and list(layout):
@@ -209,7 +219,8 @@ def parse_docsum(docsum):
     if runs_xml is None:
         return rows
 
-    for run in runs_xml.findall(".//Run") + runs_xml.findall(".//RUN"):
+    # ESummary stores a single run as the root element, not inside a wrapper.
+    for run in (element for element in runs_xml.iter() if element.tag in ("Run", "RUN")):
         accession = run.attrib.get("acc", "")
         total_spots = int(run.attrib.get("total_spots") or 0)
         total_bases = int(run.attrib.get("total_bases") or 0)

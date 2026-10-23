@@ -17,7 +17,9 @@ class ProvenanceUtils {
                 profile: workflow.profile, project_dir: workflow.projectDir.toString()],
             singularity_cache: System.getenv('NXF_SINGULARITY_CACHEDIR') ?: "${workflow.projectDir}/.singularity",
             databases: [swissprot_blast: blastPath.isAbsolute() ? blastPath.parent : null,
-                eggnog: params.eggnog_db, interproscan_data: params.interproscan_db,
+                eggnog: params.eggnog_db, omark_taxonomy: params.omark_taxonomy_db,
+                protein_evidence_taxonomy: params.evaluation_mode && !params.protein_set ? (params.protein_evidence_taxonomy_db ?: params.omark_taxonomy_db) : null,
+                interproscan_data: params.interproscan_db,
                 interproscan_container: params.interproscan_container]]
     }
 }

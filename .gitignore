@@ -1,2 +1,6 @@
 # Keep the small, reproducible protein evidence fixture in version control.
 !test/data/
+
+# Generated pipeline outputs and AGAT logs.
+/outputs/
+/agat_log_corrected/

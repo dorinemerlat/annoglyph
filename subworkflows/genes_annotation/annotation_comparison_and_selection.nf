@@ -10,6 +10,7 @@ workflow ANNOTATION_COMPARISON_AND_SELECTION {
     after_metrics
     newick
     genome_stats
+    taxonomy
     main:
     GENERATE_ANNOTATION_TABLES(before_metrics.concat(after_metrics))
     all_tables = GENERATE_ANNOTATION_TABLES.out
@@ -33,12 +34,13 @@ workflow ANNOTATION_COMPARISON_AND_SELECTION {
 
     comparison_assets = Channel.empty()
     if (params.comparative_genomics) {
-        PLOT_ANNOTATION_COMPARISON(CONCAT_ANNOTATION_TABLES.out.combine(newick.first()))
+        PLOT_ANNOTATION_COMPARISON(CONCAT_ANNOTATION_TABLES.out.combine(newick.first()).combine(taxonomy.first()))
         analysis_inputs = CONCAT_ANNOTATION_TABLES.out
             .filter { status, summary, lengths, introns -> status == 'after-contamination-filtering' }
             .map { status, summary, lengths, introns -> [status, summary, introns] }
             .combine(newick.first())
             .combine(genome_stats.map { meta, stats -> stats }.first())
+            .combine(taxonomy.first())
         PLOT_ANNOTATION_ANALYSIS(analysis_inputs)
         comparison_assets = PLOT_ANNOTATION_COMPARISON.out.comparison
             .flatMap { status, files -> (files instanceof List ? files : [files]).collect { file -> [file, "protein_coding/plots/comparison/${status}/${file.name}"] } }

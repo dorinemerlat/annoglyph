@@ -47,6 +47,25 @@
                     "format": "directory-path",
                     "description": "Directory where persistent process outputs are cached.",
                     "default": "cache"
+                },
+                "run_group": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "default": null,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+                    "description": "Identifier shared by a run and its resumes; prefixes trace/report filenames to group execution statistics."
+                },
+                "legacy_cache_manifest": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "format": "file-path",
+                    "exists": true,
+                    "default": null,
+                    "description": "Validated historical cache import manifest. Reuses repeat annotations and available raw gene predictions; missing gene predictions and derived analyses are computed normally."
                 }
             }
         },
@@ -351,6 +370,21 @@
                         }
                     },
                     "description": "Overrides for automatic annotation selection and downstream quality flags."
+                },
+                "evaluation_mode": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Exclude the target genus from automatically downloaded protein evidence. User-supplied protein_set files are used unchanged. Unresolved protein taxonomy is excluded."
+                },
+                "protein_evidence_taxonomy_db": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "format": "file-path",
+                    "exists": true,
+                    "default": null,
+                    "description": "ETE NCBI taxonomy SQLite database for evaluation filtering; null reuses omark_taxonomy_db."
                 }
             }
         },
@@ -981,5 +1015,32 @@
         {
             "$ref": "#/definitions/export_options"
         }
-    ]
+    ],
+    "properties": {
+        "annoglyph_python_container": {
+            "type": "string",
+            "description": "Python container image containing the reporting dependencies, including SciPy. Build the local image with containers/annoglyph_python/build_image.sh."
+        },
+        "sra_max_spots": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 1,
+            "default": null,
+            "description": "Maximum retained SRA spots per run; paired mates are kept together. Null keeps every spot. Local RNA-seq files are unchanged."
+        },
+        "rnaseq_min_mapped_reads": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Minimum mapped alignment count required to use an RNA-seq BAM for gene prediction; the count must exceed this threshold."
+        },
+        "omark_taxonomy_db": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "description": "Optional ETE3 NCBI taxonomy SQLite database for OMArk. An existing ~/.etetoolkit/taxa.sqlite is reused by default."
+        }
+    }
 }

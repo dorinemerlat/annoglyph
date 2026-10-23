@@ -1,0 +1,114 @@
+--- a/modules/nf-core/trnascanse/main.nf
++++ b/modules/nf-core/trnascanse/main.nf
+@@ -15,13 +15,14 @@
+     val write_bed
+
+     output:
++    path "versions.yml", emit: versions
+     tuple val(meta), path("*.tsv"), emit: tsv
+-    tuple val(meta), path("*.log"), emit: log
++    tuple val(meta), path("*.log"), emit: log, optional: true
+     tuple val(meta), path("*.stats"), emit: stats
+-    tuple val(meta), path("*.fasta"), emit: fasta, optional: true
++    tuple val(meta), path("*.fasta.gz"), emit: fasta, optional: true
+     tuple val(meta), path("*.gff"), emit: gff, optional: true
++    tuple val(meta), path("*.struct"), emit: struct, optional: true
+     tuple val(meta), path("*.bed"), emit: bed, optional: true
+-    tuple val("${task.process}"), val('tRNAscan-SE'), eval("tRNAscan-SE |& sed '2!d;s/tRNAscan-SE //;s/ .*//'"), topic: versions, emit: versions_trnascanse
+
+     when:
+     task.ext.when == null || task.ext.when
+@@ -37,6 +38,8 @@
+     def gff_output = write_gff ? "--gff ${prefix}.gff" : ""
+     def bed_output = write_bed ? "--bed ${prefix}.bed" : ""
+     """
++    export TMPDIR="\$PWD/tmp"
++    mkdir -p "\$TMPDIR"
+     ${unzip}
+
+     ## larger genomes can fill up the limited temp space in the singularity container
+@@ -61,6 +64,11 @@
+     find . -name "*.fasta" -exec gzip {} \\;
+
+     ${cleanup}
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        tRNAscan-SE: \$( tRNAscan-SE |& sed '2!d;s/tRNAscan-SE //;s/ .*//' )
++    END_VERSIONS
+     """
+
+     stub:
+@@ -69,8 +77,14 @@
+     touch ${prefix}.tsv
+     touch ${prefix}.log
+     touch ${prefix}.stats
++    touch ${prefix}.struct
+     echo "" | gzip > ${prefix}.fasta.gz
+     touch ${prefix}.gff
+     touch ${prefix}.bed
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        tRNAscan-SE: \$( tRNAscan-SE |& sed '2!d;s/tRNAscan-SE //;s/ .*//' )
++    END_VERSIONS
+     """
+ }
+--- a/modules/nf-core/trnascanse/meta.yml
++++ b/modules/nf-core/trnascanse/meta.yml
+@@ -42,6 +42,18 @@
+       description: "Write a BED file of tRNA annotations"
+
+ output:
++  struct:
++    - - meta:
++          type: map
++          description: Sample metadata.
++      - "*.struct":
++          type: file
++          description: Predicted tRNA secondary structures when requested.
++  versions:
++    - versions.yml:
++        type: file
++        description: Software versions for AnnoGlyph provenance.
++        pattern: "versions.yml"
+   tsv:
+     - - meta:
+           type: map
+@@ -84,7 +96,7 @@
+           description: |
+             Groovy Map containing sample information
+             e.g. `[ id:'sample1' ]`
+-      - "*.fasta":
++      - "*.fasta.gz":
+           type: file
+           description: |
+             (optional) FASTA output of annotated tRNA sequences
+@@ -116,27 +128,6 @@
+             (optional) BED annotation of tRNA sequences in input fasta
+           ontologies:
+             - edam: http://edamontology.org/format_3003 # BED
+-  versions_trnascanse:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - tRNAscan-SE:
+-          type: string
+-          description: The name of the tool
+-      - tRNAscan-SE |& sed '2!d;s/tRNAscan-SE //;s/ .*//':
+-          type: eval
+-          description: The expression to obtain the version of the tool
+-topics:
+-  versions:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - tRNAscan-SE:
+-          type: string
+-          description: The name of the tool
+-      - tRNAscan-SE |& sed '2!d;s/tRNAscan-SE //;s/ .*//':
+-          type: eval
+-          description: The expression to obtain the version of the tool
+ authors:
+   - "@prototaxites"
+ maintainers:

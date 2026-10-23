@@ -1,0 +1,54 @@
+process SRATOOLS_PREFETCH {
+    tag "$meta.id"
+    label 'process_low'
+
+    conda "${moduleDir}/environment.yml"
+    container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container
+        ? 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/a9/a9a7d146a9a0215c5386603fe7f0b3c347254854a447ed8dd4919a4b2eae2a88/data'
+        : 'community.wave.seqera.io/library/sra-tools_curl:c1e36977de327cd2' }"
+
+    input:
+    tuple val(meta), val(id)
+    path ncbi_settings
+    path certificate
+
+    output:
+    path "versions.yml", emit: versions
+    tuple val(meta), path("${id}", type: 'dir'), emit: sra
+
+    when:
+    task.ext.when == null || task.ext.when
+
+    script:
+    args = task.ext.args ?: ''
+    args2 = task.ext.args2 ?: '5 1 100'  // <num retries> <base delay in seconds> <max delay in seconds>
+    def cert_arg = certificate ?
+        (certificate.name.endsWith('.jwt') ? "--perm ${certificate}" :
+        certificate.name.endsWith('.ngc') ? "--ngc ${certificate}" : '') : ''
+    final_args = "${args} ${cert_arg}".trim()
+
+    """
+    echo "${args2}"
+    echo "${final_args}"
+
+    cat > versions.yml <<-END_VERSIONS
+    "${task.process}":
+        sratools: \$( prefetch --version 2>&1 | grep -Eo '[0-9.]+' )
+        curl: \$( curl --version | sed '1!d;s/^curl //; s/ .*//' )
+    END_VERSIONS
+    """
+
+    template "retry_with_backoff.sh"
+
+    stub:
+    """
+    mkdir ${id}
+    touch ${id}/${id}.sra
+
+    cat > versions.yml <<-END_VERSIONS
+    "${task.process}":
+        sratools: \$( prefetch --version 2>&1 | grep -Eo '[0-9.]+' )
+        curl: \$( curl --version | sed '1!d;s/^curl //; s/ .*//' )
+    END_VERSIONS
+    """
+}

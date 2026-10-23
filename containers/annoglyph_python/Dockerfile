@@ -25,7 +25,7 @@ COPY requirements.txt .
 RUN python -m pip install --no-cache-dir -r requirements.txt
 
 # Verify Python dependencies
-RUN python -c "import Bio, ete3, gffpandas, gffutils, matplotlib, numpy, pandas, requests, seaborn"
+RUN python -c "import Bio, ete3, gffpandas, gffutils, matplotlib, numpy, pandas, requests, scipy, seaborn"
 
 WORKDIR /app
 

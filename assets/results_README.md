@@ -108,7 +108,7 @@ incomplete CDS and phase problems require review. FASTA protein identifiers are
 local identifiers, not assigned UniProt accessions. ENA/Ensembl integration
 requires the destination's own metadata and format requirements.
 
-`submission/checksums.sha256` contains paths relative to the species directory.
+`submission/checksums.sha256` lists the species files and their checksums.
 This layout is produced by new runs; pre-existing legacy output directories are
 not deleted or moved automatically.
 

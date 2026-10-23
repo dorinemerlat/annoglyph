@@ -1,0 +1,130 @@
+--- a/modules/nf-core/star/align/main.nf
++++ b/modules/nf-core/star/align/main.nf
+@@ -14,12 +14,10 @@
+     val star_ignore_sjdbgtf
+
+     output:
++    path "versions.yml", emit: versions
+     tuple val(meta), path('*Log.final.out')   , emit: log_final
+     tuple val(meta), path('*Log.out')         , emit: log_out
+     tuple val(meta), path('*Log.progress.out'), emit: log_progress
+-    tuple val("${task.process}"), val('star'), eval('STAR --version | sed "s/STAR_//"'), emit: versions_star, topic: versions
+-    tuple val("${task.process}"), val('samtools'), eval("samtools --version | sed -n '1s/samtools //p'"), emit: versions_samtools, topic: versions
+-    tuple val("${task.process}"), val('gawk'), eval("gawk --version | sed -n '1s/GNU Awk \\([0-9.]*\\).*/\\1/p'"), emit: versions_gawk, topic: versions
+
+     tuple val(meta), path('*d.out.bam')                              , optional:true, emit: bam
+     tuple val(meta), path("${prefix}.sortedByCoord.out.bam")         , optional:true, emit: bam_sorted
+@@ -71,6 +69,12 @@
+         mv ${prefix}.Unmapped.out.mate2 ${prefix}.unmapped_2.fastq
+         gzip ${prefix}.unmapped_2.fastq
+     fi
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        star: \$( STAR --version | sed "s/STAR_//" )
++        samtools: \$( samtools --version | sed -n '1s/samtools //p' )
++    END_VERSIONS
+     """
+
+     stub:
+@@ -93,5 +97,11 @@
+     touch ${prefix}.out.sam
+     touch ${prefix}.Signal.UniqueMultiple.str1.out.wig
+     touch ${prefix}.Signal.UniqueMultiple.str1.out.bg
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        star: \$( STAR --version | sed "s/STAR_//" )
++        samtools: \$( samtools --version | sed -n '1s/samtools //p' )
++    END_VERSIONS
+     """
+ }
+--- a/modules/nf-core/star/align/meta.yml
++++ b/modules/nf-core/star/align/meta.yml
+@@ -51,6 +51,11 @@
+       type: boolean
+       description: Ignore annotation GTF file
+ output:
++  versions:
++    - versions.yml:
++        type: file
++        description: Software versions for AnnoGlyph provenance.
++        pattern: "versions.yml"
+   log_final:
+     - - meta:
+           type: map
+@@ -84,37 +89,6 @@
+           description: STAR log progress file
+           pattern: "*Log.progress.out"
+           ontologies: []
+-  versions_star:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - star:
+-          type: string
+-          description: The name of the tool
+-      - STAR --version | sed "s/STAR_//":
+-          type: eval
+-          description: The expression to obtain the version of the tool
+-  versions_samtools:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - samtools:
+-          type: string
+-          description: The name of the tool
+-      - samtools --version | sed -n '1s/samtools //p':
+-          type: eval
+-          description: The expression to obtain the version of the tool
+-  versions_gawk:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - gawk:
+-          type: string
+-          description: The name of the tool
+-      - gawk --version | sed -n '1s/GNU Awk \([0-9.]*\).*/\1/p':
+-          type: eval
+-          description: The expression to obtain the version of the tool
+-
+   bam:
+     - - meta:
+           type: map
+@@ -262,36 +236,6 @@
+           description: STAR output bedGraph format file(s) (optional)
+           pattern: "*.bg"
+           ontologies: []
+-topics:
+-  versions:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - star:
+-          type: string
+-          description: The name of the tool
+-      - STAR --version | sed "s/STAR_//":
+-          type: eval
+-          description: The expression to obtain the version of the tool
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - samtools:
+-          type: string
+-          description: The name of the tool
+-      - samtools --version | sed -n '1s/samtools //p':
+-          type: eval
+-          description: The expression to obtain the version of the tool
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - gawk:
+-          type: string
+-          description: The name of the tool
+-      - gawk --version | sed -n '1s/GNU Awk \([0-9.]*\).*/\1/p':
+-          type: eval
+-          description: The expression to obtain the version of the tool
+-
+ authors:
+   - "@kevinmenden"
+   - "@drpatelh"

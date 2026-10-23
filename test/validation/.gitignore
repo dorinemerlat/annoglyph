@@ -8,3 +8,6 @@ cache_*/
 config_hanseniaspora.txt
 config_pieris.txt
 config_utricularia.txt
+*.err
+runlist_before_single_run_fix/
+repeats_only_results/

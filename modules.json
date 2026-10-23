@@ -99,6 +99,70 @@
                             "modules"
                         ],
                         "patch": "modules/nf-core/eggnogmapper/eggnogmapper.diff"
+                    },
+                    "barrnap": {
+                        "branch": "master",
+                        "git_sha": "ffd1a93ab6f47daae9b0b834ecf024c7af6e223e",
+                        "installed_by": [
+                            "modules"
+                        ],
+                        "patch": "modules/nf-core/barrnap/barrnap.diff"
+                    },
+                    "trnascanse": {
+                        "branch": "master",
+                        "git_sha": "ffd1a93ab6f47daae9b0b834ecf024c7af6e223e",
+                        "installed_by": [
+                            "modules"
+                        ],
+                        "patch": "modules/nf-core/trnascanse/trnascanse.diff"
+                    },
+                    "infernal/cmscan": {
+                        "branch": "master",
+                        "git_sha": "ffd1a93ab6f47daae9b0b834ecf024c7af6e223e",
+                        "installed_by": [
+                            "modules"
+                        ],
+                        "patch": "modules/nf-core/infernal/cmscan/infernal-cmscan.diff"
+                    },
+                    "star/align": {
+                        "branch": "master",
+                        "git_sha": "ffd1a93ab6f47daae9b0b834ecf024c7af6e223e",
+                        "installed_by": [
+                            "modules"
+                        ],
+                        "patch": "modules/nf-core/star/align/star-align.diff"
+                    },
+                    "star/genomegenerate": {
+                        "branch": "master",
+                        "git_sha": "ffd1a93ab6f47daae9b0b834ecf024c7af6e223e",
+                        "installed_by": [
+                            "modules"
+                        ],
+                        "patch": "modules/nf-core/star/genomegenerate/star-genomegenerate.diff"
+                    },
+                    "sratools/prefetch": {
+                        "branch": "master",
+                        "git_sha": "ffd1a93ab6f47daae9b0b834ecf024c7af6e223e",
+                        "installed_by": [
+                            "modules"
+                        ],
+                        "patch": "modules/nf-core/sratools/prefetch/sratools-prefetch.diff"
+                    },
+                    "sratools/fasterqdump": {
+                        "branch": "master",
+                        "git_sha": "ffd1a93ab6f47daae9b0b834ecf024c7af6e223e",
+                        "installed_by": [
+                            "modules"
+                        ],
+                        "patch": "modules/nf-core/sratools/fasterqdump/sratools-fasterqdump.diff"
+                    },
+                    "custom/sratoolsncbisettings": {
+                        "branch": "master",
+                        "git_sha": "ffd1a93ab6f47daae9b0b834ecf024c7af6e223e",
+                        "installed_by": [
+                            "modules"
+                        ],
+                        "patch": "modules/nf-core/custom/sratoolsncbisettings/custom-sratoolsncbisettings.diff"
                     }
                 }
             }

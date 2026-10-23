@@ -15,21 +15,26 @@
      tuple val(meta), path("*-busco/*/run_*/busco_sequences/single_copy_busco_sequences/*.fna"), emit: single_copy_fna, optional: true
 -    tuple val("${task.process}"), val('busco'), eval("busco --version 2> /dev/null | sed 's/BUSCO //g'"), emit: versions_busco, topic: versions
 +    path "versions.yml", emit: versions
- 
+
      when:
      task.ext.when == null || task.ext.when
 @@ -75,7 +75,7 @@
      set -u
- 
+
      # If the augustus config directory is not writable, then copy to writeable area
 -    if [ ! -w "\${AUGUSTUS_CONFIG_PATH}" ]; then
 +    if [ -n "\${AUGUSTUS_CONFIG_PATH:-}" ] && [ ! -w "\${AUGUSTUS_CONFIG_PATH}" ]; then
          # Create writable tmp directory for augustus
          AUG_CONF_DIR=\$( mktemp -d -p \$PWD )
          cp -r \$AUGUSTUS_CONFIG_PATH/* \$AUG_CONF_DIR
-@@ -120,6 +120,11 @@
+@@ -119,7 +119,16 @@
+
      if grep -q 'Run failed; check logs' ${prefix}-busco/batch_summary.txt; then
          grep 'Run failed; check logs' ${prefix}-busco/batch_summary.txt > ${prefix}-busco.batch_summary.failed.txt
++        if [ '${mode}' = 'proteins' ]; then
++            echo 'BUSCO protein assessment failed; see the BUSCO log.' >&2
++            exit 1
++        fi
      fi
 +
 +    cat > versions.yml <<-END_VERSIONS
@@ -37,9 +42,9 @@
 +        busco: \$(busco --version 2> /dev/null | sed 's/BUSCO //g')
 +    END_VERSIONS
      """
- 
+
      stub:
-@@ -128,5 +133,10 @@
+@@ -128,5 +137,10 @@
      """
      touch ${prefix}-busco.batch_summary.txt
      mkdir -p ${prefix}-busco/${fasta_name}/run_${lineage}/busco_sequences

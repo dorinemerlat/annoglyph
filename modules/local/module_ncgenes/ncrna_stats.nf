@@ -1,5 +1,9 @@
 process NCRNA_STATS {
     tag 'all_genomes'
+    // Publish ncRNA summaries as soon as they are complete, independently of
+    // protein-coding annotation selection. The final report uses this layout.
+    publishDir "${params.outdir}/comparative/noncoding", mode: params.publish_dir_mode, overwrite: true,
+        saveAs: { name -> name == 'tables' ? 'stats' : (name == 'figures' ? 'plots' : name) }
     label 'annoglyph_python'
     memory 8.GB
 

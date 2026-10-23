@@ -5,6 +5,7 @@ process OMARK {
     label 'program_omark'
     input:
     tuple val(meta), path(proteins), path(luca_db)
+    path ete_taxonomy
 
     output:
     tuple val(meta), path("${meta.id}_${meta.annotation_method}_omark_detailed_summary.txt"), emit: summary
@@ -14,6 +15,8 @@ process OMARK {
 
     script:
     def prefix = "${meta.id}_${meta.annotation_method}_omark"
+
+    def taxonomyArg = ete_taxonomy ? "--ete_ncbi_db '${ete_taxonomy}'" : '--ete_ncbi_db "$PWD/omark_taxonomy.sqlite"'
 
     """
     omamer search \
@@ -27,7 +30,7 @@ process OMARK {
         --file ${prefix}.omamer \
         --database ${luca_db} \
         --outputFolder omark \
-        --taxid ${meta.taxid} ${params.program_args.omark ?: ''}
+        --taxid ${meta.taxid} ${taxonomyArg} ${params.program_args.omark ?: ''}
 
     mv omark/* .
 

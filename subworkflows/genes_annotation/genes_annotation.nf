@@ -15,7 +15,11 @@ workflow GENES_ANNOTATION {
     busco_dataset
     busco_dataset_dir
     main:
-    RNASEQ_ASSEMBLY(preprocessed_genomes)
+    def imported = LegacyCacheUtils.load(params.legacy_cache_manifest, params.cacheDir)
+    rnaseq_genomes = preprocessed_genomes.filter { meta, genome ->
+        LegacyCacheUtils.needsRnaseq(imported, meta.id, params.rna_seq_aligner)
+    }
+    RNASEQ_ASSEMBLY(rnaseq_genomes)
     STRUCTURAL_ANNOTATION(masked_genomes, RNASEQ_ASSEMBLY.out.bams, taxonomy_table, busco_dataset)
     FUNCTIONAL_ANNOTATION(STRUCTURAL_ANNOTATION.out.gff, STRUCTURAL_ANNOTATION.out.proteins)
     ANNOTATION_QC_AND_CONTAMINATION_FILTERING(
@@ -25,11 +29,11 @@ workflow GENES_ANNOTATION {
     ANNOTATION_COMPARISON_AND_SELECTION(
         ANNOTATION_QC_AND_CONTAMINATION_FILTERING.out.qc_metrics_before_filtering,
         ANNOTATION_QC_AND_CONTAMINATION_FILTERING.out.qc_metrics_after_filtering,
-        taxonomy_tree, genome_stats
+        taxonomy_tree, genome_stats, taxonomy_table
     )
     emit:
     databases = ANNOTATION_QC_AND_CONTAMINATION_FILTERING.out.database.map { path -> ['oma_luca', path] }.mix(STRUCTURAL_ANNOTATION.out.protein_evidence.map { path -> ['protein_evidence', path] }).mix(STRUCTURAL_ANNOTATION.out.evidence_metadata)
-    versions = RNASEQ_ASSEMBLY.out.versions.mix(STRUCTURAL_ANNOTATION.out.versions).mix(FUNCTIONAL_ANNOTATION.out.versions)
+    versions = RNASEQ_ASSEMBLY.out.versions.mix(STRUCTURAL_ANNOTATION.out.versions).mix(FUNCTIONAL_ANNOTATION.out.versions).mix(ANNOTATION_QC_AND_CONTAMINATION_FILTERING.out.versions)
     candidate_tables = ANNOTATION_COMPARISON_AND_SELECTION.out.candidate_tables
     selected_qc = ANNOTATION_COMPARISON_AND_SELECTION.out.selected_qc
     comparative_assets = ANNOTATION_COMPARISON_AND_SELECTION.out.comparative_assets

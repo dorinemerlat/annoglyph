@@ -76,7 +76,7 @@ def main():
             if actual is None or actual.get('files') != expected.get('files'):
                 raise ValueError(f'Database lock mismatch: {name}')
     for item in snapshot.get('used_database_artifacts', []):
-        if item['name'] in ('protein_evidence_sources', 'uniprot_release'):
+        if item['name'] in ('protein_evidence_sources', 'uniprot_release') or item['name'].startswith('protein_evidence_filter_'):
             target = args.output / 'database_metadata'
             target.mkdir(exist_ok=True)
             shutil.copyfile(item['staged'], target / (item['name'] + Path(item['staged']).suffix))

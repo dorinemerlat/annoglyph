@@ -1,6 +1,6 @@
 process REFORMAT_GFF3 {
     tag "${meta.annotation_method}/${meta.id}"
-    label 'annoglyph_tools'
+    label 'annoglyph_python'
 
     input:
     tuple val(meta), path(gff)
@@ -14,14 +14,12 @@ process REFORMAT_GFF3 {
 
     """
     # Prefix gene and transcript identifiers with the genome mnemonic.
-    sed -E 's/(^|[;,])(ID|Parent)=g/\\1\\2=${genomeCode}.g/g' \
-        ${gff} \
-        > ${outputFile}
+    python3 ${projectDir}/bin/prefix_gff_ids.py --input ${gff} --prefix ${genomeCode} --output ${outputFile}
     """
 
     stub:
     """
-    command -v sed >/dev/null
+    command -v python3 >/dev/null
 
     touch ${meta.id}_${meta.annotation_method}_reformatted.gff3
     """

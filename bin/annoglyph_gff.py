@@ -34,12 +34,22 @@ def read_gff(path):
             if len(fields) != 9:
                 raise ValueError(f'{path}:{number}: expected nine GFF3 columns')
             attrs = {}
+            previous_key = None
             if fields[8] != '.':
                 for item in fields[8].strip(';').split(';'):
                     key, sep, value = item.partition('=')
                     if not sep:
+                        # Historical RepeatMasker exports embedded unescaped
+                        # semicolons in MCHelper descriptions. Preserve those
+                        # continuations; Feature.line() escapes them on export.
+                        if fields[1] == 'RepeatMasker' and previous_key in {
+                                'comment', 'MCHelper_coding', 'MCHelper_struct',
+                                'MCHelper_other', 'MCHelper_Reason'}:
+                            attrs[previous_key][-1] += ';' + unquote(item)
+                            continue
                         raise ValueError(f'{path}:{number}: malformed GFF3 attribute: {item}')
-                    attrs[unquote(key)] = [unquote(v) for v in value.split(',')]
+                    previous_key = unquote(key)
+                    attrs[previous_key] = [unquote(v) for v in value.split(',')]
             start, end = int(fields[3]), int(fields[4])
             if start < 1 or end < start:
                 raise ValueError(f'{path}:{number}: invalid coordinates')

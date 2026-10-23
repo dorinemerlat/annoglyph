@@ -1,0 +1,5 @@
+metric	selection	threshold	scale	modules	measured_modules	status	figure
+runtime	all	0	symlog	60	60	plotted	execution_metrics
+cpu	all	0	symlog	60	60	plotted	execution_metrics
+memory	all	0	symlog	60	60	plotted	execution_metrics
+cores	all	0	log	60	57	plotted	execution_metrics

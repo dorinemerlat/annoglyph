@@ -11,8 +11,10 @@ process GENERATE_TAXONOMY_METADATA {
     path 'tree_minimal.nwk', emit: minimal_tree
     
     script:
+    def cacheRoot = file(params.cacheDir).toAbsolutePath()
+    def cacheArg = "--taxonomy-cache '${cacheRoot}/preprocessing/get_taxonomy' --response-cache '${cacheRoot}/taxonomy_metadata/v1'"
     """
-    generate_taxonomy_metadata.py --input ${taxonomy_input} --output .
+    generate_taxonomy_metadata.py --input ${taxonomy_input} --output . ${cacheArg}
     """
 
     stub:

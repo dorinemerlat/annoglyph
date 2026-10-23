@@ -2,7 +2,7 @@ process COLLECT_PROVENANCE {
     tag 'run_provenance'
     container null
     storeDir null
-    publishDir "${params.outdir}/pipeline_info", mode: params.publish_dir_mode
+    publishDir "${params.outdir}/pipeline_info", mode: params.publish_dir_mode, overwrite: true
     input:
     val snapshot
     tuple val(input_names), val(original_paths), path(input_files, stageAs: 'inputs??/*')

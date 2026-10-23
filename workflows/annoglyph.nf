@@ -1,4 +1,5 @@
 include { PREPROCESSING } from "$projectDir/subworkflows/preprocessing.nf"
+include { REUSED_REPEATS_ANNOTATION } from "$projectDir/subworkflows/reused_repeats_annotation.nf"
 include { REPEATS_ANNOTATION } from "$projectDir/subworkflows/repeats_annotation.nf"
 include { GENES_ANNOTATION } from "$projectDir/subworkflows/genes_annotation/genes_annotation.nf"
 include { NCGENES_ANNOTATION } from "$projectDir/subworkflows/ncgenes_annotation.nf"
@@ -18,18 +19,24 @@ workflow AnnoGlyph {
         .mix(PREPROCESSING.out.busco_summaries.flatMap { meta, files -> ResultsLayoutUtils.assets(meta, files, 'genome/stats/busco') })
     comparative_assets = PREPROCESSING.out.genome_stats.map { meta, stats -> [stats, "genome/stats/${stats.name}"] }
     if (params.module_repeats) {
-        REPEATS_ANNOTATION(PREPROCESSING.out.preprocessed_genomes,
-            PREPROCESSING.out.taxonomy_tree, PREPROCESSING.out.genome_stats,
-            PREPROCESSING.out.busco_dataset_dir)
-        masked_genomes = REPEATS_ANNOTATION.out.masked_genomes
-        repeat_gff = REPEATS_ANNOTATION.out.repeat_gff
-        software_versions = software_versions.mix(REPEATS_ANNOTATION.out.versions)
+        if (params.legacy_cache_manifest) {
+            REUSED_REPEATS_ANNOTATION(PREPROCESSING.out.preprocessed_genomes)
+            repeats_outputs = REUSED_REPEATS_ANNOTATION.out
+        } else {
+            REPEATS_ANNOTATION(PREPROCESSING.out.preprocessed_genomes,
+                PREPROCESSING.out.taxonomy_tree, PREPROCESSING.out.genome_stats,
+                PREPROCESSING.out.busco_dataset_dir)
+            repeats_outputs = REPEATS_ANNOTATION.out
+        }
+        masked_genomes = repeats_outputs.masked_genomes
+        repeat_gff = repeats_outputs.repeat_gff
+        software_versions = software_versions.mix(repeats_outputs.versions)
         species_assets = species_assets
-            .mix(REPEATS_ANNOTATION.out.consensus_libraries.flatMap { meta, files -> ResultsLayoutUtils.assets(meta, files, 'repeats/sequences') })
-            .mix(REPEATS_ANNOTATION.out.families_table.flatMap { meta, files -> ResultsLayoutUtils.assets(meta, files, 'repeats/stats') })
-            .mix(REPEATS_ANNOTATION.out.landscapes.flatMap { meta, files -> ResultsLayoutUtils.assets(meta, files, 'repeats/stats') })
-            .mix(REPEATS_ANNOTATION.out.landscape_plots.flatMap { meta, files -> ResultsLayoutUtils.assets(meta, files, 'repeats/plots') })
-        comparative_assets = comparative_assets.mix(REPEATS_ANNOTATION.out.comparative_tables.map { meta, table -> [table, "repeats/stats/${table.name}"] })
+            .mix(repeats_outputs.consensus_libraries.flatMap { meta, files -> ResultsLayoutUtils.assets(meta, files, 'repeats/sequences') })
+            .mix(repeats_outputs.families_table.flatMap { meta, files -> ResultsLayoutUtils.assets(meta, files, 'repeats/stats') })
+            .mix(repeats_outputs.landscapes.flatMap { meta, files -> ResultsLayoutUtils.assets(meta, files, 'repeats/stats') })
+            .mix(repeats_outputs.landscape_plots.flatMap { meta, files -> ResultsLayoutUtils.assets(meta, files, 'repeats/plots') })
+        comparative_assets = comparative_assets.mix(repeats_outputs.comparative_tables.map { meta, table -> [table, "repeats/stats/${table.name}"] })
     } else {
         masked_genomes = PREPROCESSING.out.preprocessed_genomes
         repeat_gff = Channel.empty()
@@ -56,6 +63,7 @@ workflow AnnoGlyph {
         NCGENES_ANNOTATION(PREPROCESSING.out.preprocessed_genomes,
             PREPROCESSING.out.taxonomy_table, PREPROCESSING.out.taxonomy_tree)
         ncrna_gff = NCGENES_ANNOTATION.out.gff
+        software_versions = software_versions.mix(NCGENES_ANNOTATION.out.versions)
         database_artifacts = database_artifacts.mix(NCGENES_ANNOTATION.out.database)
         species_assets = species_assets.mix(NCGENES_ANNOTATION.out.filtering.flatMap { meta, files -> ResultsLayoutUtils.assets(meta, files, 'noncoding/stats') })
         comparative_assets = comparative_assets.mix(NCGENES_ANNOTATION.out.tables.map { folder -> [folder, 'noncoding/stats'] })
@@ -69,6 +77,7 @@ workflow AnnoGlyph {
         def reads = ((meta['RNASeq-file']?.single_end ?: []) + (meta['RNASeq-file']?.paired_end ?: [])).flatten()
         [[meta.id, genome]] + reads.collect { path -> ["${meta.id}/${path.name}", path] }
     }
+        .mix(params.legacy_cache_manifest ? Channel.of(['legacy_cache_manifest', file(params.legacy_cache_manifest, checkIfExists: true)]) : Channel.empty())
         .mix(Channel.of(['samplesheet', file(params.input, checkIfExists: true)], ['modules_lock', file("${projectDir}/modules.json", checkIfExists: true)]))
         .mix(Channel.fromList([params.submission_metadata, params.submission_template, params.table2asn_binary].findAll { it }).map { path -> [path.toString(), file(path, checkIfExists: true)] })
         .collect(flat: false)

@@ -1,0 +1,83 @@
+MISE A JOUR : ce rapport est un etat intermediaire historique. Les reprises
+2687086 et 2694598 ont depuis termine avec succes (code 0). Le compte rendu
+final est test/validation/minimal_validation_20261023.txt.
+
+AnnoGlyph — validation partielle du test minimal, 23 octobre 2026
+
+État : exécution interrompue par une annulation Slurm depuis le compte
+utilisateur à 11:11:19 CEST. Aucune exécution complète réussie n'est encore
+établie. La sélection automatique et les exports finaux restent à valider.
+
+Test exécuté
+  Profil : singularity,test, avec conf/ifb.config et
+  test/validation/slurm_runtime.config.
+  Assemblage : Hanseniaspora uvarum, extrait de trois chromosomes,
+  2 601 250 bases. Ce test technique ne mesure pas la qualité d'une annotation
+  d'assemblage complet. Les six profils de groupes minimal/full ne sont pas
+  validés en exécution par ce test.
+  Session Nextflow : 488b6af9-11a4-4e01-9fe5-a17713751bfc.
+  Dernier contrôleur : 2682146 ; dernier job eggNOG-mapper : 2682236.
+  Journaux : test/validation/minimal_run_2682146.log et .err.
+
+Résultats observés avant l'annulation
+  - Prétraitement, taxonomie, statistiques d'assemblage et BUSCO génome terminés.
+  - RepeatModeler, recherches HMM, RepeatMasker et paysage des répétitions
+    terminés. RepeatMasker indique environ 1,4 % de répétitions simples.
+  - MCHelper n'a trouvé aucune copie complète d'élément transposable sur cet
+    extrait. Sa classification vide est maintenant prise en charge.
+  - Réconciliation non codante : 30 tRNA et 6 autres ncRNA ; statistiques et
+    figures calculées. Aucun rRNA retenu sur cet extrait.
+  - Trois runs téléchargés : SRR32695951, SRR30146999 et DRR471881.
+    Chacun est limité à ses 500 000 premiers spots. Les mates sont synchronisés
+    et une paire compte pour un spot. Alignements STAR et fusion des BAM
+    terminés ; 440 080 alignements mappés comptés dans le BAM fusionné.
+  - GALBA : sortie initiale non vide, 367 gènes et 372 transcrits avant les
+    normalisations et filtres suivants.
+  - BRAKER2 et BRAKER3 : échecs GeneMark répétés, puis GFF vides écartés après
+    cinq essais, conformément au comportement conservé à la demande de
+    l'utilisateur. Leurs prédictions ne sont donc pas validées sur ce jeu.
+    BRAKER2 échoue dans bp_seq_select.pl avec « error, hash is empty ».
+    BRAKER3 échoue lors d'une prédiction avec le modèle GeneMark-ETP entraîné.
+  - BLASTP et BUSCO sur les protéines terminés.
+  - OMArk terminé, zéro protéine classée contaminante. Avertissement OMAmer :
+    version de banque 2.0.0 contre logiciel 2.1.0 ; pas d'échec d'exécution.
+  - InterProScan terminé : les 18 analyses configurées ont été exécutées,
+    4 283 correspondances pour 368 protéines.
+  - eggNOG-mapper : recherche DIAMOND encore active à l'annulation, après
+    environ 56 minutes. Cette étape et les étapes suivantes restent à valider.
+
+Corrections et préparation réalisées pendant cette validation
+  - Sélecteurs de ressources conservant les options scientifiques des modules.
+  - Conversion numérique de la taille d'assemblage et index STAR adapté.
+  - Lecture des fragments XML SRA et de leurs métadonnées.
+  - Sous-échantillonnage apparié ; plafond minimal 500 000 spots/run, full sans
+    plafond. Seuil de lectures mappées configurable : minimal 100 000,
+    valeur habituelle conservée à 1 000 000.
+  - Ajout de SciPy à l'image Python et construction locale vérifiée.
+  - Gestion des classifications MCHelper vides et des classes de répétitions NA.
+  - Correction du chemin local de banque BUSCO pour les protéines.
+  - Base de taxonomie ETE3 explicitement transmise à OMArk ; paramètre
+    omark_taxonomy_db dans nextflow.config.
+  - Remplacement de l'image GALBA locale non fonctionnelle par la version
+    fixe demandée. Ancienne image conservée avec suffixe .invalid-backup.
+  - Figure explicative lorsque trop peu de génomes permettent des corrélations
+    codantes ; cette dernière branche reste à vérifier dans l'exécution complète.
+
+Vérifications ciblées
+  Sous-échantillonnage : 5 tests réussis.
+  Lecture SRA : 3 tests réussis.
+  Classification MCHelper vide : 2 tests réussis dans l'image Python.
+  Graphique des répétitions : génération réelle PNG/PDF/SVG réussie.
+  Vérification directe du FASTQ simple : exactement 500 000 enregistrements.
+  Vérification des configurations résolues : minimal plafonné, full non plafonné.
+  git diff --check réussi.
+
+Reprise, après clarification de l'annulation
+  nextflow run main.nf -profile singularity,test -c conf/ifb.config \
+    -c test/validation/slurm_runtime.config \
+    -resume 488b6af9-11a4-4e01-9fe5-a17713751bfc
+
+Des modifications concurrentes du reformatage des identifiants GFF sont apparues
+vers la fin de cette exécution. Elles sont conservées mais ne sont pas validées
+par les résultats ci-dessus. Le mécanisme général de cache n'a pas été changé
+pour invalider automatiquement les résultats lors d'un changement d'options.

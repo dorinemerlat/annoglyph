@@ -18,15 +18,29 @@ workflow POSTPROCESSING {
     // Join on sample ID: selected annotations carry additional method/QC metadata.
     inputs = genomes.map { meta, genome -> [meta.id, meta, genome] }
         .join(coding_gff.map { meta, gff -> [meta.id, meta, gff] }, remainder: true, failOnDuplicate: true)
-        .map { id, meta, genome, coding_meta, coding ->
+        .filter { row -> row[1] != null }
+        .map { row ->
+            def (id, meta, genome, coding_meta, coding) = row
             [id, meta + (coding_meta ?: [:]), genome, coding ?: []]
         }
         .join(repeat_gff.map { meta, gff -> [meta.id, gff] }, remainder: true, failOnDuplicate: true)
-        .map { id, meta, genome, coding, repeats -> [id, meta, genome, coding, repeats ?: []] }
+        .filter { row -> row[1] != null }
+        .map { row ->
+            def (id, meta, genome, coding, repeats) = row
+            [id, meta, genome, coding, repeats ?: []]
+        }
         .join(ncrna_gff.map { meta, gff -> [meta.id, gff] }, remainder: true, failOnDuplicate: true)
-        .map { id, meta, genome, coding, repeats, ncrna -> [id, meta, genome, coding, repeats, ncrna ?: []] }
+        .filter { row -> row[1] != null }
+        .map { row ->
+            def (id, meta, genome, coding, repeats, ncrna) = row
+            [id, meta, genome, coding, repeats, ncrna ?: []]
+        }
         .join(grouped_assets, remainder: true, failOnDuplicate: true)
-        .map { id, meta, genome, coding, repeats, ncrna, assets, destinations -> [meta, genome, coding, repeats, ncrna, assets ?: [], destinations ?: []] }
+        .filter { row -> row[1] != null }
+        .map { row ->
+            def (id, meta, genome, coding, repeats, ncrna, assets, destinations) = row
+            [meta, genome, coding, repeats, ncrna, assets ?: [], destinations ?: []]
+        }
     if (params.validate_submission && (!params.submission_metadata || !params.submission_template || !params.table2asn_binary || !params.table2asn_sha256)) {
         error 'Submission validation requires submission_metadata, submission_template, table2asn_binary and table2asn_sha256'
     }

@@ -1,0 +1,12 @@
+genus	species	accession	source_database	assembly_level	taxid	fasta_records	total_bp	sequence_N50_bp	contig_N50_bp	sequence_L50	longest_record_bp	GC_percent_ACGT	ambiguous_bp
+Hanseniaspora	Hanseniaspora guilliermondii	GCA_050947605.1	GenBank	Complete Genome	56406	7	9302783	1551527	1551527	3	1987190	31.224	0
+Hanseniaspora	Hanseniaspora menglaensis	GCA_040256855.1	GenBank	Complete Genome	3081051	8	9558054	1490982	1490982	3	1695671	30.338	0
+Hanseniaspora	Hanseniaspora opuntiae	GCA_050947625.1	GenBank	Complete Genome	211096	8	8910139	1500692	1500692	3	1905360	35.222	0
+Hanseniaspora	Hanseniaspora osmophila	GCA_050947655.1	GenBank	Complete Genome	56408	8	11407298	1658769	1658769	3	2261718	37.279	0
+Hanseniaspora	Hanseniaspora vineae	GCA_050947685.1	GenBank	Complete Genome	56409	8	11699565	1753121	1753121	3	2307051	37.633	0
+Pieris	Pieris brassicae	GCF_905147105.1	RefSeq	Chromosome	7116	401	292325833	21549451	21291167	7	23587467	34.129	5637
+Pieris	Pieris napi	GCF_905475465.1	RefSeq	Chromosome	78633	42	319186907	13068865	8327096	12	14821532	33.954	4900
+Pieris	Pieris rapae	GCF_905147795.1	RefSeq	Chromosome	64459	40	256370193	10651053	10651053	12	12960541	33.225	1000
+Utricularia	Utricularia aurea	GCA_056322005.1	GenBank	Chromosome	192275	38	180314982	8730432	6391073	9	12489762	37.365	2100
+Utricularia	Utricularia gibba	GCA_982292365.1	GenBank	Contig	13748	966	118553830	5593449	5593449	9	8586738	40.666	0
+Utricularia	Utricularia reniformis	GCA_009725065.1	GenBank	Scaffold	192314	1825	304538963	488004	160882	183	1862935	36.679	5787106

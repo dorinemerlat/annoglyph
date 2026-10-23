@@ -14,6 +14,7 @@ process PREPARE_PROTEIN_EVIDENCE {
     path 'prepare_protein_evidence.log', emit: log
 
     script:
+    def evaluationArg = params.evaluation_mode ? '--evaluation' : ''
     def releaseArg = params.uniprot_evidence_release ? "--uniprot-release ${params.uniprot_evidence_release}" : ''
     def minSequences = params.protein_evidence_min_sequences ?: 100000
     def maxSequences = params.protein_evidence_max_sequences ?: 0
@@ -26,6 +27,7 @@ process PREPARE_PROTEIN_EVIDENCE {
 
     """
     prepare_protein_evidence.py \
+        ${evaluationArg} \
         --taxonomy ${taxonomy} \
         --orthodb-version ${orthodbVersion} \
         --min-sequences ${minSequences} \

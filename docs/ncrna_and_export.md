@@ -24,6 +24,8 @@ available annotations and records the missing coding annotation in validation.ts
 `--omamer_db /path/to/LUCA.h5` can supply a compatible existing OMA database;
 otherwise the workflow downloads it. This database must match the OMAmer
 version bundled with the configured OMArk container.
+`--omark_taxonomy_db` supplies an ETE3 NCBI taxonomy SQLite database; an
+existing `~/.etetoolkit/taxa.sqlite` is detected and staged into the container.
 
 ## Noncoding annotations
 
@@ -192,8 +194,7 @@ for editable examples. All example accessions, prefixes and sequence names must
 be replaced with real metadata. Program database/image paths are centralized in the `params` block of
 `nextflow.config`; `conf/ifb.config` holds cluster execution settings. Other sites must configure their
 versioned eggnog_db/BLAST/InterProScan resources explicitly. The sbatch launcher
-uses the project/submission directory and environment overrides rather than
-absolute project/cache paths.
+uses the project/submission directory and environment overrides.
 
 The single published results README now describes the local table2asn option,
 per-genome/per-sequence genetic codes, Rfam/OMA defaults, UniProt release checks,

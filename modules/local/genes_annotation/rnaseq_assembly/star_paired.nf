@@ -13,6 +13,9 @@ process STAR_PAIRED {
     tuple val(meta), path("${meta.id}_paired_star_Log.final.out"), emit: star_log_final
 
     script:
+    // STAR recommends a smaller suffix-array index for small genomes.
+    def saIndexBases = Math.max(1, Math.min(14,
+        (int) (Math.log(meta.assembly_size as double) / Math.log(2) / 2 - 1)))
     def readFiles = reads instanceof List ? reads.flatten() : [reads]
     def compressedReads = readFiles.count { it.name.endsWith('.gz') }
 
@@ -39,6 +42,7 @@ process STAR_PAIRED {
         --outTmpDir STARtmp \
         --genomeDir genome \
         --genomeFastaFiles ${genome} \
+        --genomeSAindexNbases ${saIndexBases} \
         --limitGenomeGenerateRAM ${task.memory.toBytes()} ${params.program_args.star_index ?: ''}
 
     # Align paired-end reads and sort the BAM by coordinates.

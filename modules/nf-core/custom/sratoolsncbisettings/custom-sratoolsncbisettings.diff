@@ -1,0 +1,87 @@
+--- a/modules/nf-core/custom/sratoolsncbisettings/main.nf
++++ b/modules/nf-core/custom/sratoolsncbisettings/main.nf
+@@ -11,8 +11,8 @@
+     val ids
+
+     output:
++    path "versions.yml", emit: versions
+     path('*.mkfg'), emit: ncbi_settings
+-    tuple val("${task.process}"), val('sratools'), eval("prefetch --version 2>&1 | grep -Eo '[0-9.]+'"), topic: versions, emit: versions_sratools
+
+     when:
+     task.ext.when == null || task.ext.when
+@@ -22,6 +22,11 @@
+
+     """
+     echo ${config}
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        sratools: \$( prefetch --version 2>&1 | grep -Eo '[0-9.]+' )
++    END_VERSIONS
+     """
+
+     template "detect_ncbi_settings.sh"
+@@ -29,5 +34,10 @@
+     stub:
+     """
+     touch user-settings.mkfg
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        sratools: \$( prefetch --version 2>&1 | grep -Eo '[0-9.]+' )
++    END_VERSIONS
+     """
+ }
+--- a/modules/nf-core/custom/sratoolsncbisettings/meta.yml
++++ b/modules/nf-core/custom/sratoolsncbisettings/meta.yml
+@@ -20,33 +20,17 @@
+       type: string
+       description: List of id settings
+ output:
++  versions:
++    - versions.yml:
++        type: file
++        description: Software versions for AnnoGlyph provenance.
++        pattern: "versions.yml"
+   ncbi_settings:
+     - "*.mkfg":
+         type: file
+         description: An NCBI user settings file.
+         pattern: "*.mkfg"
+         ontologies: []
+-  versions_sratools:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - sratools:
+-          type: string
+-          description: The name of the tool
+-      - prefetch --version 2>&1 | grep -Eo '[0-9.]+':
+-          type: eval
+-          description: The expression to obtain the version of the tool
+-topics:
+-  versions:
+-    - - ${task.process}:
+-          type: string
+-          description: The name of the process
+-      - sratools:
+-          type: string
+-          description: The name of the tool
+-      - prefetch --version 2>&1 | grep -Eo '[0-9.]+':
+-          type: eval
+-          description: The expression to obtain the version of the tool
+ authors:
+   - "@Midnighter"
+ maintainers:
+--- a/modules/nf-core/custom/sratoolsncbisettings/templates/detect_ncbi_settings.sh
++++ b/modules/nf-core/custom/sratoolsncbisettings/templates/detect_ncbi_settings.sh
+@@ -38,3 +38,8 @@
+     fi
+     cp "\${NCBI_SETTINGS}" ./
+ fi
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        sratools: \$( prefetch --version 2>&1 | grep -Eo '[0-9.]+' )
++    END_VERSIONS

@@ -13,7 +13,8 @@ def main():
     parser.add_argument('--input', required=True)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
-    table = pd.read_csv(args.input, sep='\t')
+    # "NA" is a repeat classification label, not a missing observation.
+    table = pd.read_csv(args.input, sep='\t', keep_default_na=False)
     fig, ax = plt.subplots(figsize=(9, 5))
     if not table.empty:
         level = 'class' if 'class' in table else 'type'

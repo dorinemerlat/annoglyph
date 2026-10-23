@@ -20,6 +20,7 @@ process GENERATE_RUNLIST {
     def maxBases = params.sra_run_max_bases == null ? 0 : params.sra_run_max_bases as long
 
     """
+    # Include single-run ESummary records as well as multi-run experiments.
     generate_runlist.py \
         --genus '${genus}' \
         --species '${species}' \

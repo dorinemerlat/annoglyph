@@ -173,7 +173,12 @@ def parse_classif_file(path: Path) -> pd.DataFrame:
       ``MCHelper_`` to avoid clashes with other tables.
     """
 
-    df = pd.read_csv(path, sep="\t", dtype=str, keep_default_na=False)
+    try:
+        df = pd.read_csv(path, sep="\t", dtype=str, keep_default_na=False)
+    except pd.errors.EmptyDataError:
+        # MCHelper may find no full-length TE copies and write an empty file.
+        return pd.DataFrame({"id": pd.Series(dtype="string"),
+                             "comment": pd.Series(dtype="string")})
 
     # Normalize ID column name
     df = df.rename(columns={"Seq_name": "id", "seq_name": "id"})
@@ -570,10 +575,9 @@ def main() -> None:
 
             to_write.append(new_rec)
 
-        if to_write:
-            with out_fasta.open('w') as fh:
-                SeqIO.write(to_write, fh, 'fasta')
-            print(f"Wrote representative sequences to: {out_fasta}", file=sys.stderr)
+        with out_fasta.open('w') as fh:
+            SeqIO.write(to_write, fh, 'fasta')
+        print(f"Wrote representative sequences to: {out_fasta}", file=sys.stderr)
 
         if missing_keys:
             print(f"Warning: {len(missing_keys)} families had no sequence found (examples: {missing_keys[:5]})", file=sys.stderr)

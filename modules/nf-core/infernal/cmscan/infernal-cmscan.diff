@@ -1,0 +1,100 @@
+--- a/modules/nf-core/infernal/cmscan/main.nf
++++ b/modules/nf-core/infernal/cmscan/main.nf
+@@ -13,10 +13,9 @@
+     path clanin
+
+     output:
++    path "versions.yml", emit: versions
+     tuple val(meta), path("*.txt.gz"), emit: txt
+     tuple val(meta), path("*.tbl.gz"), emit: tbl
+-    tuple val("${task.process}"), val('infernal'), eval("cmsearch -h | sed '2!d;s/.*INFERNAL //;s/ .*//'"), emit: versions_infernal, topic: versions
+-    tuple val("${task.process}"), val('gzip'), eval("gzip --version |& sed '1!d;s/gzip //'"), topic: versions, emit: versions_gzip
+
+     when:
+     task.ext.when == null || task.ext.when
+@@ -46,6 +45,12 @@
+     gzip --no-name ${prefix}.txt ${prefix}.tbl
+
+     ${cleanup}
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        infernal: \$( cmsearch -h | sed '2!d;s/.*INFERNAL //;s/ .*//' )
++        gzip: \$( gzip --version |& sed '1!d;s/gzip //' )
++    END_VERSIONS
+     """
+
+     stub:
+@@ -53,5 +58,11 @@
+     """
+     echo "" | gzip > ${prefix}.txt.gz
+     echo "" | gzip > ${prefix}.tbl.gz
++
++    cat > versions.yml <<-END_VERSIONS
++    "${task.process}":
++        infernal: \$( cmsearch -h | sed '2!d;s/.*INFERNAL //;s/ .*//' )
++        gzip: \$( gzip --version |& sed '1!d;s/gzip //' )
++    END_VERSIONS
+     """
+ }
+--- a/modules/nf-core/infernal/cmscan/meta.yml
++++ b/modules/nf-core/infernal/cmscan/meta.yml
+@@ -47,6 +47,11 @@
+       ontologies:
+         - edam: http://edamontology.org/format_3475 # TSV
+ output:
++  versions:
++    - versions.yml:
++        type: file
++        description: Software versions for AnnoGlyph provenance.
++        pattern: "versions.yml"
+   txt:
+     - - meta:
+           type: map
+@@ -71,46 +76,6 @@
+           pattern: "*.{tbl.gz}"
+           ontologies:
+             - edam: http://edamontology.org/format_3475 # TSV
+-  versions_infernal:
+-    - - "${task.process}":
+-          type: string
+-          description: The name of the process
+-      - infernal:
+-          type: string
+-          description: The name of the tool
+-      - "cmsearch -h | sed '2!d;s/.*INFERNAL //;s/ .*//'":
+-          type: eval
+-          description: The expression to obtain the version of the tool
+-  versions_gzip:
+-    - - "${task.process}":
+-          type: string
+-          description: The name of the process
+-      - gzip:
+-          type: string
+-          description: The name of the tool
+-      - "gzip --version |& sed '1!d;s/gzip //'":
+-          type: eval
+-          description: The expression to obtain the version of the tool
+-topics:
+-  versions:
+-    - - "${task.process}":
+-          type: string
+-          description: The name of the process
+-      - infernal:
+-          type: string
+-          description: The name of the tool
+-      - "cmsearch -h | sed '2!d;s/.*INFERNAL //;s/ .*//'":
+-          type: eval
+-          description: The expression to obtain the version of the tool
+-    - - "${task.process}":
+-          type: string
+-          description: The name of the process
+-      - gzip:
+-          type: string
+-          description: The name of the tool
+-      - "gzip --version |& sed '1!d;s/gzip //'":
+-          type: eval
+-          description: The expression to obtain the version of the tool
+ authors:
+   - "@sainsachiko"
+ maintainers:

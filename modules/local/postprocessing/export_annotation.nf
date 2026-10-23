@@ -2,7 +2,7 @@ process EXPORT_ANNOTATION {
     tag "layout_v2/${meta.id}"
     label 'annoglyph_python'
     memory 8.GB
-    publishDir "${params.outdir}/species", mode: params.publish_dir_mode
+    publishDir "${params.outdir}/species", mode: params.publish_dir_mode, overwrite: true
 
     input:
     tuple val(meta), path(genome), path(coding), path(repeats), path(ncrna), path(assets, stageAs: 'assets??/*'), val(destinations)
