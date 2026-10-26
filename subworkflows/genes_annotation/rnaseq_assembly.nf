@@ -6,6 +6,8 @@ include { SRATOOLS_FASTERQDUMP } from "$projectDir/modules/nf-core/sratools/fast
 include { STAR_GENOMEGENERATE } from "$projectDir/modules/nf-core/star/genomegenerate/main.nf"
 include { STAR_ALIGN as STAR_SINGLE } from "$projectDir/modules/nf-core/star/align/main.nf"
 include { STAR_ALIGN as STAR_PAIRED } from "$projectDir/modules/nf-core/star/align/main.nf"
+include { CLEAN_RNASEQ_READS } from "$projectDir/modules/local/genes_annotation/rnaseq_assembly/clean_reads.nf"
+include { SORT_RNASEQ_BAM } from "$projectDir/modules/local/genes_annotation/rnaseq_assembly/sort_bam.nf"
 include { SAMTOOLS_MERGE } from "$projectDir/modules/nf-core/samtools/merge/main.nf"
 include { VARUS               } from "$projectDir/modules/local/genes_annotation/rnaseq_assembly/varus.nf"
 include { SAMTOOLS_READ_COUNT } from "$projectDir/modules/local/genes_annotation/rnaseq_assembly/samtools_read_count.nf"
@@ -57,7 +59,10 @@ workflow RNASEQ_ASSEMBLY {
             SRATOOLS_FASTERQDUMP(SRATOOLS_PREFETCH.out.sra, CUSTOM_SRATOOLSNCBISETTINGS.out.ncbi_settings, [])
             run_reads = SRATOOLS_FASTERQDUMP.out.reads.map { meta, reads -> [meta.id, reads] }
                 .combine(sra_run_meta, by: 0)
-                .map { accession, reads, meta -> [meta, reads] }
+                .map { accession, reads, meta ->
+                    def ordered = (reads instanceof List ? reads : [reads]).sort { it.name }
+                    [RnaseqUtils.readset(meta, ordered, 'sra', accession), ordered]
+                }
             if (params.sra_max_spots != null) {
                 SUBSAMPLE_SRA_READS(run_reads)
                 downloaded_reads = SUBSAMPLE_SRA_READS.out.reads
@@ -71,7 +76,7 @@ workflow RNASEQ_ASSEMBLY {
                     def singleFiles = LegacyCacheUtils.hasPrediction(imported, meta.id, 'braker-with-star') ? [] : (meta['RNASeq-file']?.single_end ?: [])
 
                     singleFiles.collect { fastq ->
-                        [meta, fastq]
+                        [RnaseqUtils.readset(meta, fastq, 'local_se'), fastq]
                     }
                 }
                 .set { rnaseq_single_files }
@@ -82,88 +87,84 @@ workflow RNASEQ_ASSEMBLY {
                     def pairedFiles = LegacyCacheUtils.hasPrediction(imported, meta.id, 'braker-with-star') ? [] : (meta['RNASeq-file']?.paired_end ?: [])
 
                     pairedFiles.collect { pair ->
-                        [meta, pair]
+                        [RnaseqUtils.readset(meta, pair, 'local_pe'), pair]
                     }
                 }
                 .set { rnaseq_paired_files }
 
-            // Separate downloaded single-end and paired-end reads.
-            downloaded_reads
-                .branch { meta, sraFiles ->
-                    def files = sraFiles instanceof List ? sraFiles : [sraFiles]
-
-                    single: files.size() == 1
-                    paired: files.size() == 2
+            // Each SRA run or local library remains independent through QC,
+            // alignment and sorting. The genome identity is restored at the merge.
+            readsets = downloaded_reads.concat(rnaseq_single_files, rnaseq_paired_files)
+                .unique { meta, reads -> meta.id }
+            CLEAN_RNASEQ_READS(readsets)
+            clean_reads = CLEAN_RNASEQ_READS.out.reads
+                .map { meta, reads, report ->
+                    def ordered = (reads instanceof List ? reads : [reads]).sort { it.name }
+                    [meta + RnaseqUtils.readStats(report), ordered]
                 }
-                .set { downloaded_sra_inputs }
-
-            // Combine downloaded and local single-end reads.
-            downloaded_sra_inputs.single
-                .concat(rnaseq_single_files)
-                .groupTuple(by: 0)
-                .join(genomes, by: 0)
-                .map { meta, fastqs, genome ->
-                    [meta, genome, fastqs.flatten()]
+                .filter { meta, reads ->
+                    if (meta.rnaseq_read_count == 0) log.warn "No usable RNA-seq reads after QC: ${meta.id}; retaining its QC report"
+                    meta.rnaseq_read_count > 0
                 }
-                .set { star_single_inputs }
+            star_qc_reports = CLEAN_RNASEQ_READS.out.reads.map { meta, reads, report -> [meta, report] }
 
-            // Combine downloaded and local paired-end reads.
-            downloaded_sra_inputs.paired
-                .concat(rnaseq_paired_files)
-                .groupTuple(by: 0)
-                .join(genomes, by: 0)
-                .map { meta, fastqs, genome ->
-                    [meta, genome, fastqs.flatten()]
-                }
-                .set { star_paired_inputs }
-
-            needed_genomes = star_single_inputs.concat(star_paired_inputs)
-                .map { meta, genome, reads -> [meta, genome] }.unique { it[0].id }
+            // combine broadcasts the single genome/index to every run; join
+            // would consume a genome key once and lose the remaining libraries.
+            read_genomes = clean_reads.map { meta, reads -> [meta.genome_id, meta, reads] }
+                .combine(genomes.map { meta, genome -> [meta.id, genome] }, by: 0)
+            needed_genomes = read_genomes.map { id, meta, reads, genome -> [meta.genome_meta, genome] }
+                .unique { meta, genome -> meta.id }
             STAR_GENOMEGENERATE(needed_genomes, Channel.value([[:], []]))
-            star_index = STAR_GENOMEGENERATE.out.index.map { meta, index -> [meta.id, index] }
-            single_reads = star_single_inputs.map { meta, genome, reads -> [meta + [single_end: true], reads] }
-            paired_reads = star_paired_inputs.map { meta, genome, reads -> [meta + [single_end: false], reads] }
-            single_with_index = single_reads.map { meta, reads -> [meta.id, meta, reads] }.join(star_index, failOnDuplicate: true, failOnMismatch: false)
-            paired_with_index = paired_reads.map { meta, reads -> [meta.id, meta, reads] }.join(star_index, failOnDuplicate: true, failOnMismatch: false)
-            // multiMap broadcasts paired read/index channels in the same order.
-            single_channels = single_with_index.multiMap { id, meta, reads, index ->
+            star_index = STAR_GENOMEGENERATE.out.index.map { meta, index -> [meta.id, index, RnaseqUtils.indexBytes(index)] }
+            aligned_inputs = clean_reads.map { meta, reads -> [meta.genome_id, meta, reads] }
+                .combine(star_index, by: 0)
+                .map { id, meta, reads, index, bytes ->
+                    [meta + [star_memory_gb: RnaseqUtils.starMemoryGb(bytes, meta.rnaseq_read_count as long, params)], reads, index]
+                }
+                .branch {
+                    single: it[0].single_end
+                    paired: !it[0].single_end
+                }
+            single_channels = aligned_inputs.single.multiMap { meta, reads, index ->
                 reads: [meta, reads]
-                index: [[id: id], index]
+                index: [[id: meta.genome_id], index]
             }
-            paired_channels = paired_with_index.multiMap { id, meta, reads, index ->
+            paired_channels = aligned_inputs.paired.multiMap { meta, reads, index ->
                 reads: [meta, reads]
-                index: [[id: id], index]
+                index: [[id: meta.genome_id], index]
             }
             STAR_SINGLE(single_channels.reads, single_channels.index, Channel.value([[:], []]), true)
             STAR_PAIRED(paired_channels.reads, paired_channels.index, Channel.value([[:], []]), true)
+            SORT_RNASEQ_BAM(STAR_SINGLE.out.bam.concat(STAR_PAIRED.out.bam))
+            star_run_bams = SORT_RNASEQ_BAM.out.bam
 
-            // Merge STAR BAM files when several read sets are available.
-            STAR_SINGLE.out.bam_sorted_aligned
-                .concat(STAR_PAIRED.out.bam_sorted_aligned)
-                .map { meta, bam -> [meta.findAll { key, value -> key != 'single_end' }, bam] }
+            // Include the library inventory in the merge cache key and sort it
+            // deterministically, independently of task completion order.
+            star_bam_groups = SORT_RNASEQ_BAM.out.bam
+                .map { meta, bam -> [meta.genome_id, meta, bam] }
                 .groupTuple(by: 0)
-                .branch { meta, bams ->
-                    multiple: bams.size() > 1
-                    single: bams.size() == 1
+                .map { id, metas, bams ->
+                    def ordered = (0..<bams.size()).toList().sort { a, b -> metas[a].readset_id <=> metas[b].readset_id }
+                    [RnaseqUtils.mergeMeta(metas), ordered.collect { bams[it] }]
                 }
-                .set { star_bam_groups }
-
+                .branch {
+                    multiple: it[1].size() > 1
+                    single: it[1].size() == 1
+                }
             SAMTOOLS_MERGE(star_bam_groups.multiple.map { meta, bams -> [meta, bams, []] }, Channel.value([[:], [], [], []]), '')
-
-            star_bam_groups.single
-                .map { meta, bams ->
-                    [meta, bams.first()]
-                }
-                .set { single_star_bams }
-
-            SAMTOOLS_MERGE.out.bam
-                .concat(single_star_bams)
-                .map { meta, bam ->
-                    [meta + [rnaseq_aligner: 'star'], bam]
-                }
-                .set { all_star_bams }
+            single_star_bams = star_bam_groups.single.map { meta, bams -> [meta, bams.first()] }
+            all_star_bams = SAMTOOLS_MERGE.out.bam.concat(single_star_bams)
+                .map { meta, bam -> [meta.genome_meta + [rnaseq_aligner: 'star'], bam] }
+            star_versions = CLEAN_RNASEQ_READS.out.versions.mix(SORT_RNASEQ_BAM.out.versions,
+                SAMTOOLS_MERGE.out.versions, STAR_GENOMEGENERATE.out.versions,
+                STAR_SINGLE.out.versions, STAR_PAIRED.out.versions,
+                SRATOOLS_PREFETCH.out.versions, SRATOOLS_FASTERQDUMP.out.versions,
+                CUSTOM_SRATOOLSNCBISETTINGS.out.versions)
         } else {
             all_star_bams = Channel.empty()
+            star_versions = Channel.empty()
+            star_run_bams = Channel.empty()
+            star_qc_reports = Channel.empty()
         }
 
         if (params.rna_seq_aligner == 'varus' || params.rna_seq_aligner == 'both') {
@@ -195,7 +196,7 @@ workflow RNASEQ_ASSEMBLY {
         // Keep BAM files passing the configured mapped-read threshold.
         SAMTOOLS_READ_COUNT.out
             .branch { meta, readCountFile ->
-                def readCount = readCountFile.readLines().first().toInteger()
+                def readCount = readCountFile.readLines().first().toLong()
 
                 good_quality: readCount > params.rnaseq_min_mapped_reads
                 poor_quality: readCount <= params.rnaseq_min_mapped_reads
@@ -211,6 +212,8 @@ workflow RNASEQ_ASSEMBLY {
             .set { bams_for_gene_annotation }
 
     emit:
-    versions = params.rna_seq_aligner in ['star', 'both'] ? SAMTOOLS_MERGE.out.versions.mix(STAR_GENOMEGENERATE.out.versions).mix(STAR_SINGLE.out.versions).mix(STAR_PAIRED.out.versions).mix(SRATOOLS_PREFETCH.out.versions).mix(SRATOOLS_FASTERQDUMP.out.versions).mix(CUSTOM_SRATOOLSNCBISETTINGS.out.versions) : Channel.empty()
+        versions = star_versions
         bams = bams_for_gene_annotation
+        run_bams = star_run_bams
+        qc_reports = star_qc_reports
 }

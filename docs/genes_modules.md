@@ -17,6 +17,68 @@ caches made before this correction must be regenerated from the corrected GFF3.
 Gene-structure and assembly-correlation figures use the selected method for each
 genome, including only its introns; method-comparison figures retain all candidates.
 
+## RNA-seq runs, cleaning and BAM sorting
+
+STAR processes each SRA run or local FASTQ library independently. A paired-end
+library stays an ordered R1/R2 pair. All reads passing light fastp cleaning are
+retained; there is no new subsampling or tissue-selection step. The optional
+existing SRA limits still apply when explicitly configured. Local FASTQs receive
+the same cleaning as downloaded reads. VARUS acquisition is unchanged.
+
+Cleaning parameters are defined in `nextflow.config` and validated by the schema:
+
+| Parameter | Default | Meaning |
+| --- | --- | --- |
+| `rnaseq_clean_reads` | `true` | Enable light cleaning; false produces QC reports while retaining every read |
+| `rnaseq_min_read_length` | `30` | Minimum retained length, in bases |
+| `rnaseq_qualified_quality_phred` | `15` | Bases below this Phred score are unqualified |
+| `rnaseq_unqualified_percent_limit` | `40` | Maximum percentage of unqualified bases per read |
+| `rnaseq_max_n_bases` | `5` | Maximum N bases per read |
+| `rnaseq_trim_adapters` | `true` | Detect and remove adapters |
+| `rnaseq_trim_poly_g` | `false` | Optional poly-G trimming |
+
+No deduplication, pair merging, sliding-window quality trimming or poly-X
+trimming is enabled. A pair is retained only when both mates pass. Empty
+libraries are reported and skipped; other libraries of that genome can proceed.
+fastp 1.3.6 is pinned to the image used by the nf-core modules revision recorded
+below. JSON/HTML reports are published under
+`results/rnaseq/qc/<genome>/<run>/<input-fingerprint>/`.
+
+STAR writes unsorted BAM. A separate `SORT_RNASEQ_BAM` task uses `samtools sort`
+with memory bounded per thread (initially 1024 MiB, configurable with
+`rnaseq_sort_memory_per_thread_mb`) and 20% task-memory headroom. Temporary sort
+files stay in the shared task directory. Sorting and merging stage inputs as
+symlinks rather than copying all FASTQs, BAMs and indices. Failed sorting can be
+retried independently of alignment; standard Nextflow retries increase the
+requested memory on exit 137/140 and walltime on exit 143.
+SRA downloads and conversions also run on shared storage, with at most four
+concurrent tasks per stage, avoiding large archive/conversion scratch on `/tmp`.
+
+STAR starts with a scheduling estimate of index bytes times
+`rnaseq_star_index_memory_factor` (1.5), plus 4 GiB and
+`rnaseq_star_memory_per_million_reads_gb` (0.25) GiB per million individual
+post-cleaning reads, with a floor of `rnaseq_star_min_memory_gb` (8). This is a
+conservative initial estimate, not an exact peak-memory prediction. Existing
+`program_resources.star` overrides remain available.
+
+Sorted run BAMs are merged by genome in a deterministic run order, and the
+original genome metadata is restored before gene prediction. One input BAM is
+passed through without a redundant merge. Counts after merging are alignment
+counts, as before; they are not a base-quality score.
+
+Persistent QC, alignment and sort caches are separated by **genome/run/input
+fingerprint**. Local-library IDs derive from their paths, and the input
+fingerprint includes paths, sizes and modification times. A `rnaseq_runs_v1`
+namespace incorporating cleaning settings separates these products and derived
+coding annotations from historical pooled results. Downloaded SRA archives,
+FASTQs remain reusable. Genome indices are shared across runs and cleaning
+settings, with an ID-based cache key (historical filename-based indices may be
+rebuilt once). The merge key includes the retained
+run inventory. Changing cleaning parameters invalidates derived caches.
+
+Validate channel associations with `test_rnaseq_runs.nf` and
+`test/validation/rnaseq_runs.config` in a separate launch/work/cache directory.
+
 ## nf-core replacements
 
 All modules are pinned in `modules.json` to commit
@@ -55,11 +117,9 @@ that command fails; it preserves the ten configured CPUs and all analyses.
   The nf-core BRAKER3 wrapper does not implement that fallback and requires
   additional outputs even when prediction fails.
 - GALBA: no corresponding nf-core module at the pinned commit.
-- STAR single/paired: retain the combined genome indexing/alignment commands,
-  coordinate-sorted BAM, `intronMotif`, gzip detection and memory limits.
-  The nf-core STAR submodules add outputs/default options and need a distinct
-  index channel. Multiple paired libraries now use every R1/R2 pair; the previous
-  shell code considered only `input1` and `input2`.
+- STAR single/paired: use nf-core indexing/alignment per run, retaining
+  `intronMotif` and gzip detection. Coordinate sorting is a separate local
+  samtools task; each library receives the correct genome index.
 - SRA/runlist and VARUS: preserve acquisition and selection logic. VARUS creates
   its empty fallback BAM from a SAM dictionary; `/dev/null` was not a valid SAM.
 - Gene-length filtering: retain `agat_sp_filter_gene_by_length.pl --test '>='

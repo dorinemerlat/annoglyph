@@ -113,6 +113,48 @@ automatically when present.
 No complete pipeline run is implied by these instructions; execution is left
 to the user.
 
+## RNA-seq preprocessing and per-run alignment checks
+
+Portable synthetic inputs live in `test/data/rnaseq`. Run these checks from
+separate launch directories, using absolute paths to the source tree; all
+generated work, caches and results stay under the launch directory. Load
+Nextflow 25.10.2+ and Singularity first and configure an image cache, for example:
+
+```bash
+export NXF_SINGULARITY_CACHEDIR=/path/to/annoglyph/.singularity
+nextflow run /path/to/annoglyph/test_rnaseq_utils.nf
+nextflow run /path/to/annoglyph/test_rnaseq_runs.nf -profile singularity \
+    -c /path/to/annoglyph/test/validation/rnaseq_runs.config -stub-run
+```
+
+The channel check covers two genome IDs, a shared SRA accession, single/paired
+libraries and colliding local filenames. It expects eight per-library BAMs and
+two merged per-genome BAMs with the original metadata restored. SRA acquisition
+is stubbed, so it makes no NCBI requests. Stub outputs are not real annotations.
+
+The following execute real tools on tiny inputs:
+
+```bash
+nextflow run /path/to/annoglyph/test_rnaseq_tools.nf -profile singularity \
+    -c /path/to/annoglyph/test/validation/rnaseq_runs.config
+nextflow run /path/to/annoglyph/test_rnaseq_qc.nf -profile singularity \
+    -c /path/to/annoglyph/test/validation/rnaseq_runs.config
+```
+
+The first verifies fastp, STAR, separate sorting and merging, then checks that
+the resulting BAM contains 90 mapped reads in coordinate order. The QC check
+verifies default filtering and mate synchronization. Repeat the QC check with
+`--rnaseq_clean_reads false --test_qc_expected_mixed 4` to retain every read, or
+with `--rnaseq_min_read_length 80 --test_qc_expected_good 0
+--test_qc_expected_mixed 0` to test valid empty outputs. Changing QC settings
+uses a separate persistent cache namespace; existing raw SRA downloads remain
+reusable. These tests do not establish annotation accuracy on full genomes.
+For additional channel checks, run `test_rnaseq_runs.nf -stub-run` with
+`--test_read_count 5000000000` (64-bit mapped counts),
+`--test_clean_read_count 0` (no alignment for empty libraries), or
+`--test_local_libraries false` (one run per genome, no redundant merge).
+Use a separate launch/cache directory for each stub scenario.
+
 ## Disk-space failure recovery
 
 The default error strategy retries explicit `No space left on device` failures,

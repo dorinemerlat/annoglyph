@@ -385,6 +385,71 @@
                     "exists": true,
                     "default": null,
                     "description": "ETE NCBI taxonomy SQLite database for evaluation filtering; null reuses omark_taxonomy_db."
+                },
+                "rnaseq_clean_reads": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Apply light fastp cleaning to each SRA run/local library. False retains all reads and produces QC reports without filtering."
+                },
+                "rnaseq_min_read_length": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "default": 30,
+                    "description": "Minimum read length retained by RNA-seq cleaning, in bases."
+                },
+                "rnaseq_qualified_quality_phred": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 93,
+                    "default": 15,
+                    "description": "Phred threshold below which a base is counted as unqualified by fastp."
+                },
+                "rnaseq_unqualified_percent_limit": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "default": 40,
+                    "description": "Maximum allowed percentage of unqualified bases per read."
+                },
+                "rnaseq_max_n_bases": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "default": 5,
+                    "description": "Maximum number of N bases allowed per read during cleaning."
+                },
+                "rnaseq_trim_adapters": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Detect and remove adapters during RNA-seq cleaning."
+                },
+                "rnaseq_trim_poly_g": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable poly-G tail trimming; disabled by default."
+                },
+                "rnaseq_star_min_memory_gb": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "default": 8,
+                    "description": "Minimum initial STAR alignment memory request in GiB."
+                },
+                "rnaseq_star_index_memory_factor": {
+                    "type": "number",
+                    "minimum": 1,
+                    "default": 1.5,
+                    "description": "Multiplier applied to STAR index bytes in the initial alignment memory estimate."
+                },
+                "rnaseq_star_memory_per_million_reads_gb": {
+                    "type": "number",
+                    "minimum": 0,
+                    "default": 0.25,
+                    "description": "Additional initial STAR memory in GiB per million individual reads retained after cleaning."
+                },
+                "rnaseq_sort_memory_per_thread_mb": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "default": 1024,
+                    "description": "Initial samtools sort memory per thread in MiB, bounded by the task memory allocation with overhead reserved."
                 }
             }
         },
