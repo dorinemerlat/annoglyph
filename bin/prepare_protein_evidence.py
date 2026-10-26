@@ -7,6 +7,8 @@ import csv
 import gzip
 import shutil
 import sys
+import time
+import urllib.error
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -60,13 +62,30 @@ def parse_args():
     return parser.parse_args()
 
 
+def open_request(request, timeout=300):
+    """Retry temporary HTTP failures without hiding permanent errors."""
+    for attempt in range(6):
+        try:
+            return urllib.request.urlopen(request, timeout=timeout)
+        except urllib.error.HTTPError as error:
+            if error.code not in (429, 500, 502, 503, 504) or attempt == 5:
+                raise
+            delay = 10 * (2 ** attempt)
+            retry_after = error.headers.get('Retry-After') if error.headers else None
+            if retry_after and retry_after.isdigit():
+                delay = max(delay, int(retry_after))
+            print(f'HTTP {error.code}; retrying in {delay}s ({attempt + 1}/5)', file=sys.stderr)
+            error.close()
+            time.sleep(delay)
+
+
 def open_url(url, params=None, timeout=300):
     """Open a URL with an AnnoGlyph user agent."""
     if params:
         url = f"{url}?{urllib.parse.urlencode(params)}"
 
     request = urllib.request.Request(url, headers={"User-Agent": "AnnoGlyph/1.0"})
-    return urllib.request.urlopen(request, timeout=timeout)
+    return open_request(request, timeout=timeout)
 
 
 def list_orthodb_partitions(version):
@@ -142,7 +161,7 @@ def count_uniprot_proteins(taxid):
     url = f"{UNIPROT_SEARCH_URL}?{urllib.parse.urlencode(params)}"
     request = urllib.request.Request(url, headers={"User-Agent": "AnnoGlyph/1.0"})
 
-    with urllib.request.urlopen(request, timeout=60) as response:
+    with open_request(request, timeout=60) as response:
         total = response.headers.get("X-Total-Results")
 
     if total is None:
@@ -248,7 +267,7 @@ def download_uniprot(taxid, output, expected_release=None):
                 },
             )
 
-            with urllib.request.urlopen(request, timeout=300) as response:
+            with open_request(request, timeout=300) as response:
                 release = response.headers.get('X-UniProt-Release')
                 if expected_release and release != expected_release:
                     raise ValueError(f'Expected UniProt release {expected_release}, received {release}')
