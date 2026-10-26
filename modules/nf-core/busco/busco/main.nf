@@ -1,5 +1,5 @@
 process BUSCO_BUSCO {
-    tag "${meta.id}"
+    tag "${meta.annotation_method ? meta.annotation_method + '/' : ''}${meta.id}"
     label 'process_medium'
 
     conda "${moduleDir}/environment.yml"

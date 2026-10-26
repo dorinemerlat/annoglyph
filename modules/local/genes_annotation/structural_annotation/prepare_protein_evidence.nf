@@ -35,7 +35,7 @@ process PREPARE_PROTEIN_EVIDENCE {
         ${releaseArg} \
         --output protein_evidence.fa \
         --metadata-output protein_evidence.tsv \
-        > prepare_protein_evidence.log 2>&1
+        2>&1 | tee prepare_protein_evidence.log
     """
 
     stub:

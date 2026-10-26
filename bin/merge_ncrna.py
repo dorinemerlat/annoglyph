@@ -2,10 +2,10 @@
 """Reconcile tRNAscan-SE, Barrnap and Infernal into one GFF3 per genome."""
 import argparse
 import csv
-import re
 from bisect import bisect_right
 from collections import defaultdict
 from annoglyph_gff import Feature, namespace, read_gff, sort_key
+from rfam_metadata import family_types, classify_family
 
 
 def interval_index(features, kind):
@@ -31,19 +31,6 @@ def overlaps(feature, index):
     return position >= 0 and ends[position] >= feature.start
 
 
-def family_types(path):
-    result = {}
-    with open(path) as handle:
-        for line in handle:
-            fields = line.rstrip('\n').split('\t')
-            if not fields[0].startswith('RF'):
-                continue
-            if len(fields) < 19:
-                raise ValueError('Expected Rfam database_files/family.txt with at least 19 columns')
-            result[fields[0]] = fields[18]
-    return result
-
-
 def infernal_features(path, types):
     with open(path) as handle:
         for number, line in enumerate(handle, 1):
@@ -56,17 +43,16 @@ def infernal_features(path, types):
             if fields[19] == '=':
                 continue
             accession, model = fields[2], fields[1]
-            if accession not in types:
-                raise ValueError(f'Missing Rfam family metadata for {accession}')
-            family_type = types[accession]
-            kind = 'tRNA' if re.search(r'\btRNA\b', family_type) else (
-                'rRNA' if re.search(r'\brRNA\b', family_type) else 'ncRNA')
+            family_type = types.get(accession, '')
+            kind, submission_class, category = classify_family(family_type)
             start, end = sorted((int(fields[9]), int(fields[10])))
             attrs = {'Name': [model], 'Dbxref': [f'Rfam:{accession}'],
-                     'rfam_type': [family_type], 'evalue': [fields[17]],
+                     'rfam_type': [family_type or 'Unknown'], 'rna_type': [category],
+                     'rfam_metadata_status': ['available' if accession in types else 'missing'],
+                     'evalue': [fields[17]],
                      'model': [model]}
             if kind == 'ncRNA':
-                attrs['ncRNA_class'] = [family_type.split(';')[-1].strip() or 'other']
+                attrs['ncRNA_class'] = [submission_class]
             yield Feature(fields[3], 'Infernal', kind, start, end,
                           fields[16], fields[11], '.', attrs)
 
@@ -99,13 +85,16 @@ def main():
     retained = []
     with open(args.audit, 'w') as handle:
         audit = csv.writer(handle, delimiter='\t')
-        audit.writerow(['model', 'seqid', 'start', 'end', 'strand', 'decision'])
+        audit.writerow(['model', 'seqid', 'start', 'end', 'strand', 'decision',
+                        'rfam_accession', 'rfam_type', 'rna_type', 'metadata_status'])
         for feature in infernal_features(args.infernal, family_types(args.families)):
             conflict = feature.kind in priority and overlaps(feature, priority[feature.kind])
             decision = ('removed_for_tRNAscan-SE' if feature.kind == 'tRNA'
                         else 'removed_for_Barrnap') if conflict else 'retained'
             audit.writerow([feature.attrs['Name'][0], feature.seqid, feature.start,
-                            feature.end, feature.strand, decision])
+                            feature.end, feature.strand, decision,
+                            feature.attrs['Dbxref'][0], feature.attrs['rfam_type'][0],
+                            feature.attrs['rna_type'][0], feature.attrs['rfam_metadata_status'][0]])
             if not conflict:
                 retained.append(feature)
     namespace(retained, args.prefix + '.infernal')

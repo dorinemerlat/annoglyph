@@ -4,6 +4,7 @@ include { INFERNAL_CMSCAN as INFERNAL } from "$projectDir/modules/nf-core/infern
 include { NORMALIZE_INFERNAL_OUTPUTS } from "$projectDir/modules/local/module_ncgenes/normalize_infernal.nf"
 include { BARRNAP as BARRNAP_EUK; BARRNAP as BARRNAP_MITO } from "$projectDir/modules/nf-core/barrnap/main.nf"
 include { MERGE_NCRNA } from "$projectDir/modules/local/module_ncgenes/merge_ncrna.nf"
+include { RESOLVE_RFAM_METADATA } from "$projectDir/modules/local/module_ncgenes/resolve_rfam_metadata.nf"
 
 include { NCRNA_STATS } from "$projectDir/modules/local/module_ncgenes/ncrna_stats.nf"
 
@@ -33,7 +34,8 @@ workflow NCGENES_ANNOTATION {
         .join(BARRNAP_EUK.out.gff, failOnDuplicate: true, failOnMismatch: true)
         .join(BARRNAP_MITO.out.gff, failOnDuplicate: true, failOnMismatch: true)
         .join(NORMALIZE_INFERNAL_OUTPUTS.out.tblout, failOnDuplicate: true, failOnMismatch: true)
-    MERGE_NCRNA(merged_inputs, rfam_models)
+    RESOLVE_RFAM_METADATA(rfam_models, NORMALIZE_INFERNAL_OUTPUTS.out.tblout.map { meta, table -> table }.collect())
+    MERGE_NCRNA(merged_inputs, RESOLVE_RFAM_METADATA.out.metadata)
     statistics_manifest = MERGE_NCRNA.out.gff
         .map { meta, gff -> [meta.id, meta.assembly_size, gff.name].join('\t') }
         .collectFile(name: 'ncrna_manifest.tsv', seed: 'genome_id\tgenome_size_bp\tannotation\n', newLine: true, sort: true)
@@ -46,4 +48,5 @@ workflow NCGENES_ANNOTATION {
     figures = NCRNA_STATS.out.figures
     gff = MERGE_NCRNA.out.gff
     filtering = MERGE_NCRNA.out.filtering
+    metadata_resolution = RESOLVE_RFAM_METADATA.out.audit
 }

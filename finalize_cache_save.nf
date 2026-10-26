@@ -3,6 +3,7 @@ nextflow.enable.dsl = 2
 // Explicitly finalize historical results. This entry point never calls coding
 // predictors, functional annotation, BUSCO, OMArk, cmscan, tRNAscan or barrnap.
 include { MERGE_NCRNA } from './modules/local/module_ncgenes/merge_ncrna.nf'
+include { RESOLVE_RFAM_METADATA } from './modules/local/module_ncgenes/resolve_rfam_metadata.nf'
 include { NCRNA_STATS } from './modules/local/module_ncgenes/ncrna_stats.nf'
 include { PLOT_REPEAT_LANDSCAPE } from './modules/local/repeats_annotation/plot_landscape.nf'
 include { POSTPROCESSING } from './subworkflows/postprocessing.nf'
@@ -16,10 +17,24 @@ process IMPORT_SELECTED_CODING {
     output:
     tuple val(meta), path('selected_coding.gff3'), emit: gff
     tuple val(meta), path('coding_import.json'), emit: audit
+    tuple val(meta), path('excluded_coding_models.gff3'), path('coding_exclusions.tsv'), emit: exclusions
     script:
     """
-    python ${projectDir}/bin/normalize_cached_coding.py --source ${source} \\
+    python ${projectDir}/bin/normalize_cached_coding.py --sample '${meta.id}' --source ${source} \\
         --reference ${reference} --mapping ${mapping} --output selected_coding.gff3
+    """
+}
+
+process SUMMARIZE_CODING_IMPORTS {
+    tag 'all_genomes'
+    label 'annoglyph_python'
+    input:
+    path audits, stageAs: 'imports??/*'
+    output:
+    path '*.tsv', emit: tables
+    script:
+    """
+    python ${projectDir}/bin/summarize_coding_imports.py --audits ${audits.join(' ')}
     """
 }
 
@@ -40,24 +55,37 @@ workflow {
             [meta + [annotation_method: selection.method], file(selection.source, checkIfExists: true),
                 file(entry.reference, checkIfExists: true), file(entry.mapping.path, checkIfExists: true)]
         }
-    IMPORT_SELECTED_CODING(selected)
+    if (!params.finalize_ncrna_only) {
+        IMPORT_SELECTED_CODING(selected)
+        SUMMARIZE_CODING_IMPORTS(IMPORT_SELECTED_CODING.out.audit.map { meta, audit -> audit }.collect())
+    }
     ncinputs = records.map { meta, entry ->
         [meta, file("${entry.trnascanse}/${meta.id}_trna.gff", checkIfExists: true),
             file(entry.barrnap.euk, checkIfExists: true), file(entry.barrnap.mito, checkIfExists: true),
             file("${params.cacheDir}/ncgenes_annotation/infernal/${meta.id}/${meta.id}_infernal.tblout", checkIfExists: true)]
     }
-    MERGE_NCRNA(ncinputs, Channel.value(file("${params.cacheDir}/annotation_export_v1/ncgenes_annotation/download_rfam/15.0/rfam", checkIfExists: true)))
+    RESOLVE_RFAM_METADATA(Channel.value(file(params.finalization_rfam_metadata, checkIfExists: true)),
+        ncinputs.map { meta, trna, euk, mito, infernal -> infernal }.collect())
+    MERGE_NCRNA(ncinputs, RESOLVE_RFAM_METADATA.out.metadata)
     manifest = MERGE_NCRNA.out.gff.map { meta, gff -> [meta.id, meta.assembly_size, gff.name].join('\t') }
         .collectFile(name: 'ncrna_manifest.tsv', seed: 'genome_id\tgenome_size_bp\tannotation\n', newLine: true, sort: true)
     NCRNA_STATS(MERGE_NCRNA.out.gff.map { meta, gff -> gff }.collect(), manifest, taxonomy, tree)
+    if (!params.finalize_ncrna_only) {
     PLOT_REPEAT_LANDSCAPE(records.map { meta, entry -> [meta, file(entry.landscape, checkIfExists: true)] })
     species_assets = records.flatMap { meta, entry -> [
+        [meta.id, [file(imported.repeat_library, checkIfExists: true), "repeats/sequences/${file(imported.repeat_library).name}"]],
         [meta.id, [file(entry.family_table, checkIfExists: true), 'repeats/stats/families.tsv']],
         [meta.id, [file(entry.landscape, checkIfExists: true), 'repeats/stats/landscape.tsv']]
     ] }.mix(PLOT_REPEAT_LANDSCAPE.out.plots.flatMap { meta, plots -> plots.collect { p -> [meta.id, [p, "repeats/plots/${p.name}"]] } })
       .mix(MERGE_NCRNA.out.filtering.map { meta, audit -> [meta.id, [audit, 'noncoding/stats/filtering.tsv']] })
       .mix(IMPORT_SELECTED_CODING.out.audit.map { meta, audit -> [meta.id, [audit, 'protein_coding/selection/cache_import.json']] })
+      .mix(IMPORT_SELECTED_CODING.out.exclusions.flatMap { meta, excluded, table -> [
+          [meta.id, [excluded, 'protein_coding/selection/excluded_models.gff3']],
+          [meta.id, [table, 'protein_coding/selection/excluded_models.tsv']]
+      ] })
     comparative_assets = NCRNA_STATS.out.tables.map { p -> [p, 'noncoding/stats'] }
+        .mix(SUMMARIZE_CODING_IMPORTS.out.tables.flatMap { tables -> tables.collect { p -> [p, "protein_coding/stats/${p.name}"] } })
+        .mix(RESOLVE_RFAM_METADATA.out.audit.map { p -> [p, 'noncoding/stats/rfam_metadata_resolution.json'] })
         .mix(NCRNA_STATS.out.figures.map { p -> [p, 'noncoding/plots'] })
         .mix(NCRNA_STATS.out.readme.map { p -> [p, 'noncoding/README.txt'] })
         .mix(Channel.of([file("${projectDir}/outputs/cache_reuse_20261023/final_coding_sources.json"), 'protein_coding/stats/cache_sources.json']))
@@ -65,4 +93,5 @@ workflow {
         IMPORT_SELECTED_CODING.out.gff,
         records.map { meta, entry -> [meta, file(entry.repeats_gff, checkIfExists: true)] },
         MERGE_NCRNA.out.gff, species_assets, comparative_assets, taxonomy, tree)
+    }
 }

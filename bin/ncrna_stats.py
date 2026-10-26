@@ -69,11 +69,15 @@ def rna_kind(feature):
     if feature.kind in ('tRNA', 'rRNA'):
         return feature.kind
     if feature.kind.endswith('RNA') and feature.kind != 'mRNA':
+        if feature.attrs.get('rna_type'):
+            return feature.attrs['rna_type'][0]
         text = ' '.join(feature.attrs.get('rfam_type', []))
         for kind in ['snoRNA', 'snRNA', 'miRNA', 'lncRNA', 'ribozyme', 'antisense_RNA']:
             if kind in text or feature.kind == kind:
                 return kind
-        return 'ncRNA'
+        if 'Cis-reg' in text:
+            return 'Regulatory RNA'
+        return 'Unclassified ncRNA'
     return None
 
 
@@ -298,6 +302,8 @@ def main():
                               'seqid', 'start', 'end', 'strand', 'source']).to_csv(
         args.output / 'tables' / 'ncrna_loci.tsv', sep='\t', index=False)
     labels = {genome: str(taxonomy.loc[genome, 'name']) + '\n' + genome for genome in order}
+    heatmap(summary.drop(index='Total'), args.output / 'figures' / 'ncrna_types_heatmap',
+            'Non-coding RNA types', labels, tree, leaf_genomes, order)
     heatmap(trna_matrix, args.output / 'figures' / 'trna_isotypes_heatmap', 'tRNA isotypes', labels, tree, leaf_genomes, order)
     heatmap(rrna_matrix, args.output / 'figures' / 'rrna_types_heatmap', 'rRNA types', labels, tree, leaf_genomes, order)
     if ac_rows:

@@ -1,5 +1,10 @@
 --- a/modules/nf-core/busco/busco/main.nf
 +++ b/modules/nf-core/busco/busco/main.nf
+@@ -1,3 +1,3 @@
+ process BUSCO_BUSCO {
+-    tag "${meta.id}"
++    tag "${meta.annotation_method ? meta.annotation_method + '/' : ''}${meta.id}"
+     label 'process_medium'
 @@ -16,7 +16,7 @@
      // Required:    lineage for checking against, or "auto/auto_prok/auto_euk" for enabling auto-lineage
      val lineage

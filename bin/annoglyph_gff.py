@@ -22,7 +22,7 @@ class Feature:
                                    self.end, self.score, self.strand, self.phase, attrs]))
 
 
-def read_gff(path):
+def read_gff(path, *, validate_coordinates=True):
     features = []
     with open(path) as handle:
         for number, line in enumerate(handle, 1):
@@ -51,7 +51,7 @@ def read_gff(path):
                     previous_key = unquote(key)
                     attrs[previous_key] = [unquote(v) for v in value.split(',')]
             start, end = int(fields[3]), int(fields[4])
-            if start < 1 or end < start:
+            if validate_coordinates and (start < 1 or end < start):
                 raise ValueError(f'{path}:{number}: invalid coordinates')
             features.append(Feature(*fields[:3], start, end, *fields[5:8], attrs))
     return features

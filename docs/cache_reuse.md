@@ -21,7 +21,22 @@ functional annotation, BUSCO, OMArk, Infernal, tRNAscan-SE or Barrnap. It valida
 and translates the selected coding GFF sequence IDs, merges the cached ncRNAs,
 regenerates figures, and builds species and comparative exports in `results/`.
 Finalization products use `cache_save/finalize_cache_save_v1` separately from the
-original results. Global statistics and reports are rebuilt from this run.
+original results. The updated ncRNA merges use `cache_save/finalize_cache_save_v2`;
+coding imports and exports with audited model exclusions use
+`cache_save/finalize_cache_save_v3`. Global statistics and reports are rebuilt
+from this run.
+
+Official Rfam 15.1 family types cover the imported Infernal hits. Before merging,
+`RESOLVE_RFAM_METADATA` checks every accession and automatically looks up missing
+types in the official Rfam CURRENT metadata, cached for 24 hours. A network
+failure or a genuinely unknown accession does not abort merging: the hit is
+retained as `Unclassified ncRNA`, with its original accession, coordinates and
+score. Cis-regulatory families are labeled `Regulatory RNA`; other official
+types, including future subtypes, are preserved without an accession-by-accession
+mapping. These English categories are used in GFF attributes, filtering audits,
+counts and figures. `comparative/noncoding/stats/rfam_metadata_resolution.json`
+records automatic resolutions, unresolved accessions, metadata provenance and
+checksums. The fallback does not assign a regulatory function to unknown hits.
 
 `outputs/cache_reuse_20261023/final_coding_sources.json` records the 36 selected
 coding GFFs, historical quality flags, and source methods. Thirty-three come
@@ -29,6 +44,20 @@ from `publish_best_annotations`; the other three use the exact method already
 chosen in the historical selection table and its cached functional GFF. Those
 three retain the historical `no` quality flags; exporting them does not imply
 that they pass current quality thresholds.
+
+Selected historical coding GFFs contain a small number of models with fragments
+on different contigs, incompatible strands, inconsistent parent spans or bounds
+outside the assembly. With the user's approval these models are excluded from
+the validated export, including their descendant features, instead of clipping
+coordinates or predicting replacement genes. Valid models keep their original
+coordinates and functional annotations. Shared features retain valid Parent
+references. Empty gene containers are removed. Original cache files are never
+edited. Excluded original GFF rows and the reasons appear in each species'
+`protein_coding/selection/excluded_models.gff3` and `excluded_models.tsv`;
+`cache_import.json` gives counts and source identities. Comparative
+`protein_coding/stats/coding_import_summary.tsv` and `excluded_models.tsv`
+provide the combined report. An unknown contig still fails the import because
+it can indicate an incorrect assembly or ID mapping.
 
 `nextflow_myriapoda.sbatch` runs the full pipeline instead and can calculate
 missing predictions and downstream analyses as described below. Use that

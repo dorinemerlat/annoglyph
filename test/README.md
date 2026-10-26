@@ -65,6 +65,17 @@ An empty filtered set is an error. Downloads can be substantial. See
 If you override `protein_set`, that user-supplied bank is used unchanged,
 including in full profiles.
 No eligible SRA runs means no downloaded RNA-seq evidence for that species.
+
+BRAKER3 uses a task-local copy of GeneMark-ETP with an exon-count compatibility
+fix. The bundled `super.pl` writes intron counts in training summaries, while
+`gmes/parse_set.pl` expects exon counts. In intron-poor genomes this can produce
+negative transition probabilities and abort masking-penalty estimation. The
+fix reports the number of CDS exons, without changing the training genes or
+prediction thresholds. `test_patch_genemark_super.py` checks single-exon and
+multi-exon summaries; an unrecognized upstream summary format fails explicitly.
+The original tools are documented in the
+[GeneMark-ETP source](https://github.com/gatech-genemark/GeneMark-ETP).
+
 The supplied samplesheets contain no local RNA-seq; local FASTQs added later
 are not subsampled by these parameters. Neither mode invokes VARUS.
 

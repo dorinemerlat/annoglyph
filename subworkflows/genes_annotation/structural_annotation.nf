@@ -38,7 +38,7 @@ workflow STRUCTURAL_ANNOTATION {
         if (!taxonomyDb) error 'Evaluation requires protein_evidence_taxonomy_db (ETE NCBI taxonomy SQLite database), or omark_taxonomy_db.'
         FILTER_PROTEIN_EVIDENCE(
             masked_genomes.map { meta, genome -> [meta] }.combine(protein_evidence),
-            taxonomy_table,
+            taxonomy_table.first(),
             Channel.value(file(taxonomyDb, checkIfExists: true))
         )
         prediction_evidence = FILTER_PROTEIN_EVIDENCE.out.proteins.map { meta, fasta -> [meta.id, fasta] }

@@ -6,6 +6,10 @@ The active gene workflow uses `[meta, files…]`. `meta.id` is the sample identi
 `braker-with-varus`. Metadata is copied when adding these fields. Genome/BAM and
 genome/GFF associations use the sample identifier; functional joins use the full
 sample/method metadata. A shared evidence channel is broadcast with `.first()`.
+Protein BUSCO task tags include the annotation method, keeping persistent caches
+separate for each predictor; genome-only BUSCO tags retain the sample identifier.
+The InterProScan container override is resolved at task execution, after local
+database configuration has been loaded.
 
 ## nf-core replacements
 
@@ -18,7 +22,7 @@ files record the changes needed by this pipeline.
 | `samtools/merge` | Original VARUS image; merge without indexing, 4 threads | File-based versions; retain original thread count |
 | `agat/spkeeplongestisoform` | AGAT 1.6.1; longest isoform per gene | Original canonical GFF filename; omit the upstream additional `--cpu`; file-based versions |
 | `agat/spextractsequences` | AGAT 1.6.1; `--protein`; original protein FASTA filename | GFF and corresponding genome travel in one tuple; file-based versions |
-| `interproscan` | 5.59-91.0; 10 CPUs, 8 GB; `-f TSV -dp -goterms -iprlookup -pa -t p` | Original prefix; remove stop symbols from an input copy; complete IFB image data; file-based versions |
+| `interproscan` | 5.59-91.0; 10 CPUs, 16 GB; `-f TSV -dp -goterms -iprlookup -pa -t p` | Original prefix; remove stop symbols from an input copy; complete IFB image data; file-based versions |
 | `eggnogmapper` | 2.1.12; 8 CPUs, 16 GB; `--report_orthologs`; `/tmp` scratch/temp; bank `/shared/bank/emapperdb/5.0.2/` | Preserve output subdirectory and all four outputs; disable automatic upstream `--dbmem`; file-based versions |
 
 The eggNOG database is staged as a symlink, avoiding a copy of the shared bank.

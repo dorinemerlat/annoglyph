@@ -24,6 +24,8 @@ process BRAKER3 {
     """
     cp -r /opt/Augustus/config .
     export AUGUSTUS_CONFIG_PATH="\$PWD/config"
+    cp -r /opt/ETP/bin genemark_etp
+    python3 ${projectDir}/bin/patch_genemark_super.py genemark_etp/super.pl
 
     set +e
 
@@ -40,7 +42,7 @@ process BRAKER3 {
         --AUGUSTUS_SCRIPTS_PATH=/opt/Augustus/scripts \
         --DIAMOND_PATH=/opt/ETP/tools \
         --PROTHINT_PATH=/opt/ETP/bin/gmes/ProtHint/bin \
-        --GENEMARK_PATH=/opt/ETP/bin \
+        --GENEMARK_PATH="\$PWD/genemark_etp" \
         --workingdir=braker_${meta.id} ${params.program_args.braker3 ?: ''} ${geneticCodeArg}
 
     braker_status=\$?

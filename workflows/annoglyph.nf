@@ -68,6 +68,7 @@ workflow AnnoGlyph {
         species_assets = species_assets.mix(NCGENES_ANNOTATION.out.filtering.flatMap { meta, files -> ResultsLayoutUtils.assets(meta, files, 'noncoding/stats') })
         comparative_assets = comparative_assets.mix(NCGENES_ANNOTATION.out.tables.map { folder -> [folder, 'noncoding/stats'] })
             .mix(NCGENES_ANNOTATION.out.figures.map { folder -> [folder, 'noncoding/plots'] })
+            .mix(NCGENES_ANNOTATION.out.metadata_resolution.map { report -> [report, 'noncoding/stats/rfam_metadata_resolution.json'] })
     } else {
         ncrna_gff = Channel.empty()
     }
