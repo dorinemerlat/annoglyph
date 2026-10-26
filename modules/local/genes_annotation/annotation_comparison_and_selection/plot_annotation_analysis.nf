@@ -3,7 +3,7 @@ process PLOT_ANNOTATION_ANALYSIS {
     label 'annoglyph_python'
 
     input:
-    tuple val(status), path(summary), path(intron_lengths), path(newick), path(seqkit_stats), path(taxonomy)
+    tuple val(status), path(summary), path(intron_lengths), path(newick), path(seqkit_stats), path(taxonomy), path(selection)
 
     output:
     tuple val(status), path("summary_plots/gene_structure_summary.{png,pdf,svg}"), emit: structure
@@ -18,7 +18,7 @@ process PLOT_ANNOTATION_ANALYSIS {
         --summary ${summary} \
         --intron-lengths ${intron_lengths} \
         --genome-stats ${seqkit_stats} \
-        --taxonomy ${taxonomy} --tree ${newick} \
+        --taxonomy ${taxonomy} --tree ${newick} --selection ${selection} \
         --out-dir .
     """
 

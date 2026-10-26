@@ -128,6 +128,17 @@ def setup_genome_xaxis(ax, genome_order: list[str]) -> None:
     )
 
 
+def select_annotation_rows(summary, introns, selection):
+    keys = ['genome_id', 'method_annotation']
+    selected = selection[keys]
+    if selected['genome_id'].duplicated().any():
+        raise ValueError('Expected one selected annotation per genome')
+    chosen = selected.merge(summary, on=keys, how='left', validate='one_to_one', indicator=True)
+    if (chosen['_merge'] != 'both').any():
+        raise ValueError('Selected annotations are missing from the summary')
+    return chosen.drop(columns='_merge'), introns.merge(selected, on=keys, validate='many_to_one')
+
+
 def prepare_summary(summary: pd.DataFrame, genome_stats: pd.DataFrame) -> pd.DataFrame:
     df = summary.copy()
 
@@ -525,6 +536,7 @@ def main() -> None:
     )
 
     parser.add_argument("--taxonomy", type=Path, help="Taxonomy TSV mapping scientific names to genome IDs.")
+    parser.add_argument('--selection', type=Path, help='Selected annotation method per genome.')
     args = parser.parse_args()
 
     summary_dir = args.out_dir / "summary_plots"
@@ -536,6 +548,9 @@ def main() -> None:
     df_summary = read_table(args.summary)
     df_introns = read_table(args.intron_lengths)
     df_genome_stats = read_table(args.genome_stats)
+
+    if args.selection:
+        df_summary, df_introns = select_annotation_rows(df_summary, df_introns, read_table(args.selection))
 
     intron_stats = prepare_intron_stats(df_introns)
 

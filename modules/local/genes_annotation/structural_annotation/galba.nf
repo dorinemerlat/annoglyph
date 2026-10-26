@@ -53,6 +53,13 @@ process GALBA {
         fi
     fi
 
+    set -e
+    python3 ${projectDir}/bin/normalize_gtf_locus_ids.py \
+        --input galba_${meta.id}/galba.gtf \
+        --output galba_${meta.id}/galba.locus_ids.gtf
+    perl /opt/Augustus/scripts/gtf2gff.pl --gff3 \
+        --out=galba_${meta.id}/galba.gff3 < galba_${meta.id}/galba.locus_ids.gtf
+
     if [ ! -s galba_${meta.id}/galba.gff3 ]; then
         echo "GALBA finished but galba_${meta.id}/galba.gff3 is missing or empty."
 

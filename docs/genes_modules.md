@@ -10,6 +10,12 @@ Protein BUSCO task tags include the annotation method, keeping persistent caches
 separate for each predictor; genome-only BUSCO tags retain the sample identifier.
 The InterProScan container override is resolved at task execution, after local
 database configuration has been loaded.
+GALBA GTF identifiers reused on different contigs or strands are disambiguated
+before GFF3 conversion. This preserves every CDS coordinate and phase while
+preventing unrelated genes from being merged by AGAT. Existing GALBA-derived
+caches made before this correction must be regenerated from the corrected GFF3.
+Gene-structure and assembly-correlation figures use the selected method for each
+genome, including only its introns; method-comparison figures retain all candidates.
 
 ## nf-core replacements
 

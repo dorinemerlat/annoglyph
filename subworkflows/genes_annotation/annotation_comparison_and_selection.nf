@@ -41,6 +41,7 @@ workflow ANNOTATION_COMPARISON_AND_SELECTION {
             .combine(newick.first())
             .combine(genome_stats.map { meta, stats -> stats }.first())
             .combine(taxonomy.first())
+            .combine(SELECT_BEST_ANNOTATION.out.selection.map { status, selection -> selection }.first())
         PLOT_ANNOTATION_ANALYSIS(analysis_inputs)
         comparison_assets = PLOT_ANNOTATION_COMPARISON.out.comparison
             .flatMap { status, files -> (files instanceof List ? files : [files]).collect { file -> [file, "protein_coding/plots/comparison/${status}/${file.name}"] } }
