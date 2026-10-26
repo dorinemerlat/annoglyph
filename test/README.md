@@ -113,6 +113,32 @@ automatically when present.
 No complete pipeline run is implied by these instructions; execution is left
 to the user.
 
+## Disk-space failure recovery
+
+The default error strategy retries explicit `No space left on device` failures,
+including scratch allocation errors recorded only in `.command.log` before
+the tool starts. It also checks `.command.err` and `.command.out`. Other error
+handling remains unchanged; the existing `maxRetries = 4` allows at most five
+attempts per task. Persistent storage failures still fail the run.
+
+Slurm schedules each retry normally: a retry may use another node, but does not
+automatically exclude the previous node. Keep large downloads on shared storage
+and limit concurrent downloads in the site configuration when local `/tmp`
+capacity is insufficient. Configuration changes apply to subsequent launches;
+they do not change an already running Nextflow session.
+
+To validate recovery locally, run from a separate launch directory without a
+Slurm/site profile:
+
+```bash
+nextflow -c /path/to/annoglyph/conf/modules.config run /path/to/annoglyph/test/test_disk_space_retry.nf
+```
+
+This simulates wrapper, stdout and stderr failures, each succeeding on its
+second attempt. Add `--failure_mode ordinary` to verify that an unrelated tool
+error is not retried, or `--failure_mode persistent` to verify that retries stop
+at the configured limit. Both negative checks must exit unsuccessfully.
+
 ## Execution statistics
 
 Use `--run_group` to give an experiment and its resumes the same identifier. Test profiles set it automatically: `test_minimal` for `test`,
