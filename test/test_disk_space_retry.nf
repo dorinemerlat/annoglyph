@@ -5,10 +5,11 @@ nextflow.enable.dsl = 2
 params.program_args = [:]
 // Other validation modes: ordinary (no retry), persistent (exhaust maxRetries).
 params.failure_mode = 'recover'
+params.disk_error = 'No space left on device'
 
 process WRAPPER_DISK_FAILURE {
     // Fail before the tool starts: the diagnostic is only in .command.log.
-    beforeScript { task.attempt == 1 ? 'echo "mktemp: No space left on device" >&2; exit 1' : ':' }
+    beforeScript { task.attempt == 1 ? "echo 'mktemp: ${params.disk_error}' >&2; exit 1" : ':' }
     output:
     path 'wrapper.txt'
     script:
@@ -24,7 +25,7 @@ process TOOL_DISK_FAILURE {
     path "${stream}.txt"
     script:
     def redirect = stream == 'stderr' ? '>&2' : ''
-    def message = params.failure_mode == 'ordinary' ? 'invalid input data' : 'write failed: No space left on device'
+    def message = params.failure_mode == 'ordinary' ? 'invalid input data' : "write failed: ${params.disk_error}"
     """
     if [ '${task.attempt}' = 1 ] || [ '${params.failure_mode}' != recover ]; then
         echo '${message}' ${redirect}

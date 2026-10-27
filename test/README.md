@@ -155,9 +155,10 @@ For additional channel checks, run `test_rnaseq_runs.nf -stub-run` with
 `--test_local_libraries false` (one run per genome, no redundant merge).
 Use a separate launch/cache directory for each stub scenario.
 
-## Disk-space failure recovery
+## Resource failure recovery
 
-The default error strategy retries explicit `No space left on device` failures,
+The default error strategy retries explicit `No space left on device` and
+`Disk quota exceeded` failures,
 including scratch allocation errors recorded only in `.command.log` before
 the tool starts. It also checks `.command.err` and `.command.out`. Other error
 handling remains unchanged; the existing `maxRetries = 4` allows at most five
@@ -166,7 +167,10 @@ attempts per task. Persistent storage failures still fail the run.
 Slurm schedules each retry normally: a retry may use another node, but does not
 automatically exclude the previous node. Keep large downloads on shared storage
 and limit concurrent downloads in the site configuration when local `/tmp`
-capacity is insufficient. Configuration changes apply to subsequent launches;
+capacity is insufficient. RepeatModeler runs without scratch and exports
+`TMPDIR`, `TMP` and `TEMP` to its shared work directory for LTR intermediates.
+A genuine shared-project quota exhaustion must still be resolved before a retry
+can succeed. Configuration changes apply to subsequent launches;
 they do not change an already running Nextflow session.
 
 To validate recovery locally, run from a separate launch directory without a
@@ -180,6 +184,29 @@ This simulates wrapper, stdout and stderr failures, each succeeding on its
 second attempt. Add `--failure_mode ordinary` to verify that an unrelated tool
 error is not retried, or `--failure_mode persistent` to verify that retries stop
 at the configured limit. Both negative checks must exit unsuccessfully.
+Use `--disk_error 'Disk quota exceeded'` to exercise quota diagnostics in all
+three streams.
+
+STAR exit 102 is retried only when its log explicitly reports insufficient BAM
+sorting memory. The next request is the larger of twice the previous allocation
+and the reported required bytes plus 25%, rounded up to whole GiB. Without a
+parseable byte count it doubles the previous request. Increased memory is
+retained if a subsequent retry fails for disk or time reasons. STAR's BAM sort
+limit is 80% of the task allocation; the standard RNA-seq flow still uses separate
+samtools sorting. An unrelated exit 102 is not classified as a memory failure.
+
+Validate using the actual Nextflow retry mechanism (no large RAM allocation or
+STAR inputs are needed):
+
+```bash
+nextflow -c /path/to/annoglyph/conf/modules.config run /path/to/annoglyph/test/test_star_memory_retry.nf
+```
+
+This checks a 2 GiB initial request followed by 7 GiB for a reported 5 GiB need.
+Use `--star_failure missing` for the 4 GiB fallback or `--star_failure ordinary`
+to check that an unrelated exit 102 is not retried (expected unsuccessful exit).
+Use `--star_failure mixed` to check that 7 GiB is retained after an intervening
+quota failure, with success on the third attempt.
 
 ## Execution statistics
 
